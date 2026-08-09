@@ -114,6 +114,23 @@ test("contact page is compact and submits a general enquiry", async ({ page }) =
   expect(submittedType).toBe("general");
 });
 
+test("cars for sale uses a compact title-only hero", async ({ page }) => {
+  await page.goto("/cars-for-sale");
+  const main = page.getByRole("main");
+
+  await expect(main.getByText("Only genuine, currently approved stock appears here.", { exact: false })).toHaveCount(0);
+  await expect(main.getByRole("link", { name: "Book appointment", exact: true })).toHaveCount(0);
+  await expect(main.getByRole("link", { name: "Request an estimate", exact: true })).toHaveCount(0);
+  await expect(main.getByText("Professional testing", { exact: true })).toHaveCount(0);
+  await expect(main.getByText("Clear next steps", { exact: true })).toHaveCount(0);
+  const stockHeading = main.getByRole("heading", { name: "Available vehicles" });
+  await expect(stockHeading).toBeVisible();
+  await expect.poll(async () => {
+    const box = await stockHeading.boundingBox();
+    return box ? box.y < (page.viewportSize()?.height || 0) : false;
+  }).toBe(true);
+});
+
 test("notification centre is protected by admin authentication", async ({ page }) => {
   await page.goto("/admin/notifications");
   await expect(page).toHaveURL(/\/admin\/login$/);
