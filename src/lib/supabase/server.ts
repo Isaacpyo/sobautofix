@@ -3,6 +3,7 @@ import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import { isAllowedAdminEmail } from "@/config/admin";
 
 export function isSupabaseConfigured() {
   return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
@@ -44,7 +45,7 @@ export async function getAdminUser() {
   const client = await createClient();
   if (!client) return null;
   const { data: { user } } = await client.auth.getUser();
-  if (!user) return null;
+  if (!user || !isAllowedAdminEmail(user.email)) return null;
 
   const { data: profile } = await client
     .from("admin_profiles")

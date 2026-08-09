@@ -2,22 +2,34 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { ADMIN_EMAIL } from "@/config/admin";
 import { createClient } from "@/lib/supabase/server";
-import { siteConfig } from "@/config/site";
 
 export type LoginState = { message: string };
 
-export async function requestLogin(_: LoginState, formData: FormData): Promise<LoginState> {
-  const parsed = z.email().safeParse(formData.get("email"));
-  if (!parsed.success) return { message: "Enter a valid staff email address." };
+export async function loginWithPassword(_: LoginState, formData: FormData): Promise<LoginState> {
+  const parsed = z.string().min(1).max(1_024).safeParse(formData.get("password"));
+  if (!parsed.success) return { message: "Enter your password." };
   const client = await createClient();
   if (!client) return { message: "Supabase authentication is not configured." };
-  const { error } = await client.auth.signInWithOtp({
-    email: parsed.data,
-    options: { shouldCreateUser: false, emailRedirectTo: `${siteConfig.siteUrl}/auth/confirm` },
+
+  const { data: auth, error } = await client.auth.signInWithPassword({
+    email: ADMIN_EMAIL,
+    password: parsed.data,
   });
-  if (error) return { message: "A sign-in link could not be sent. Confirm that this address has been invited." };
-  return { message: "Check your email for a secure sign-in link." };
+  if (error || !auth.user) return { message: "Sign-in failed. Check your password and try again." };
+
+  const { data: profile } = await client
+    .from("admin_profiles")
+    .select("user_id")
+    .eq("user_id", auth.user.id)
+    .maybeSingle();
+  if (!profile) {
+    await client.auth.signOut();
+    return { message: "This account is not authorised for the CMS." };
+  }
+
+  redirect("/admin");
 }
 
 export async function signOut() {

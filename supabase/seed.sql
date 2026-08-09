@@ -1,7 +1,10 @@
--- Staff users are intentionally not created here. Invite a user through
--- Supabase Auth, then explicitly grant access:
+-- Staff users and passwords are intentionally not created here. Create the
+-- authorised user through Supabase Auth, then explicitly grant access:
 -- insert into public.admin_profiles (user_id, display_name)
--- values ('<auth-user-uuid>', '<staff display name>');
+-- select id, 'SOB Autofix Admin'
+-- from auth.users
+-- where lower(email) = 'sobautofix@gmail.com'
+-- on conflict (user_id) do update set display_name = excluded.display_name;
 
 insert into public.offers (title, description, active)
 values (

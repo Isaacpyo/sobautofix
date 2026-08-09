@@ -71,6 +71,15 @@ test("optional integrations remain gated by consent", async ({ page }) => {
   await expect(page.evaluate(() => localStorage.getItem("sob-autofix-consent-v1"))).resolves.toContain('"analytics":false');
 });
 
+test("admin login uses the fixed administrator email and a password", async ({ page }) => {
+  await page.goto("/admin/login");
+  await expect(page.getByText("sobautofix@gmail.com", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Password")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
+  await expect(page.getByText(/secure sign-in link/i)).toHaveCount(0);
+  await expect(page.locator('input[type="email"]')).toHaveCount(0);
+});
+
 test("mobile navigation is keyboard operable", async ({ page, isMobile }) => {
   test.skip(!isMobile, "mobile project only");
   await page.goto("/");
