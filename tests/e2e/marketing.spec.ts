@@ -40,6 +40,114 @@ test("priority landing pages have one clear heading", async ({ page }) => {
   }
 });
 
+test("service category headings link to the canonical hubs", async ({ page, isMobile }) => {
+  await page.goto("/");
+  const expected = [
+    { label: "Diagnostics", href: "/diagnostics" },
+    { label: "Repairs & Maintenance", href: "/services/repairs-maintenance" },
+    { label: "Mobile & Specialist", href: "/services/mobile-specialist" },
+  ];
+
+  if (isMobile) {
+    await page.getByRole("button", { name: "Open menu" }).click();
+    const navigation = page.getByRole("navigation", { name: "Mobile navigation" });
+    await navigation.getByRole("button", { name: "Services", exact: true }).click();
+    for (const item of expected) await expect(navigation.getByRole("link", { name: item.label, exact: true })).toHaveAttribute("href", item.href);
+    return;
+  }
+
+  const navigation = page.getByRole("navigation", { name: "Primary navigation" });
+  const servicesButton = navigation.getByRole("button", { name: "Services", exact: true });
+  await servicesButton.focus();
+  await page.keyboard.press("Enter");
+  for (const item of expected) await expect(navigation.getByRole("link", { name: item.label, exact: true })).toHaveAttribute("href", item.href);
+  await page.keyboard.press("Tab");
+  await expect(navigation.getByRole("link", { name: "Diagnostics", exact: true })).toBeFocused();
+});
+
+test("service category hubs expose complete cards, breadcrumbs, canonicals and schema", async ({ page }) => {
+  const seoTitles = new Set<string>();
+  const categories = [
+    {
+      route: "/diagnostics",
+      title: "Vehicle Diagnostics & Fault Finding in Doncaster",
+      cards: [
+        ["Vehicle Diagnostics", "/diagnostics/car-diagnostics"],
+        ["Electrical Fault Finding", "/diagnostics/electrical-fault-finding"],
+        ["Engine Management Light", "/diagnostics/engine-management-light"],
+        ["ECU Diagnostics", "/diagnostics/ecu-diagnostics"],
+        ["ABS Diagnostics", "/diagnostics/abs-diagnostics"],
+        ["DPF Diagnostics", "/diagnostics/dpf-diagnostics"],
+        ["Battery & Charging Diagnostics", "/diagnostics/battery-charging"],
+      ],
+    },
+    {
+      route: "/services/repairs-maintenance",
+      title: "Vehicle Repairs & Maintenance in Doncaster",
+      cards: [
+        ["Vehicle Servicing", "/services/vehicle-servicing"],
+        ["Engine Repairs", "/services/engine-repair"],
+        ["Brake Repairs", "/services/brake-repair"],
+      ],
+    },
+    {
+      route: "/services/mobile-specialist",
+      title: "Mobile & Specialist Vehicle Services in Doncaster",
+      cards: [
+        ["Mobile Mechanic", "/mobile-mechanic"],
+        ["Vehicle Recovery", "/vehicle-recovery"],
+        ["Pre-Purchase Inspection", "/vehicle-inspections"],
+        ["Fleet Servicing", "/fleet"],
+      ],
+    },
+  ] as const;
+
+  for (const category of categories) {
+    const response = await page.goto(category.route);
+    expect(response?.status()).toBe(200);
+    seoTitles.add(await page.title());
+    await expect(page.getByRole("heading", { level: 1, name: category.title })).toBeVisible();
+    const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
+    expect(canonical).toBeTruthy();
+    expect(new URL(canonical!).pathname).toBe(category.route);
+    await expect(page.getByRole("navigation", { name: "Breadcrumb" })).toContainText("Services");
+    for (const [title, href] of category.cards) {
+      const heading = page.getByRole("heading", { level: 3, name: title, exact: true }).first();
+      await expect(heading).toBeVisible();
+      await expect(heading.locator("..")).toHaveAttribute("href", href);
+    }
+    const schemaTypes = await page.locator('script[type="application/ld+json"]').evaluateAll((scripts) => scripts.map((script) => JSON.parse(script.textContent || "{}")["@type"]));
+    expect(schemaTypes).toContain("BreadcrumbList");
+    expect(schemaTypes).toContain("FAQPage");
+    expect(schemaTypes).toContain("Service");
+  }
+  expect(seoTitles.size).toBe(categories.length);
+});
+
+test("services index presents all three substantial category gateways", async ({ page }) => {
+  const response = await page.goto("/services");
+  expect(response?.status()).toBe(200);
+  for (const [label, href] of [["Explore Diagnostics", "/diagnostics"], ["Explore Repairs & Maintenance", "/services/repairs-maintenance"], ["Explore Mobile & Specialist", "/services/mobile-specialist"]] as const) {
+    await expect(page.getByRole("link", { name: label, exact: true })).toHaveAttribute("href", href);
+  }
+});
+
+test("service category hubs have no automatically detectable accessibility violations", async ({ page }) => {
+  for (const route of ["/diagnostics", "/services/repairs-maintenance", "/services/mobile-specialist"]) {
+    await page.goto(route);
+    const results = await new AxeBuilder({ page }).analyze();
+    expect(results.violations, route).toEqual([]);
+  }
+});
+
+test("sitemap contains all canonical service category routes", async ({ request }) => {
+  const response = await request.get("/sitemap.xml");
+  expect(response.ok()).toBe(true);
+  const sitemap = await response.text();
+  for (const route of ["/diagnostics", "/services/repairs-maintenance", "/services/mobile-specialist"]) expect(sitemap).toContain(route);
+  expect(sitemap).not.toContain("/services/diagnostics");
+});
+
 test("homepage has no automatically detectable accessibility violations", async ({ page }) => {
   await page.goto("/");
   const results = await new AxeBuilder({ page }).analyze();
