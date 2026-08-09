@@ -7,8 +7,14 @@ import { VehicleJourney } from "@/components/vehicle/vehicle-journey";
 import { ButtonLink } from "@/components/ui/button";
 import { Container, Eyebrow } from "@/components/ui/container";
 import { areas, contactLinks, diagnostics, services } from "@/config/site";
-import { localBusinessJsonLd } from "@/lib/seo";
+import { createMetadata, localBusinessJsonLd } from "@/lib/seo";
 import { getActiveOffer } from "@/lib/offers/repository";
+
+export const metadata = createMetadata(
+  "Professional Diagnostics. Not Guesswork.",
+  "Professional vehicle diagnostics, electrical fault finding, repairs, servicing and vehicle sales in Doncaster.",
+  "/",
+);
 
 export default async function HomePage() {
   const offer = await getActiveOffer();
