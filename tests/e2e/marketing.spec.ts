@@ -5,10 +5,27 @@ async function setEssentialCookies(page: import("@playwright/test").Page) {
   await page.addInitScript(() => localStorage.setItem("sob-autofix-consent-v1", JSON.stringify({ analytics: false, functional: false })));
 }
 
+async function mockTurnstile(page: import("@playwright/test").Page) {
+  await page.route("https://challenges.cloudflare.com/turnstile/**", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/javascript",
+    body: "window.turnstile={render:function(element,options){options.callback('playwright-token');return 'playwright-widget';},remove:function(){}};",
+  }));
+}
+
+async function mockVehicleLookup(page: import("@playwright/test").Page) {
+  await page.route("**/api/vehicle/lookup", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({ success: true, vehicle: { registration: "AB12CDE", make: "Vauxhall", model: "Astra", year: 2017, fuelType: "Petrol" } }),
+  }));
+}
+
 test("homepage exposes the primary vehicle journey", async ({ page }) => {
   await page.goto("/");
   const logo = page.getByRole("link", { name: "SOB Autofix home" }).first().locator("img");
   await expect(logo).toBeVisible();
+  await logo.scrollIntoViewIfNeeded();
   await expect.poll(() => logo.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Professional Diagnostics");
   await expect(page.getByLabel("Enter your registration")).toBeVisible();
@@ -30,6 +47,7 @@ test("homepage has no automatically detectable accessibility violations", async 
 });
 
 test("registration context survives into booking", async ({ page }) => {
+  await mockVehicleLookup(page);
   await setEssentialCookies(page);
   await page.goto("/vehicle-check");
   await page.getByLabel("Enter your registration").fill("ab12 cde");
@@ -54,6 +72,7 @@ test("provider outage offers manual continuation", async ({ page }) => {
 
 test("quote validation and successful submission", async ({ page }) => {
   await page.route("**/api/enquiries", (route) => route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ success: true, id: "68ae0835-6325-485b-b7e7-cb29e08f2f10", notificationStatus: "sent" }) }));
+  await mockTurnstile(page);
   await setEssentialCookies(page);
   await page.goto("/get-a-quote");
   await page.getByRole("button", { name: "Send request" }).click();
@@ -64,6 +83,40 @@ test("quote validation and successful submission", async ({ page }) => {
   await page.getByLabel(/I have read the privacy notice/).check();
   await page.getByRole("button", { name: "Send request" }).click();
   await expect(page.getByRole("status")).toContainText("request has been received");
+});
+
+test("contact page is compact and submits a general enquiry", async ({ page }) => {
+  let submittedType = "";
+  await page.route("**/api/enquiries", async (route) => {
+    submittedType = (route.request().postDataJSON() as { type?: string }).type || "";
+    await route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ success: true, id: "68ae0835-6325-485b-b7e7-cb29e08f2f10", notificationStatus: "sent" }) });
+  });
+  await mockTurnstile(page);
+  await setEssentialCookies(page);
+  await page.goto("/contact");
+
+  await expect(page.getByText("Call, WhatsApp or send the details online.", { exact: false })).toHaveCount(0);
+  await expect(page.getByText("Professional testing", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Clear next steps", { exact: true })).toHaveCount(0);
+  const formHeading = page.getByRole("heading", { name: "Send a general enquiry" });
+  await expect(formHeading).toBeVisible();
+  await expect.poll(async () => {
+    const box = await formHeading.boundingBox();
+    return box ? box.y < (page.viewportSize()?.height || 0) : false;
+  }).toBe(true);
+
+  await page.getByLabel("Name").fill("Test Customer");
+  await page.getByRole("textbox", { name: /Phone/ }).fill("07123456789");
+  await page.getByLabel("What is happening?").fill("The vehicle has an intermittent warning light.");
+  await page.getByLabel(/I have read the privacy notice/).check();
+  await page.getByRole("button", { name: "Send request" }).click();
+  await expect(page.getByRole("status")).toContainText("request has been received");
+  expect(submittedType).toBe("general");
+});
+
+test("notification centre is protected by admin authentication", async ({ page }) => {
+  await page.goto("/admin/notifications");
+  await expect(page).toHaveURL(/\/admin\/login$/);
 });
 
 test("optional integrations remain gated by consent", async ({ page }) => {

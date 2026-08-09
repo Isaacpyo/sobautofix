@@ -126,6 +126,7 @@ export async function updateEnquiryStatus(formData: FormData) {
   await client.from("enquiries").update({ status, closed_at: status === "closed" ? new Date().toISOString() : null }).eq("id", id);
   await audit(client, auth.user.id, "status_change", "enquiry", id, { status });
   revalidatePath("/admin/enquiries");
+  revalidatePath("/admin/notifications");
 }
 
 export async function resendEnquiryNotifications(formData: FormData) {
@@ -134,6 +135,7 @@ export async function resendEnquiryNotifications(formData: FormData) {
   const status = await retryEnquiryNotifications(id);
   await audit(client, auth.user.id, "notification_retry", "enquiry", id, { status });
   revalidatePath("/admin/enquiries");
+  revalidatePath("/admin/notifications");
 }
 
 export async function saveSaleVehicle(formData: FormData) {

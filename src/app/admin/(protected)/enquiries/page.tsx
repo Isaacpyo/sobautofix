@@ -1,6 +1,83 @@
 import { resendEnquiryNotifications, updateEnquiryStatus } from "../actions";
 import { createClient } from "@/lib/supabase/server";
 
-type EnquiryRow = { id: string; type: string; description: string | null; location_postcode: string | null; status: string; notification_status: string; created_at: string; customers: { name: string; email: string | null; phone: string } | null; vehicles: { registration: string | null; make: string | null; model: string | null } | null; enquiry_attachments: Array<{ id: string; object_path: string; file_name: string }> };
+type EnquiryRow = {
+  id: string;
+  type: string;
+  description: string | null;
+  location_postcode: string | null;
+  status: string;
+  notification_status: string;
+  created_at: string;
+  customers: { name: string; email: string | null; phone: string } | null;
+  vehicles: { registration: string | null; make: string | null; model: string | null } | null;
+  enquiry_attachments: Array<{ id: string; object_path: string; file_name: string }>;
+};
 
-export default async function EnquiriesPage() { const client = await createClient(); const { data } = client ? await client.from("enquiries").select("id,type,description,location_postcode,status,notification_status,created_at,customers(name,email,phone),vehicles(registration,make,model),enquiry_attachments(id,object_path,file_name)").order("created_at", { ascending: false }).limit(100) : { data: [] }; const enquiries = (data || []) as unknown as EnquiryRow[]; const paths = enquiries.flatMap((enquiry) => enquiry.enquiry_attachments || []).map((attachment) => attachment.object_path); const { data: signed } = client && paths.length ? await client.storage.from("enquiry-attachments").createSignedUrls(paths, 300) : { data: [] }; const signedByPath = new Map<string, string>(); for (const item of signed || []) if (item.path && item.signedUrl) signedByPath.set(item.path, item.signedUrl); return <><p className="text-xs font-extrabold tracking-widest text-[#1974E2] uppercase">Customer requests</p><h1 className="mt-2 text-4xl font-extrabold text-[#071127]">Enquiries</h1><div className="mt-8 grid gap-5">{enquiries.map((enquiry) => <article key={enquiry.id} className="rounded-2xl border border-[#E4EAF0] bg-white p-6"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs font-extrabold tracking-widest text-[#1974E2] uppercase">{enquiry.type.replace("_", " ")} · {new Date(enquiry.created_at).toLocaleString("en-GB")}</p><h2 className="mt-2 text-2xl font-bold text-[#071127]">{enquiry.customers?.name}</h2><p className="mt-1 text-sm text-[#586575]">{enquiry.customers?.phone}{enquiry.customers?.email ? ` · ${enquiry.customers.email}` : ""}</p></div><div className="flex items-center gap-2"><span className={enquiry.notification_status === "failed" ? "rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-800" : "rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-800"}>Email {enquiry.notification_status}</span>{enquiry.notification_status === "failed" && <form action={resendEnquiryNotifications}><input type="hidden" name="id" value={enquiry.id} /><button className="min-h-9 rounded-lg border border-red-200 px-3 text-xs font-bold text-red-800">Retry email</button></form>}</div></div>{enquiry.vehicles && <p className="mt-4 rounded-lg bg-[#F4F7FA] p-3 text-sm font-bold text-[#071127]">{[enquiry.vehicles.make, enquiry.vehicles.model, enquiry.vehicles.registration].filter(Boolean).join(" · ")}</p>}<p className="mt-4 whitespace-pre-wrap leading-7 text-[#586575]">{enquiry.description}</p>{enquiry.location_postcode && <p className="mt-3 text-sm font-bold text-[#071127]">Location: {enquiry.location_postcode}</p>}{enquiry.enquiry_attachments?.length > 0 && <div className="mt-4"><p className="text-xs font-extrabold tracking-widest text-[#667586] uppercase">Private attachments · links expire in 5 minutes</p><div className="mt-2 flex flex-wrap gap-2">{enquiry.enquiry_attachments.map((attachment) => { const signedUrl = signedByPath.get(attachment.object_path); return signedUrl ? <a key={attachment.id} href={signedUrl} className="rounded-lg bg-[#EAF3FF] px-3 py-2 text-sm font-bold text-[#1974E2]">{attachment.file_name}</a> : null; })}</div></div>}<form action={updateEnquiryStatus} className="mt-5 flex flex-wrap items-center gap-3"><input type="hidden" name="id" value={enquiry.id} /><select name="status" defaultValue={enquiry.status} className="min-h-11 rounded-lg border border-[#D7E0E9] bg-white px-3"><option value="new">New</option><option value="contacted">Contacted</option><option value="booked">Booked</option><option value="closed">Closed</option></select><button className="min-h-11 rounded-lg bg-[#071127] px-4 text-sm font-bold text-white">Update status</button></form></article>)}{!enquiries.length && <p className="rounded-2xl border border-[#E4EAF0] bg-white p-8 text-center text-[#667586]">No enquiries yet.</p>}</div></>; }
+export default async function EnquiriesPage() {
+  const client = await createClient();
+  const { data } = client
+    ? await client.from("enquiries").select("id,type,description,location_postcode,status,notification_status,created_at,customers(name,email,phone),vehicles(registration,make,model),enquiry_attachments(id,object_path,file_name)").order("created_at", { ascending: false }).limit(100)
+    : { data: [] };
+  const enquiries = (data || []) as unknown as EnquiryRow[];
+  const paths = enquiries.flatMap((enquiry) => enquiry.enquiry_attachments || []).map((attachment) => attachment.object_path);
+  const { data: signed } = client && paths.length
+    ? await client.storage.from("enquiry-attachments").createSignedUrls(paths, 300)
+    : { data: [] };
+  const signedByPath = new Map<string, string>();
+  for (const item of signed || []) if (item.path && item.signedUrl) signedByPath.set(item.path, item.signedUrl);
+
+  return (
+    <>
+      <p className="text-xs font-extrabold tracking-widest text-[#1974E2] uppercase">Customer requests</p>
+      <h1 className="mt-2 text-4xl font-extrabold text-[#071127]">Enquiries</h1>
+      <div className="mt-8 grid gap-5">
+        {enquiries.map((enquiry) => (
+          <article id={`enquiry-${enquiry.id}`} key={enquiry.id} className="scroll-mt-6 rounded-2xl border border-[#E4EAF0] bg-white p-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-extrabold tracking-widest text-[#1974E2] uppercase">{enquiry.type.replace("_", " ")} · {new Date(enquiry.created_at).toLocaleString("en-GB")}</p>
+                <h2 className="mt-2 text-2xl font-bold text-[#071127]">{enquiry.customers?.name}</h2>
+                <p className="mt-1 text-sm text-[#586575]">{enquiry.customers?.phone}{enquiry.customers?.email ? ` · ${enquiry.customers.email}` : ""}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={enquiry.notification_status === "failed" ? "rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-800" : "rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-800"}>Email {enquiry.notification_status}</span>
+                {enquiry.notification_status === "failed" && (
+                  <form action={resendEnquiryNotifications}>
+                    <input type="hidden" name="id" value={enquiry.id} />
+                    <button className="min-h-9 rounded-lg border border-red-200 px-3 text-xs font-bold text-red-800">Retry email</button>
+                  </form>
+                )}
+              </div>
+            </div>
+            {enquiry.vehicles && <p className="mt-4 rounded-lg bg-[#F4F7FA] p-3 text-sm font-bold text-[#071127]">{[enquiry.vehicles.make, enquiry.vehicles.model, enquiry.vehicles.registration].filter(Boolean).join(" · ")}</p>}
+            <p className="mt-4 whitespace-pre-wrap leading-7 text-[#586575]">{enquiry.description}</p>
+            {enquiry.location_postcode && <p className="mt-3 text-sm font-bold text-[#071127]">Location: {enquiry.location_postcode}</p>}
+            {enquiry.enquiry_attachments?.length > 0 && (
+              <div className="mt-4">
+                <p className="text-xs font-extrabold tracking-widest text-[#667586] uppercase">Private attachments · links expire in 5 minutes</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {enquiry.enquiry_attachments.map((attachment) => {
+                    const signedUrl = signedByPath.get(attachment.object_path);
+                    return signedUrl ? <a key={attachment.id} href={signedUrl} className="rounded-lg bg-[#EAF3FF] px-3 py-2 text-sm font-bold text-[#1974E2]">{attachment.file_name}</a> : null;
+                  })}
+                </div>
+              </div>
+            )}
+            <form action={updateEnquiryStatus} className="mt-5 flex flex-wrap items-center gap-3">
+              <input type="hidden" name="id" value={enquiry.id} />
+              <select name="status" defaultValue={enquiry.status} className="min-h-11 rounded-lg border border-[#D7E0E9] bg-white px-3">
+                <option value="new">New</option>
+                <option value="contacted">Contacted</option>
+                <option value="booked">Booked</option>
+                <option value="closed">Closed</option>
+              </select>
+              <button className="min-h-11 rounded-lg bg-[#071127] px-4 text-sm font-bold text-white">Update status</button>
+            </form>
+          </article>
+        ))}
+        {!enquiries.length && <p className="rounded-2xl border border-[#E4EAF0] bg-white p-8 text-center text-[#667586]">No enquiries yet.</p>}
+      </div>
+    </>
+  );
+}
