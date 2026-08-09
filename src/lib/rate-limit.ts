@@ -10,7 +10,7 @@ function hashIdentifier(value: string) {
 
 export async function consumeRateLimit(identifier: string, scope: string, limit = 10, windowSeconds = 60) {
   const key = hashIdentifier(identifier);
-  const admin = createAdminClient();
+  const admin = process.env.PLAYWRIGHT_TEST === "true" ? null : createAdminClient();
 
   if (admin) {
     const { data, error } = await admin.rpc("consume_rate_limit", {

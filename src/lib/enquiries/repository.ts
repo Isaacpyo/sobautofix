@@ -1,7 +1,7 @@
 import "server-only";
 
 import { randomUUID } from "node:crypto";
-import { Resend } from "resend";
+import { getResendConfig, sendTransactionalEmail } from "@/lib/email/resend";
 import { createAdminClient } from "@/lib/supabase/server";
 import type { EnquiryRequest } from "./schema";
 
@@ -58,12 +58,9 @@ export async function createEnquiry(input: EnquiryRequest) {
 }
 
 export async function sendNotifications(enquiryId: string, input: NotificationInput) {
-  const key = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM_EMAIL;
-  const business = process.env.ENQUIRY_NOTIFICATION_EMAIL;
+  const emailConfig = getResendConfig();
   const admin = createAdminClient();
-  if (!key || !from || !business) return "failed" as const;
-  const resend = new Resend(key);
+  if (!emailConfig) return "failed" as const;
   const details = [
     `Type: ${input.type}`,
     `Name: ${input.contact.name}`,
@@ -75,10 +72,15 @@ export async function sendNotifications(enquiryId: string, input: NotificationIn
   ].filter(Boolean).join("\n");
 
   try {
-    const result = await resend.emails.send({ from, to: business, subject: `New ${input.type.replace("_", " ")} enquiry`, text: details, replyTo: input.contact.email });
+    const result = await sendTransactionalEmail({
+      to: emailConfig.notificationRecipient,
+      subject: `New ${input.type.replace("_", " ")} enquiry`,
+      text: details,
+      replyTo: input.contact.email || emailConfig.replyTo,
+    });
     await admin?.from("notification_attempts").insert({ enquiry_id: enquiryId, recipient_type: "business", status: "sent", provider_id: result.data?.id || null });
     if (input.contact.email) {
-      const customerResult = await resend.emails.send({ from, to: input.contact.email, subject: "We received your SOB Autofix request", text: `Hello ${input.contact.name},\n\nThanks for contacting SOB Autofix. We have received your request and will respond using your preferred contact method.\n\nReference: ${enquiryId}\n\nSOB Autofix Limited` });
+      const customerResult = await sendTransactionalEmail({ to: input.contact.email, subject: "We received your SOB Autofix request", text: `Hello ${input.contact.name},\n\nThanks for contacting SOB Autofix. We have received your request and will respond using your preferred contact method.\n\nReference: ${enquiryId}\n\nSOB Autofix Limited` });
       await admin?.from("notification_attempts").insert({ enquiry_id: enquiryId, recipient_type: "customer", status: "sent", provider_id: customerResult.data?.id || null });
     }
     return "sent" as const;

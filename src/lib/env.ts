@@ -26,27 +26,25 @@ export const requiredProductionVariables = [
   "NEXT_PUBLIC_SITE_URL",
   "NEXT_PUBLIC_SUPABASE_URL",
   "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
-  "SUPABASE_SERVICE_ROLE_KEY",
-  "DVLA_API_KEY",
-  "NEXT_PUBLIC_CALENDLY_URL",
+  "SUPABASE_SECRET_KEY",
   "RESEND_API_KEY",
   "RESEND_FROM_EMAIL",
+  "RESEND_REPLY_TO",
   "ENQUIRY_NOTIFICATION_EMAIL",
-  "GOOGLE_PLACES_API_KEY",
-  "GOOGLE_PLACE_ID",
-  "NEXT_PUBLIC_GOOGLE_MAPS_URL",
   "TURNSTILE_SECRET_KEY",
   "NEXT_PUBLIC_TURNSTILE_SITE_KEY",
-  "NEXT_PUBLIC_GA_MEASUREMENT_ID",
-  "SENTRY_DSN",
-  "NEXT_PUBLIC_TAWK_PROPERTY_ID",
-  "NEXT_PUBLIC_TAWK_WIDGET_ID",
-  "GOOGLE_SEARCH_CONSOLE_VERIFICATION",
   "CRON_SECRET",
 ] as const;
 
 export function getEnvironmentReadiness() {
   const missing: string[] = requiredProductionVariables.filter((name) => !process.env[name]);
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (process.env.NODE_ENV === "production" && siteUrl) {
+    const parsed = new URL(siteUrl);
+    if (parsed.protocol !== "https:" || parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1") {
+      missing.push("NEXT_PUBLIC_SITE_URL_PRODUCTION_DOMAIN");
+    }
+  }
   if (process.env.LEGAL_COPY_APPROVED !== "true") missing.push("LEGAL_COPY_APPROVED");
   if (process.env.COOKIE_CONFIGURATION_APPROVED !== "true") missing.push("COOKIE_CONFIGURATION_APPROVED");
   return { ready: missing.length === 0, missing };

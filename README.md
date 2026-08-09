@@ -26,7 +26,7 @@ The marketing site builds without external credentials so approved copy can be r
 3. Apply `supabase/seed.sql` for the editable full-service offer.
 4. Invite each staff user through Supabase Auth.
 5. Insert the invited user ID into `public.admin_profiles` as shown in `supabase/seed.sql`.
-6. Configure the three storage buckets and policies through the migration; do not expose the service-role key to the browser.
+6. Configure the three storage buckets and policies through the migration; do not expose `SUPABASE_SECRET_KEY` to the browser.
 
 The CMS is available at `/admin/login`. There is no public staff signup. Administrators can manage structured content, authenticated previews, scheduled publication, revision rollback, search fields, offers, pricing, navigation, ordered stock galleries, enquiry statuses and notification retries, private attachment downloads, approved media, verified reviews and central business settings.
 
@@ -41,6 +41,7 @@ Copy `.env.example` into the hosting provider and supply all values. Launch is b
 - DVLA, Google Places, Turnstile, Sentry, GA4 and tawk.to credentials
 - Approved privacy, cookie and website terms
 - Set `LEGAL_COPY_APPROVED=true` and `COOKIE_CONFIGURATION_APPROVED=true` only after that approval is recorded
+- Runtime Sentry reporting uses the server-side `SENTRY_DSN`; browser error boundaries send only scrubbed error summaries to the server endpoint.
 - Genuine prices, media, reviews and vehicle stock where those sections are intended to be public
 
 Preview deployments are blocked from indexing. Analytics and chat load only after the corresponding consent choice.
@@ -67,7 +68,8 @@ pnpm test:lighthouse
 - Only approved DVLA identity fields cross the provider boundary.
 - Private enquiry images use short-lived signed upload access and are limited to five 8 MB JPG, PNG or WebP files.
 - Closed ordinary enquiries are anonymised and their attachments removed after 12 months by the signed daily retention job.
-- Scheduled content is published by the signed hourly publishing job and triggers route and sitemap revalidation.
+- Publishing and unpublishing from the CMS revalidates the public route and sitemap immediately. Scheduled entries remain private until staff explicitly publish them; normal publishing does not depend on cron.
+- The only Vercel cron is the signed daily retention cleanup, which is compatible with the Hobby plan.
 - Sold vehicle pages become non-indexable immediately and redirect to inventory after 90 days.
 - Optional gallery, review and advice content remains non-indexable until genuine approved records exist.
 - Customer portals, payments, reminders and service history are intentionally outside Phase 1.

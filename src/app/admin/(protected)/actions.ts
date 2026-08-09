@@ -42,11 +42,17 @@ export async function saveContent(formData: FormData) {
     await client.from("content_revisions").insert({ content_entry_id: id, snapshot: existing, created_by: auth.user.id });
     const { error } = await client.from("content_entries").update(toContentRow(parsed, auth.user.id)).eq("id", id);
     if (error) throw new Error(error.code === "23505" ? "That slug is already in use." : "Content could not be saved.");
-    await audit(client, auth.user.id, parsed.status === "published" ? "publish" : "update", "content", id, { kind: parsed.kind, slug: parsed.slug });
+    const auditAction = parsed.status === "published" && existing.status !== "published"
+      ? "publish"
+      : parsed.status !== "published" && existing.status === "published"
+        ? "unpublish"
+        : "update";
+    await audit(client, auth.user.id, auditAction, "content", id, { kind: parsed.kind, slug: parsed.slug, status: parsed.status });
+    if (existing.kind !== parsed.kind || existing.slug !== parsed.slug) revalidateContent(existing.kind, existing.slug);
   } else {
     const { data, error } = await client.from("content_entries").insert(toContentRow(parsed, auth.user.id)).select("id").single();
     if (error) throw new Error(error.code === "23505" ? "That slug is already in use." : "Content could not be created.");
-    await audit(client, auth.user.id, "create", "content", data.id, { kind: parsed.kind, slug: parsed.slug });
+    await audit(client, auth.user.id, parsed.status === "published" ? "publish" : "create", "content", data.id, { kind: parsed.kind, slug: parsed.slug, status: parsed.status });
   }
   revalidateContent(parsed.kind, parsed.slug);
   redirect("/admin/content");

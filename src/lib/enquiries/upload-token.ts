@@ -3,7 +3,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 const lifetimeSeconds = 15 * 60;
 
 function secret() {
-  return process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.CRON_SECRET || "local-development-secret";
+  return process.env.SUPABASE_SECRET_KEY || process.env.CRON_SECRET || "local-development-secret";
 }
 
 export function createUploadToken(enquiryId: string) {

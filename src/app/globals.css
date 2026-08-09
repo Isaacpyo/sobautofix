@@ -35,6 +35,11 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+.deferred-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 800px;
+}
+
 h1,
 h2,
 h3,
