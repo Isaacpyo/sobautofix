@@ -2,20 +2,27 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { ADMIN_EMAIL } from "@/config/admin";
+import { isAllowedAdminEmail } from "@/config/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export type LoginState = { message: string };
 
 export async function loginWithPassword(_: LoginState, formData: FormData): Promise<LoginState> {
-  const parsed = z.string().min(1).max(1_024).safeParse(formData.get("password"));
-  if (!parsed.success) return { message: "Enter your password." };
+  const parsed = z.object({
+    email: z.email(),
+    password: z.string().min(1).max(1_024),
+  }).safeParse({
+    email: formData.get("email"),
+    password: formData.get("password"),
+  });
+  if (!parsed.success) return { message: "Enter your email address and password." };
+  if (!isAllowedAdminEmail(parsed.data.email)) return { message: "Sign-in failed. Check your details and try again." };
   const client = await createClient();
   if (!client) return { message: "Supabase authentication is not configured." };
 
   const { data: auth, error } = await client.auth.signInWithPassword({
-    email: ADMIN_EMAIL,
-    password: parsed.data,
+    email: parsed.data.email.trim().toLowerCase(),
+    password: parsed.data.password,
   });
   if (error || !auth.user) return { message: "Sign-in failed. Check your password and try again." };
 

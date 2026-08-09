@@ -9,6 +9,16 @@ export function LoginForm() {
   return (
     <form action={action} className="mt-8 grid gap-5">
       <label className="text-sm font-bold text-[#071127]">
+        Email
+        <input
+          name="email"
+          type="email"
+          required
+          autoComplete="username"
+          className="mt-2 block min-h-12 w-full rounded-xl border border-[#D7E0E9] px-4"
+        />
+      </label>
+      <label className="text-sm font-bold text-[#071127]">
         Password
         <input
           name="password"

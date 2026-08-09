@@ -74,13 +74,14 @@ test("optional integrations remain gated by consent", async ({ page }) => {
   await expect(page.evaluate(() => localStorage.getItem("sob-autofix-consent-v1"))).resolves.toContain('"analytics":false');
 });
 
-test("admin login exposes only the password field", async ({ page }) => {
+test("admin login accepts email and password without displaying the allowed address", async ({ page }) => {
   await page.goto("/admin/login");
+  await expect(page.getByLabel("Email")).toBeVisible();
   await expect(page.getByLabel("Password")).toBeVisible();
   await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
   await expect(page.getByText("sobautofix@gmail.com", { exact: true })).toHaveCount(0);
   await expect(page.getByText(/secure sign-in link/i)).toHaveCount(0);
-  await expect(page.locator('input[type="email"]')).toHaveCount(0);
+  await expect(page.getByLabel("Email")).toHaveValue("");
 });
 
 test("mobile navigation is keyboard operable", async ({ page, isMobile }) => {
