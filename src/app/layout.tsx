@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Barlow_Condensed, Inter } from "next/font/google";
+import siteIcon from "../../assets/sobautofix_siteicon.png";
 import { SiteChrome } from "@/components/layout/site-chrome";
 import { VehicleSessionProvider } from "@/components/vehicle/vehicle-context";
 import { siteConfig } from "@/config/site";
@@ -15,6 +16,10 @@ export const metadata: Metadata = {
   title: { default: `${siteConfig.tagline} | ${siteConfig.name}`, template: `%s | ${siteConfig.name}` },
   description: "Professional vehicle diagnostics, electrical fault finding, repairs, servicing and vehicle sales in Doncaster.",
   applicationName: siteConfig.name,
+  icons: {
+    icon: [{ url: siteIcon.src, type: "image/png" }],
+    apple: [{ url: siteIcon.src, type: "image/png" }],
+  },
   verification: { google: process.env.GOOGLE_SEARCH_CONSOLE_VERIFICATION },
 };
 

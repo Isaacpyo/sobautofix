@@ -7,6 +7,9 @@ async function setEssentialCookies(page: import("@playwright/test").Page) {
 
 test("homepage exposes the primary vehicle journey", async ({ page }) => {
   await page.goto("/");
+  const logo = page.getByRole("link", { name: "SOB Autofix home" }).first().locator("img");
+  await expect(logo).toBeVisible();
+  await expect.poll(() => logo.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Professional Diagnostics");
   await expect(page.getByLabel("Enter your registration")).toBeVisible();
   await expect(page.getByRole("link", { name: /book appointment/i }).first()).toBeVisible();

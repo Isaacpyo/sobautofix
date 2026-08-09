@@ -58,7 +58,7 @@ export const siteConfig = {
   companyNumber: "16182532",
 
   phone: "07469273483",
-  whatsapp: "07468273483",
+  whatsapp: "07469273483",
 
   email: "sobautofix@gmail.com",
 

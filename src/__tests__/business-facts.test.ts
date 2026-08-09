@@ -24,10 +24,18 @@ describe("approved business facts", () => {
     }
   });
 
-  it("keeps phone and WhatsApp distinct", () => {
+  it("uses the confirmed phone number for phone and WhatsApp", () => {
     expect(siteConfig.phone).toBe("07469273483");
-    expect(siteConfig.whatsapp).toBe("07468273483");
-    expect(siteConfig.phone).not.toBe(siteConfig.whatsapp);
+    expect(siteConfig.whatsapp).toBe("07469273483");
+    expect(siteConfig.phone).toBe(siteConfig.whatsapp);
+  });
+
+  it("uses the approved transparent logo variants", () => {
+    const logoComponent = readFileSync(join(process.cwd(), "src/components/layout/logo.tsx"), "utf8");
+    const rootLayout = readFileSync(join(process.cwd(), "src/app/layout.tsx"), "utf8");
+    expect(logoComponent).toContain("assets/sobautofix_logo.png");
+    expect(logoComponent).toContain("assets/sobautofix_logo-white.png");
+    expect(rootLayout).toContain("assets/sobautofix_siteicon.png");
   });
 
   it("markets Doncaster and South Yorkshire instead of Norton", () => {
