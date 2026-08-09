@@ -1,0 +1,29 @@
+# dependencies
+node_modules/
+
+# next
+.next/
+out/
+
+# test output
+coverage/
+playwright-report/
+test-results/
+.lighthouseci/
+
+# local environment
+.env
+.env.local
+.env.*.local
+
+# deployment and tooling
+.vercel/
+.turbo/
+*.tsbuildinfo
+next-env.d.ts
+
+# operating systems/editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

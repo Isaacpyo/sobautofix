@@ -1,0 +1,9 @@
+import { PageHero } from "@/components/marketing/page-hero";
+import { InventoryGrid } from "@/components/sales/inventory-grid";
+import { Container, Eyebrow } from "@/components/ui/container";
+import { getPublicSaleVehicles } from "@/lib/sales/repository";
+import { createMetadata } from "@/lib/seo";
+
+export const metadata = createMetadata("Used Cars for Sale in Doncaster", "Browse genuine used vehicle listings from SOB Autofix in Doncaster. Finance options may be available on selected vehicles.", "/cars-for-sale");
+
+export default async function CarsForSalePage() { const vehicles = await getPublicSaleVehicles(); return <><PageHero eyebrow="Vehicle sales" title="Used cars for sale in Doncaster." body="Only genuine, currently approved stock appears here. Warranty and finance information is specific to each vehicle." /><section className="py-20"><Container><div className="mb-10"><Eyebrow>Current stock</Eyebrow><h2 className="text-4xl font-extrabold text-[#071127]">Available vehicles</h2></div><InventoryGrid vehicles={vehicles} /></Container></section><section className="bg-[#071127] py-16 text-white"><Container><h2 className="text-3xl font-bold">Finance information</h2><p className="mt-3 max-w-2xl leading-7 text-[#C6D2DF]">Finance options may be available on selected vehicles. Contact us for details. SOB Autofix is not presented as the lender.</p></Container></section></>; }

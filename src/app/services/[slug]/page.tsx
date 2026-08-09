@@ -1,0 +1,29 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
+import { ContentRenderer } from "@/components/content/content-renderer";
+import { PageHero } from "@/components/marketing/page-hero";
+import { VehicleJourney } from "@/components/vehicle/vehicle-journey";
+import { ButtonLink } from "@/components/ui/button";
+import { Container, Eyebrow } from "@/components/ui/container";
+import { services } from "@/config/site";
+import { createMetadata } from "@/lib/seo";
+import { getPublishedContent } from "@/lib/content/repository";
+import { getServicePrice } from "@/lib/pricing/repository";
+import { formatCurrency } from "@/lib/utils";
+
+const content: Record<string, { title: string; signs: string[]; includes: string[]; detail: string }> = {
+  "vehicle-servicing": { title: "Vehicle Servicing in Doncaster", signs: ["Scheduled service interval due", "Oil or maintenance warning", "Preparing for higher mileage", "Wanting a general health check"], includes: ["Service items matched to the vehicle", "Visual vehicle health observations", "Maintenance findings explained", "Comprehensive module diagnostic scan with a full service"], detail: "Servicing supports reliability by replacing scheduled items and creating an opportunity to spot developing concerns. The exact scope depends on the vehicle and service level." },
+  "engine-repair": { title: "Engine Repair in Doncaster", signs: ["Poor running or loss of power", "Unusual engine noise", "Smoke or fluid loss", "Starting and driveability concerns"], includes: ["Symptom and history review", "Diagnostic testing where relevant", "Repair scope and estimate", "Approved repair and follow-up checks"], detail: "Engine symptoms can have mechanical, electrical or control-system causes. The investigation should establish the likely cause before the repair scope is agreed." },
+  "brake-repair": { title: "Brake Repair in Doncaster", signs: ["Noise while braking", "Vibration or pulling", "Longer stopping feel", "Brake warning indication"], includes: ["Accessible component inspection", "Fault and wear assessment", "Clear repair recommendation", "Approved replacement or repair"], detail: "Brake concerns should be assessed promptly. If the vehicle does not feel safe to drive, do not continue driving it; call to discuss the appropriate next step." },
+};
+
+export function generateStaticParams() { return services.filter((item) => item.published).map((item) => ({ slug: item.slug })); }
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> { const { slug } = await params; const cms = await getPublishedContent("service", slug); if (cms) return createMetadata(cms.seoTitle, cms.seoDescription, `/services/${slug}`); const item = services.find((candidate) => candidate.slug === slug && candidate.published); const copy = content[slug]; return item && copy ? createMetadata(copy.title, `${item.summary} Request an estimate or book SOB Autofix in Doncaster.`, `/services/${slug}`) : {}; }
+
+export default async function ServiceDetail({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params; const cms = await getPublishedContent("service", slug); if (cms) return <ContentRenderer entry={cms} />; const item = services.find((candidate) => candidate.slug === slug && candidate.published); const copy = content[slug]; if (!item || !copy) notFound(); const price = await getServicePrice(slug);
+  return <><PageHero eyebrow="Repairs & servicing" title={copy.title} body={item.summary}><VehicleJourney compact source={`service-${slug}`} /></PageHero><section className="py-8"><Container><Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Services", href: "/services" }, { label: item.name, href: `/services/${slug}` }]} /></Container></section><section className="pb-20 pt-8"><Container className="grid gap-12 lg:grid-cols-[1fr_1fr]"><div><Eyebrow>Service overview</Eyebrow><h2 className="text-4xl font-extrabold text-[#071127]">Understand the requirement before work begins.</h2><p className="mt-5 text-lg leading-8 text-[#586575]">{copy.detail}</p>{price ? <div className="mt-5 rounded-xl border border-[#1974E2]/20 bg-[#EAF3FF] p-4 text-[#1446A5]"><strong className="block text-lg">{price.label || (price.minimum != null && price.maximum != null ? `${formatCurrency(price.minimum)}–${formatCurrency(price.maximum)}` : price.minimum != null ? `From ${formatCurrency(price.minimum)}` : "Contact for pricing")}</strong>{price.notes && <span className="mt-1 block text-sm">{price.notes}</span>}</div> : <p className="mt-5 rounded-xl border border-[#1974E2]/20 bg-[#EAF3FF] p-4 text-sm text-[#1446A5]">Pricing depends on the vehicle and confirmed scope. No unapproved price is displayed.</p>}<div className="mt-7 flex flex-wrap gap-3"><ButtonLink href="/get-a-quote">Request an estimate</ButtonLink><ButtonLink href="/book" variant="outline">Book appointment</ButtonLink></div></div><div className="grid gap-5 sm:grid-cols-2"><List title="Signs to discuss" items={copy.signs} /><List title="What to expect" items={copy.includes} /></div></Container></section></>;
+}
+
+function List({ title, items }: { title: string; items: string[] }) { return <article className="rounded-2xl border border-[#E4EAF0] bg-[#F4F7FA] p-6"><h2 className="text-2xl font-bold text-[#071127]">{title}</h2><ul className="mt-4 grid gap-3 text-sm text-[#586575]">{items.map((value) => <li key={value} className="flex gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#1974E2]" />{value}</li>)}</ul></article>; }

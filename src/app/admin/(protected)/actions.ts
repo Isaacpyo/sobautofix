@@ -1,0 +1,222 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { randomUUID } from "node:crypto";
+import { z } from "zod";
+import { assertCustomerFacingContent } from "@/lib/content-guard";
+import { contentEntrySchema } from "@/lib/content/schema";
+import { attachmentRequestSchema } from "@/lib/enquiries/schema";
+import { retryEnquiryNotifications } from "@/lib/enquiries/repository";
+import { createAdminClient, getAdminUser } from "@/lib/supabase/server";
+import { diagnostics, services } from "@/config/site";
+
+async function requireAdmin() {
+  const auth = await getAdminUser();
+  const client = createAdminClient();
+  if (!auth || !client) throw new Error("Unauthorised");
+  return { auth, client };
+}
+
+async function audit(client: NonNullable<ReturnType<typeof createAdminClient>>, actorId: string, action: string, entityType: string, entityId: string, detail: Record<string, unknown> = {}) {
+  await client.from("admin_audit_log").insert({ actor_id: actorId, action, entity_type: entityType, entity_id: entityId, detail });
+}
+
+export async function saveContent(formData: FormData) {
+  const { auth, client } = await requireAdmin();
+  const id = String(formData.get("id") || "");
+  const sections = JSON.parse(String(formData.get("sections") || "[]")) as unknown;
+  const metadata = JSON.parse(String(formData.get("metadata") || "{}")) as unknown;
+  const publicationValue = String(formData.get("publishedAt") || "");
+  const parsed = contentEntrySchema.parse({
+    id: id || undefined,
+    kind: formData.get("kind"), slug: formData.get("slug"), title: formData.get("title"), excerpt: formData.get("excerpt"),
+    sections, metadata, seoTitle: formData.get("seoTitle"), seoDescription: formData.get("seoDescription"), status: formData.get("status"),
+    publishedAt: publicationValue ? new Date(publicationValue).toISOString() : undefined,
+  });
+  if (parsed.status === "published" || parsed.status === "scheduled") await validateInternalLinks(client, sections);
+
+  if (id) {
+    const { data: existing } = await client.from("content_entries").select("*").eq("id", id).single();
+    if (!existing) throw new Error("Content entry not found");
+    await client.from("content_revisions").insert({ content_entry_id: id, snapshot: existing, created_by: auth.user.id });
+    const { error } = await client.from("content_entries").update(toContentRow(parsed, auth.user.id)).eq("id", id);
+    if (error) throw new Error(error.code === "23505" ? "That slug is already in use." : "Content could not be saved.");
+    await audit(client, auth.user.id, parsed.status === "published" ? "publish" : "update", "content", id, { kind: parsed.kind, slug: parsed.slug });
+  } else {
+    const { data, error } = await client.from("content_entries").insert(toContentRow(parsed, auth.user.id)).select("id").single();
+    if (error) throw new Error(error.code === "23505" ? "That slug is already in use." : "Content could not be created.");
+    await audit(client, auth.user.id, "create", "content", data.id, { kind: parsed.kind, slug: parsed.slug });
+  }
+  revalidateContent(parsed.kind, parsed.slug);
+  redirect("/admin/content");
+}
+
+export async function restoreContentRevision(formData: FormData) {
+  const { auth, client } = await requireAdmin();
+  const contentId = z.string().uuid().parse(formData.get("contentId"));
+  const revisionId = z.coerce.number().int().positive().parse(formData.get("revisionId"));
+  const [{ data: revision }, { data: current }] = await Promise.all([
+    client.from("content_revisions").select("snapshot").eq("id", revisionId).eq("content_entry_id", contentId).single(),
+    client.from("content_entries").select("*").eq("id", contentId).single(),
+  ]);
+  if (!revision || !current) throw new Error("Revision not found");
+  const snapshot = revision.snapshot as Record<string, unknown>;
+  assertCustomerFacingContent(snapshot);
+  await client.from("content_revisions").insert({ content_entry_id: contentId, snapshot: current, created_by: auth.user.id });
+  const restored = {
+    kind: snapshot.kind, slug: snapshot.slug, title: snapshot.title, excerpt: snapshot.excerpt,
+    sections: snapshot.sections, metadata: snapshot.metadata, seo_title: snapshot.seo_title,
+    seo_description: snapshot.seo_description, status: snapshot.status, published_at: snapshot.published_at,
+    author_id: auth.user.id,
+  };
+  const { error } = await client.from("content_entries").update(restored).eq("id", contentId);
+  if (error) throw new Error("Revision could not be restored");
+  await audit(client, auth.user.id, "rollback", "content", contentId, { revisionId });
+  revalidatePath("/", "layout"); revalidatePath("/sitemap.xml");
+  redirect(`/admin/content/${contentId}`);
+}
+
+export async function deleteContent(formData: FormData) {
+  const { auth, client } = await requireAdmin();
+  const id = z.string().uuid().parse(formData.get("id"));
+  const { data } = await client.from("content_entries").select("kind,slug").eq("id", id).single();
+  if (!data) throw new Error("Content entry not found");
+  const { error } = await client.from("content_entries").delete().eq("id", id);
+  if (error) throw new Error("Content entry could not be deleted");
+  await audit(client, auth.user.id, "delete", "content", id, { kind: data.kind, slug: data.slug });
+  revalidateContent(data.kind, data.slug); revalidatePath("/admin/content");
+  redirect("/admin/content");
+}
+
+function toContentRow(parsed: z.infer<typeof contentEntrySchema>, authorId: string) {
+  const publishedAt = parsed.status === "scheduled" ? parsed.publishedAt : parsed.status === "published" ? new Date().toISOString() : null;
+  return { kind: parsed.kind, slug: parsed.slug, title: parsed.title, excerpt: parsed.excerpt, sections: parsed.sections, metadata: parsed.metadata, seo_title: parsed.seoTitle, seo_description: parsed.seoDescription, status: parsed.status, published_at: publishedAt, author_id: authorId };
+}
+
+async function validateInternalLinks(client: NonNullable<ReturnType<typeof createAdminClient>>, sections: unknown) {
+  const serialized = JSON.stringify(sections);
+  const links = [...serialized.matchAll(/"href":"\/(services|diagnostics|areas|advice)\/([a-z0-9-]+)"/g)];
+  const kindMap = { services: "service", diagnostics: "diagnostic", areas: "area", advice: "article" } as const;
+  for (const link of links) {
+    const group = link[1] as keyof typeof kindMap; const slug = link[2];
+    if (group === "services" && services.some((item) => item.slug === slug && item.published)) continue;
+    if (group === "diagnostics" && diagnostics.some((item) => item.slug === slug && item.published)) continue;
+    if (group === "areas" && slug === "doncaster") continue;
+    const { data } = await client.from("content_entries").select("id").eq("kind", kindMap[group]).eq("slug", slug).eq("status", "published").maybeSingle();
+    if (!data) throw new Error(`Linked content is not published: /${group}/${slug}`);
+  }
+}
+
+function revalidateContent(kind: string, slug: string) {
+  const prefix = kind === "service" ? "/services" : kind === "diagnostic" ? "/diagnostics" : kind === "area" ? "/areas" : kind === "article" ? "/advice" : "";
+  revalidatePath(prefix ? `${prefix}/${slug}` : `/${slug}`);
+  revalidatePath("/sitemap.xml");
+}
+
+export async function updateEnquiryStatus(formData: FormData) {
+  const { auth, client } = await requireAdmin();
+  const id = z.string().uuid().parse(formData.get("id")); const status = z.enum(["new", "contacted", "booked", "closed"]).parse(formData.get("status"));
+  await client.from("enquiries").update({ status, closed_at: status === "closed" ? new Date().toISOString() : null }).eq("id", id);
+  await audit(client, auth.user.id, "status_change", "enquiry", id, { status });
+  revalidatePath("/admin/enquiries");
+}
+
+export async function resendEnquiryNotifications(formData: FormData) {
+  const { auth, client } = await requireAdmin();
+  const id = z.string().uuid().parse(formData.get("id"));
+  const status = await retryEnquiryNotifications(id);
+  await audit(client, auth.user.id, "notification_retry", "enquiry", id, { status });
+  revalidatePath("/admin/enquiries");
+}
+
+export async function saveSaleVehicle(formData: FormData) {
+  const { auth, client } = await requireAdmin();
+  const schema = z.object({ id: z.string().uuid().optional(), slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/), make: z.string().min(1), model: z.string().min(1), derivative: z.string().optional(), year: z.coerce.number().int().min(1885), mileage: z.coerce.number().int().nonnegative(), price: z.coerce.number().int().nonnegative(), fuelType: z.string().min(1), transmission: z.string().min(1), engineSize: z.string().optional(), colour: z.string().optional(), description: z.string().min(20), features: z.string(), financeAvailable: z.coerce.boolean(), warrantyAvailable: z.coerce.boolean(), warrantyDescription: z.string().optional(), status: z.enum(["available", "reserved", "sold"]) });
+  const parsed = schema.parse(Object.fromEntries(formData)); assertCustomerFacingContent(parsed);
+  const row = { slug: parsed.slug, make: parsed.make, model: parsed.model, derivative: parsed.derivative || null, year: parsed.year, mileage: parsed.mileage, price: parsed.price, fuel_type: parsed.fuelType, transmission: parsed.transmission, engine_size: parsed.engineSize || null, colour: parsed.colour || null, description: parsed.description, features: parsed.features.split("\n").map((value) => value.trim()).filter(Boolean), finance_available: parsed.financeAvailable, warranty: parsed.warrantyAvailable ? { available: true, description: parsed.warrantyDescription || undefined } : { available: false }, status: parsed.status, sold_at: parsed.status === "sold" ? new Date().toISOString() : null };
+  let entityId = parsed.id;
+  if (parsed.id) await client.from("sale_vehicles").update(row).eq("id", parsed.id); else { const { data, error } = await client.from("sale_vehicles").insert(row).select("id").single(); if (error) throw new Error("Vehicle could not be saved"); entityId = data.id; }
+  await audit(client, auth.user.id, parsed.id ? "update" : "create", "sale_vehicle", entityId!, { status: parsed.status, slug: parsed.slug, price: parsed.price });
+  revalidatePath("/cars-for-sale"); revalidatePath(`/cars-for-sale/${parsed.slug}`); revalidatePath("/admin/inventory"); revalidatePath("/sitemap.xml");
+  redirect("/admin/inventory");
+}
+
+export async function uploadSaleVehicleImage(formData: FormData) {
+  const { auth, client } = await requireAdmin();
+  const vehicleId = z.string().uuid().parse(formData.get("vehicleId"));
+  const alt = z.string().trim().min(5).max(180).parse(formData.get("alt"));
+  const file = formData.get("file");
+  if (!(file instanceof File)) throw new Error("Select an image");
+  z.object({ type: z.enum(["image/jpeg", "image/png", "image/webp"]), size: z.number().int().positive().max(12 * 1024 * 1024) }).parse({ type: file.type, size: file.size });
+  assertCustomerFacingContent(alt);
+  const { data: vehicle } = await client.from("sale_vehicles").select("slug").eq("id", vehicleId).single();
+  if (!vehicle) throw new Error("Vehicle not found");
+  const extension = file.type === "image/jpeg" ? "jpg" : file.type.split("/")[1];
+  const path = `${vehicleId}/${randomUUID()}.${extension}`;
+  const { error: uploadError } = await client.storage.from("vehicle-sales").upload(path, file, { contentType: file.type, upsert: false });
+  if (uploadError) throw new Error("Vehicle image upload failed");
+  const { data: last } = await client.from("sale_vehicle_images").select("position").eq("sale_vehicle_id", vehicleId).order("position", { ascending: false }).limit(1).maybeSingle();
+  const { data, error } = await client.from("sale_vehicle_images").insert({ sale_vehicle_id: vehicleId, object_path: path, alt_text: alt, position: (last?.position ?? -1) + 1 }).select("id").single();
+  if (error) {
+    await client.storage.from("vehicle-sales").remove([path]);
+    throw new Error("Vehicle image could not be saved");
+  }
+  await audit(client, auth.user.id, "upload", "sale_vehicle_image", data.id, { vehicleId, path });
+  revalidatePath(`/admin/inventory/${vehicleId}`); revalidatePath(`/cars-for-sale/${vehicle.slug}`); revalidatePath("/cars-for-sale");
+}
+
+export async function updateSaleVehicleImage(formData: FormData) {
+  const { auth, client } = await requireAdmin();
+  const parsed = z.object({ id: z.string().uuid(), vehicleId: z.string().uuid(), position: z.coerce.number().int().min(0).max(100), alt: z.string().trim().min(5).max(180) }).parse(Object.fromEntries(formData));
+  assertCustomerFacingContent(parsed.alt);
+  const { data } = await client.from("sale_vehicle_images").update({ position: parsed.position, alt_text: parsed.alt }).eq("id", parsed.id).eq("sale_vehicle_id", parsed.vehicleId).select("id").single();
+  if (!data) throw new Error("Vehicle image could not be updated");
+  await audit(client, auth.user.id, "update", "sale_vehicle_image", parsed.id, { position: parsed.position });
+  revalidatePath(`/admin/inventory/${parsed.vehicleId}`); revalidatePath("/cars-for-sale", "layout");
+}
+
+export async function deleteSaleVehicleImage(formData: FormData) {
+  const { auth, client } = await requireAdmin();
+  const id = z.string().uuid().parse(formData.get("id"));
+  const vehicleId = z.string().uuid().parse(formData.get("vehicleId"));
+  const { data } = await client.from("sale_vehicle_images").select("object_path").eq("id", id).eq("sale_vehicle_id", vehicleId).single();
+  if (!data) throw new Error("Vehicle image not found");
+  const { error: storageError } = await client.storage.from("vehicle-sales").remove([data.object_path]);
+  if (storageError) throw new Error("Vehicle image could not be removed");
+  await client.from("sale_vehicle_images").delete().eq("id", id).eq("sale_vehicle_id", vehicleId);
+  await audit(client, auth.user.id, "delete", "sale_vehicle_image", id, { vehicleId, path: data.object_path });
+  revalidatePath(`/admin/inventory/${vehicleId}`); revalidatePath("/cars-for-sale", "layout");
+}
+
+export async function uploadMedia(formData: FormData) {
+  const { auth, client } = await requireAdmin();
+  const file = formData.get("file"); const alt = z.string().min(5).max(180).parse(formData.get("alt")); const category = z.string().max(80).parse(formData.get("category"));
+  if (!(file instanceof File)) throw new Error("Select an image");
+  attachmentRequestSchema.parse({ name: file.name, contentType: file.type, size: file.size });
+  assertCustomerFacingContent({ alt, category });
+  const extension = file.type === "image/jpeg" ? "jpg" : file.type.split("/")[1]; const path = `${category || "general"}/${randomUUID()}.${extension}`;
+  const { error } = await client.storage.from("public-media").upload(path, file, { contentType: file.type, upsert: false }); if (error) throw new Error("Upload failed");
+  const { data } = await client.from("media_assets").insert({ object_path: path, alt_text: alt, category: category || null, created_by: auth.user.id, published: false }).select("id").single();
+  await audit(client, auth.user.id, "upload", "media", data?.id || path, { path }); revalidatePath("/admin/media");
+}
+
+export async function toggleMediaPublication(formData: FormData) { const { auth, client } = await requireAdmin(); const id = z.string().uuid().parse(formData.get("id")); const published = formData.get("published") === "true"; const { data } = await client.from("media_assets").select("alt_text").eq("id", id).single(); if (published && (!data?.alt_text || data.alt_text.trim().length < 5)) throw new Error("Alt text is required"); await client.from("media_assets").update({ published }).eq("id", id); await audit(client, auth.user.id, published ? "publish" : "unpublish", "media", id); revalidatePath("/admin/media"); revalidatePath("/gallery"); }
+
+export async function syncGoogleReviews() {
+  const { auth, client } = await requireAdmin(); const apiKey = process.env.GOOGLE_PLACES_API_KEY; const placeId = process.env.GOOGLE_PLACE_ID; if (!apiKey || !placeId) throw new Error("Google Places is not configured");
+  const response = await fetch(`https://places.googleapis.com/v1/places/${placeId}`, { headers: { "X-Goog-Api-Key": apiKey, "X-Goog-FieldMask": "id,rating,userRatingCount,reviews,googleMapsUri" }, cache: "no-store" }); if (!response.ok) throw new Error("Review sync failed");
+  const body = await response.json() as { googleMapsUri?: string; reviews?: Array<{ name: string; rating: number; publishTime?: string; text?: { text?: string }; authorAttribution?: { displayName?: string; uri?: string } }> };
+  for (const review of body.reviews || []) { const text = review.text?.text?.trim(); if (!text) continue; try { assertCustomerFacingContent(text); } catch { continue; } await client.from("reviews").upsert({ provider: "google", provider_review_id: review.name, author_name: review.authorAttribution?.displayName || "Google user", author_uri: review.authorAttribution?.uri || null, rating: review.rating, text, published_at: review.publishTime || null, source_uri: body.googleMapsUri || "https://maps.google.com", fetched_at: new Date().toISOString() }, { onConflict: "provider_review_id" }); }
+  await audit(client, auth.user.id, "sync", "reviews", placeId); revalidatePath("/admin/reviews");
+}
+
+export async function toggleReview(formData: FormData) { const { auth, client } = await requireAdmin(); const id = z.string().uuid().parse(formData.get("id")); const visible = formData.get("visible") === "true"; const { data } = await client.from("reviews").select("text").eq("id", id).single(); if (visible) assertCustomerFacingContent(data?.text || ""); await client.from("reviews").update({ visible }).eq("id", id); await audit(client, auth.user.id, visible ? "publish" : "unpublish", "review", id); revalidatePath("/admin/reviews"); revalidatePath("/reviews"); }
+
+export async function saveSettings(formData: FormData) { const { auth, client } = await requireAdmin(); const value = { name: String(formData.get("name")), legalName: String(formData.get("legalName")), companyNumber: String(formData.get("companyNumber")), phone: String(formData.get("phone")), whatsapp: String(formData.get("whatsapp")), email: String(formData.get("email")), address: { building: String(formData.get("building")), street: String(formData.get("street")), town: String(formData.get("town")), city: String(formData.get("city")), postcode: String(formData.get("postcode")), country: "United Kingdom", countryCode: "GB" }, openingHours: { monday: String(formData.get("monday")), tuesday: String(formData.get("tuesday")), wednesday: String(formData.get("wednesday")), thursday: String(formData.get("thursday")), friday: String(formData.get("friday")), saturday: String(formData.get("saturday")), sunday: String(formData.get("sunday")), bankHolidays: String(formData.get("bankHolidays")) }, googleMapsUrl: String(formData.get("googleMapsUrl") || "") }; assertCustomerFacingContent(value); await client.from("site_settings").upsert({ id: true, value, updated_by: auth.user.id }); await audit(client, auth.user.id, "update", "site_settings", "primary"); revalidatePath("/", "layout"); redirect("/admin/settings"); }
+
+export async function saveNavigationItem(formData: FormData) { const { auth, client } = await requireAdmin(); const parsed = z.object({ id: z.string().uuid().optional(), label: z.string().min(1).max(60), href: z.string().startsWith("/").max(160), position: z.coerce.number().int().min(0).max(100), published: z.coerce.boolean() }).parse({ id: formData.get("id") || undefined, label: formData.get("label"), href: formData.get("href"), position: formData.get("position"), published: formData.get("published") === "on" }); assertCustomerFacingContent(parsed); let id = parsed.id; const row = { label: parsed.label, href: parsed.href, position: parsed.position, published: parsed.published, parent_id: null }; if (id) await client.from("navigation_items").update(row).eq("id", id); else { const { data } = await client.from("navigation_items").insert(row).select("id").single(); id = data?.id; } await audit(client, auth.user.id, parsed.id ? "update" : "create", "navigation", id || parsed.href, { href: parsed.href, published: parsed.published }); revalidatePath("/", "layout"); redirect("/admin/navigation"); }
+
+export async function saveOffer(formData: FormData) { const { auth, client } = await requireAdmin(); const parsed = z.object({ id: z.string().uuid().optional(), title: z.string().min(3).max(120), description: z.string().min(10).max(500), active: z.coerce.boolean() }).parse({ id: formData.get("id") || undefined, title: formData.get("title"), description: formData.get("description"), active: formData.get("active") === "on" }); assertCustomerFacingContent(parsed); let id = parsed.id; const row = { title: parsed.title, description: parsed.description, active: parsed.active }; if (id) await client.from("offers").update(row).eq("id", id); else { const { data } = await client.from("offers").insert(row).select("id").single(); id = data?.id; } await audit(client, auth.user.id, parsed.id ? "update" : "create", "offer", id || parsed.title, { active: parsed.active }); revalidatePath("/"); redirect("/admin/offers"); }
+
+export async function saveServicePrice(formData: FormData) { const { auth, client } = await requireAdmin(); const optionalMoney = z.preprocess((value) => value === "" || value == null ? undefined : value, z.coerce.number().int().nonnegative().optional()); const parsed = z.object({ serviceSlug: z.string().regex(/^[a-z0-9-]+$/), minimum: optionalMoney, maximum: optionalMoney, label: z.string().max(80).optional(), notes: z.string().max(300).optional(), published: z.coerce.boolean() }).refine((value) => value.maximum == null || value.minimum == null || value.maximum >= value.minimum, { message: "Maximum must be at least the minimum" }).parse({ serviceSlug: formData.get("serviceSlug"), minimum: formData.get("minimum"), maximum: formData.get("maximum"), label: String(formData.get("label") || ""), notes: String(formData.get("notes") || ""), published: formData.get("published") === "on" }); assertCustomerFacingContent(parsed); await client.from("service_prices").upsert({ service_slug: parsed.serviceSlug, minimum: parsed.minimum ?? null, maximum: parsed.maximum ?? null, label: parsed.label || null, notes: parsed.notes || null, published: parsed.published }); await audit(client, auth.user.id, "update", "service_price", parsed.serviceSlug, { minimum: parsed.minimum, maximum: parsed.maximum, published: parsed.published }); revalidatePath(`/services/${parsed.serviceSlug}`); revalidatePath(`/diagnostics/${parsed.serviceSlug}`); redirect("/admin/pricing"); }

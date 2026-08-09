@@ -1,0 +1,9 @@
+import { ImageIcon } from "lucide-react";
+import Image from "next/image";
+import { PageHero } from "@/components/marketing/page-hero";
+import { Container } from "@/components/ui/container";
+import { getPublishedMedia } from "@/lib/media/repository";
+import { createMetadata } from "@/lib/seo";
+
+export async function generateMetadata() { const media = await getPublishedMedia(); return media.length ? createMetadata("Workshop Gallery", "See genuine diagnostics, electrical, servicing and repair work from SOB Autofix in Doncaster.", "/gallery") : { title: "Gallery", robots: { index: false, follow: true } }; }
+export default async function GalleryPage() { const media = await getPublishedMedia(); return <><PageHero eyebrow="Workshop gallery" title={media.length ? "Genuine work from the workshop." : "Real workshop media is coming."} body={media.length ? "Approved diagnostics, repair and workshop media from SOB Autofix." : "This gallery remains outside navigation and search indexing until genuine diagnostics, repair and workshop media has been approved."} cta={false} /><section className="py-20"><Container>{media.length ? <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{media.map((asset) => <figure key={asset.id} className="overflow-hidden rounded-2xl border border-[#E4EAF0] bg-white"><div className="relative aspect-[4/3]"><Image src={asset.url} alt={asset.alt} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover" /></div><figcaption className="p-4 text-sm font-semibold text-[#586575]">{asset.category?.replace("-", " ")}</figcaption></figure>)}</div> : <div className="text-center"><ImageIcon className="mx-auto text-[#1974E2]" size={44} /><h2 className="mt-4 text-3xl font-bold text-[#071127]">No fabricated workshop photography</h2><p className="mx-auto mt-3 max-w-xl leading-7 text-[#586575]">Categories and before-and-after support are ready for real client media.</p></div>}</Container></section></>; }

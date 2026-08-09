@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+:root {
+  --brand-blue: #1974e2;
+  --brand-blue-bright: #168bff;
+  --brand-blue-light: #67b9ff;
+  --brand-blue-dark: #1446a5;
+  --brand-navy: #071127;
+  --brand-navy-light: #0c1d3d;
+  --brand-black: #030712;
+  --silver: #dce6f2;
+  --grey-100: #f4f7fa;
+  --grey-200: #e4eaf0;
+  --grey-400: #9aa7b6;
+  --grey-600: #586575;
+  --grey-800: #202a36;
+  --success: #16a34a;
+  --warning: #f59e0b;
+  --error: #dc2626;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  color: var(--grey-800);
+  background: white;
+  font-family: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-barlow), "Arial Narrow", ui-sans-serif, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+a,
+button,
+input,
+select,
+textarea {
+  outline-offset: 3px;
+}
+
+:focus-visible {
+  outline: 3px solid rgba(22, 139, 255, 0.55);
+}
+
+::selection {
+  color: white;
+  background: var(--brand-blue);
+}
+
+.hero-grid {
+  background:
+    linear-gradient(rgba(103, 185, 255, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(103, 185, 255, 0.055) 1px, transparent 1px),
+    radial-gradient(circle at 72% 38%, rgba(25, 116, 226, 0.26), transparent 36%),
+    linear-gradient(135deg, #030712, #071127 72%);
+  background-size: 52px 52px, 52px 52px, auto, auto;
+}
+
+.diagnostic-panel {
+  background:
+    radial-gradient(circle at 90% 10%, rgba(22, 139, 255, 0.16), transparent 32%),
+    var(--brand-navy);
+}
+
+.plate-strip {
+  background: linear-gradient(180deg, #2462ac, #174477);
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+@media (max-width: 767px) {
+  /* Keep the first mobile paint independent of optional webfont delivery. */
+  body {
+    font-family: Arial, ui-sans-serif, system-ui, sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: "Arial Narrow", "Roboto Condensed", ui-sans-serif, sans-serif;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
