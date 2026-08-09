@@ -17,7 +17,7 @@ export const topLevelContent: Record<string, LandingContent> = {
   about: {
     eyebrow: "About SOB Autofix",
     title: "Diagnosis-led automotive care in Doncaster.",
-    body: "SOB Autofix Limited combines professional vehicle diagnostics, electrical fault finding and practical repair work from Norton, Doncaster.",
+    body: "SOB Autofix Limited combines professional vehicle diagnostics, electrical fault finding and practical repair work for Doncaster and South Yorkshire.",
     introHeading: "Diagnose first. Repair second.",
     paragraphs: ["Replacing parts without identifying the cause can become expensive quickly. Our approach starts with the symptoms, scans the relevant systems and follows the evidence with targeted tests.", "Customers receive an explanation of what has been found and the sensible next step before repair work proceeds. Mobile appointments, workshop work, inspections, recovery coordination and used vehicle sales are handled with the same direct, professional approach."],
     highlights: [
@@ -31,7 +31,7 @@ export const topLevelContent: Record<string, LandingContent> = {
     title: "Mobile Mechanic in Doncaster",
     body: "Diagnostics and suitable repair work at your location, with clear advice when workshop attention or recovery is the safer next step.",
     introHeading: "Start with the vehicle, location and symptoms.",
-    paragraphs: ["Mobile work is particularly useful for warning lights, non-starting vehicles, battery and charging concerns, and electrical faults that can be assessed safely at the vehicle’s location.", "Availability depends on the problem and area. Opening hours do not represent a guaranteed emergency arrival time, so submit the details or call for the current options."],
+    paragraphs: ["Mobile work is particularly useful for warning lights, non-starting vehicles, battery and charging concerns, and electrical faults that can be assessed safely at the vehicle’s location.", "Availability depends on the problem and area. Submit the details or call to confirm current appointment options."],
     highlights: [
       { title: "Mobile diagnostics", body: "System scanning and targeted checks where the vehicle is located." },
       { title: "Starting and charging", body: "Battery, alternator, drain and starting-circuit assessment." },
@@ -109,7 +109,7 @@ export const legalContent: Record<string, { title: string; description: string; 
     description: "Important information about using the SOB Autofix website and enquiry services.",
     sections: [
       { heading: "Website information", body: ["Website content is general information and does not constitute a diagnosis. A vehicle must be assessed and tested before the cause of a fault or repair scope can be confirmed."] },
-      { heading: "Estimates and appointments", body: ["An online request does not guarantee a price, response time or appointment. Estimates may change when inspection reveals additional work. Calendly availability is separate from published business opening hours."] },
+      { heading: "Estimates and appointments", body: ["An online request does not guarantee a price, response time or appointment. Estimates may change when inspection reveals additional work. Use the booking calendar or contact SOB Autofix to check current availability."] },
       { heading: "Vehicle sales", body: ["Finance options may be available on selected vehicles. Contact us for details. Warranty information is vehicle-specific and applies only where shown in the individual listing."] },
       { heading: "Final approval", body: ["These operational terms must be reviewed and approved by the business before production launch."] },
     ],

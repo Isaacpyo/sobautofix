@@ -219,7 +219,38 @@ export async function syncGoogleReviews() {
 
 export async function toggleReview(formData: FormData) { const { auth, client } = await requireAdmin(); const id = z.string().uuid().parse(formData.get("id")); const visible = formData.get("visible") === "true"; const { data } = await client.from("reviews").select("text").eq("id", id).single(); if (visible) assertCustomerFacingContent(data?.text || ""); await client.from("reviews").update({ visible }).eq("id", id); await audit(client, auth.user.id, visible ? "publish" : "unpublish", "review", id); revalidatePath("/admin/reviews"); revalidatePath("/reviews"); }
 
-export async function saveSettings(formData: FormData) { const { auth, client } = await requireAdmin(); const value = { name: String(formData.get("name")), legalName: String(formData.get("legalName")), companyNumber: String(formData.get("companyNumber")), phone: String(formData.get("phone")), whatsapp: String(formData.get("whatsapp")), email: String(formData.get("email")), address: { building: String(formData.get("building")), street: String(formData.get("street")), town: String(formData.get("town")), city: String(formData.get("city")), postcode: String(formData.get("postcode")), country: "United Kingdom", countryCode: "GB" }, openingHours: { monday: String(formData.get("monday")), tuesday: String(formData.get("tuesday")), wednesday: String(formData.get("wednesday")), thursday: String(formData.get("thursday")), friday: String(formData.get("friday")), saturday: String(formData.get("saturday")), sunday: String(formData.get("sunday")), bankHolidays: String(formData.get("bankHolidays")) }, googleMapsUrl: String(formData.get("googleMapsUrl") || "") }; assertCustomerFacingContent(value); await client.from("site_settings").upsert({ id: true, value, updated_by: auth.user.id }); await audit(client, auth.user.id, "update", "site_settings", "primary"); revalidatePath("/", "layout"); redirect("/admin/settings"); }
+export async function saveSettings(formData: FormData) {
+  const { auth, client } = await requireAdmin();
+  const openingHours = Object.fromEntries(
+    ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "bankHolidays"]
+      .map((day) => [day, String(formData.get(day) || "").trim()] as const)
+      .filter(([, hours]) => hours.length > 0),
+  );
+  const value = {
+    name: String(formData.get("name")),
+    legalName: String(formData.get("legalName")),
+    companyNumber: String(formData.get("companyNumber")),
+    phone: String(formData.get("phone")),
+    whatsapp: String(formData.get("whatsapp")),
+    email: String(formData.get("email")),
+    address: {
+      building: String(formData.get("building")),
+      street: String(formData.get("street")),
+      town: String(formData.get("town")),
+      city: String(formData.get("city")),
+      postcode: String(formData.get("postcode")),
+      country: "United Kingdom",
+      countryCode: "GB",
+    },
+    openingHours,
+    googleMapsUrl: String(formData.get("googleMapsUrl") || ""),
+  };
+  assertCustomerFacingContent(value);
+  await client.from("site_settings").upsert({ id: true, value, updated_by: auth.user.id });
+  await audit(client, auth.user.id, "update", "site_settings", "primary");
+  revalidatePath("/", "layout");
+  redirect("/admin/settings");
+}
 
 export async function saveNavigationItem(formData: FormData) { const { auth, client } = await requireAdmin(); const parsed = z.object({ id: z.string().uuid().optional(), label: z.string().min(1).max(60), href: z.string().startsWith("/").max(160), position: z.coerce.number().int().min(0).max(100), published: z.coerce.boolean() }).parse({ id: formData.get("id") || undefined, label: formData.get("label"), href: formData.get("href"), position: formData.get("position"), published: formData.get("published") === "on" }); assertCustomerFacingContent(parsed); let id = parsed.id; const row = { label: parsed.label, href: parsed.href, position: parsed.position, published: parsed.published, parent_id: null }; if (id) await client.from("navigation_items").update(row).eq("id", id); else { const { data } = await client.from("navigation_items").insert(row).select("id").single(); id = data?.id; } await audit(client, auth.user.id, parsed.id ? "update" : "create", "navigation", id || parsed.href, { href: parsed.href, published: parsed.published }); revalidatePath("/", "layout"); redirect("/admin/navigation"); }
 

@@ -3,7 +3,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { createMetadata } from "@/lib/seo";
 
-export const metadata = createMetadata("Frequently Asked Questions", "Answers about diagnostics, mobile appointments, electrical faults, inspections, opening hours and vehicle sales at SOB Autofix.", "/faqs");
+export const metadata = createMetadata("Frequently Asked Questions", "Answers about diagnostics, mobile appointments, electrical faults, inspections, booking and vehicle sales at SOB Autofix.", "/faqs");
 
 const faqs = [
   ["What does a vehicle diagnostic test tell you?", "A scan can identify stored faults, affected systems and useful live data. It is evidence for the investigation, but targeted testing may still be needed before the cause is confirmed."],
@@ -12,7 +12,7 @@ const faqs = [
   ["Can you come to my location?", "Mobile appointments are available for suitable work. Share the vehicle, postcode, symptoms and whether it can be driven so the request can be assessed."],
   ["Do you work on all vehicle makes?", "Contact us with the registration and problem. Vehicle coverage can depend on the system, equipment access and work required."],
   ["Do I need an appointment?", "Booking or contacting SOB Autofix before travelling is recommended so availability and the correct service route can be confirmed."],
-  ["Are you open 24 hours?", "The supplied business hours are 24 hours, seven days a week. This does not guarantee immediate roadside attendance, response time or Calendly availability."],
+  ["How do I check appointment availability?", "Use the booking calendar or contact SOB Autofix by phone, WhatsApp or enquiry form to confirm the current options for your vehicle and location."],
   ["Can you inspect a car before I buy it?", "Pre-purchase inspections can combine visible mechanical observations with a diagnostic scan where appropriate."],
   ["Do you sell used cars?", "Yes. Only genuine approved stock appears on the cars-for-sale page, with finance and warranty wording configured per vehicle."],
 ] as const;

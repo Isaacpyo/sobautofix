@@ -12,7 +12,7 @@ export function Footer({ settings = siteConfig }: { settings?: SiteSettings }) {
         <div className="grid gap-12 lg:grid-cols-[1.35fr_1fr_1fr_1fr]">
           <div>
             <Logo inverse />
-            <p className="mt-5 max-w-sm text-sm leading-7">Professional diagnostics, fault finding, servicing, repairs and vehicle sales from Norton, Doncaster.</p>
+            <p className="mt-5 max-w-sm text-sm leading-7">Professional diagnostics, fault finding, servicing, repairs and vehicle sales across Doncaster and South Yorkshire.</p>
             <address className="mt-5 text-sm leading-7 not-italic">{settings.address.building}, {settings.address.street}<br />{settings.address.town}, {settings.address.city}<br />{settings.address.postcode}</address>
           </div>
           <FooterGroup title="Diagnostics" links={diagnostics.filter((item) => item.published).slice(0, 5).map((item) => ({ label: item.name, href: `/diagnostics/${item.slug}` }))} />

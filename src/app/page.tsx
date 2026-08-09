@@ -28,7 +28,7 @@ export default async function HomePage() {
             <h1 className="text-balance text-6xl leading-[.9] font-extrabold sm:text-7xl lg:text-[5.5rem]">Professional Diagnostics.<br /><span className="text-[#168BFF]">Not Guesswork.</span></h1>
             <p className="mt-7 max-w-2xl text-lg leading-8 text-[#C6D2DF]">Automotive diagnostics, electrical fault finding, repairs, servicing and vehicle sales in Doncaster and surrounding areas.</p>
             <div className="mt-8 flex flex-wrap gap-3"><ButtonLink href="/book">Book appointment <ArrowRight size={18} /></ButtonLink><ButtonLink href={contactLinks.phone} variant="secondary">Call SOB Autofix</ButtonLink></div>
-            <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-[#DCE6F2]"><span className="flex items-center gap-2"><Check size={17} className="text-[#67B9FF]" /> Systematic testing</span><span className="flex items-center gap-2"><Check size={17} className="text-[#67B9FF]" /> Mobile appointments</span><span className="flex items-center gap-2"><Check size={17} className="text-[#67B9FF]" /> Open 24 hours</span></div>
+            <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-[#DCE6F2]"><span className="flex items-center gap-2"><Check size={17} className="text-[#67B9FF]" /> Systematic testing</span><span className="flex items-center gap-2"><Check size={17} className="text-[#67B9FF]" /> Mobile appointments</span><span className="flex items-center gap-2"><Check size={17} className="text-[#67B9FF]" /> Doncaster &amp; South Yorkshire</span></div>
           </div>
           <VehicleJourney compact source="homepage" />
         </Container>
@@ -82,7 +82,7 @@ export default async function HomePage() {
 
       <section className="deferred-section py-20 sm:py-24">
         <Container className="grid gap-10 lg:grid-cols-[1fr_1.2fr]">
-          <div><Eyebrow>Areas covered</Eyebrow><h2 className="text-5xl font-extrabold text-[#071127]">Based in Norton, serving Doncaster and beyond.</h2><p className="mt-5 leading-7 text-[#586575]">Workshop and mobile availability depends on the service and location. Contact us with the vehicle and postcode to confirm.</p><ButtonLink className="mt-7" href="/areas">View coverage</ButtonLink></div>
+          <div><Eyebrow>Areas covered</Eyebrow><h2 className="text-5xl font-extrabold text-[#071127]">Serving Doncaster and South Yorkshire.</h2><p className="mt-5 leading-7 text-[#586575]">Workshop and mobile availability depends on the service and location. Contact us with the vehicle and postcode to confirm.</p><ButtonLink className="mt-7" href="/areas">View coverage</ButtonLink></div>
           <div className="flex flex-wrap content-start gap-3">{areas.map((area) => <span key={area} className="rounded-full border border-[#1974E2]/20 bg-[#F4F7FA] px-4 py-2 text-sm font-semibold text-[#071127]">{area}</span>)}</div>
         </Container>
       </section>

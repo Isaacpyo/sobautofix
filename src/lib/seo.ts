@@ -37,7 +37,6 @@ export function localBusinessJsonLd() {
       addressCountry: siteConfig.address.countryCode,
     },
     areaServed: ["Doncaster", "South Yorkshire"],
-    openingHours: "Mo-Su 00:00-23:59",
   };
 }
 

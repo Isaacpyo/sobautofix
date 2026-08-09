@@ -1,10 +1,10 @@
-import { Clock3, MapPin, ScanLine, ShieldCheck } from "lucide-react";
+import { MapPinned, MapPin, ScanLine, ShieldCheck } from "lucide-react";
 import { Container } from "@/components/ui/container";
 
 const facts = [
   { icon: ScanLine, label: "Diagnostic-led", detail: "Test before replacing" },
   { icon: MapPin, label: "Doncaster based", detail: "Workshop and mobile" },
-  { icon: Clock3, label: "Open 24 hours", detail: "Appointments vary" },
+  { icon: MapPinned, label: "South Yorkshire", detail: "Coverage varies by service" },
   { icon: ShieldCheck, label: "4 years in business", detail: "Professional approach" },
 ];
 

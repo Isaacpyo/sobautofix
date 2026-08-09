@@ -1,7 +1,7 @@
 # SOB Autofix Limited — Full Codex Architecture & Implementation Specification
 
 > **Project type:** UK automotive diagnostics, repair, servicing, mobile mechanic and vehicle sales website  
-> **Primary location:** Norton, Doncaster  
+> **Primary service area:** Doncaster and South Yorkshire
 > **Primary objective:** Generate qualified repair bookings, diagnostic enquiries, vehicle-sales leads and local organic traffic  
 > **Booking system:** Calendly  
 > **Vehicle identification:** UK vehicle registration lookup  
@@ -72,16 +72,8 @@ export const siteConfig = {
     countryCode: "GB",
   },
 
-  openingHours: {
-    monday: "24 Hours",
-    tuesday: "24 Hours",
-    wednesday: "24 Hours",
-    thursday: "24 Hours",
-    friday: "24 Hours",
-    saturday: "24 Hours",
-    sunday: "24 Hours",
-    bankHolidays: "24 Hours",
-  },
+  // Opening hours remain unpublished until confirmed by the business.
+  openingHours: {},
 
   yearsInBusiness: 4,
 
@@ -1990,7 +1982,6 @@ Verified details available:
 4 years in business
 NABTEB
 Automotive Service Management Certificate
-24-hour opening
 Mobile service availability
 Vehicle sales
 Google reviews
@@ -2012,28 +2003,11 @@ unless later supplied and verified.
 
 ---
 
-# 68. 24-Hour Availability
+# 68. Opening-Hours Status
 
-Client supplied 24-hour opening for:
-
-```text
-Monday-Friday
-Saturday
-Sunday
-Bank holidays
-```
-
-The website may display:
-
-```text
-Open 24 Hours
-```
-
-However:
-
-- 24-hour business opening is not automatically the same as emergency roadside attendance
-- Calendly availability is independent of business opening hours
-- do not promise instant response times
+Opening hours are not yet approved and must remain unpublished. Calendly shows
+online appointment options only; do not infer business hours, emergency roadside
+attendance or response times from calendar availability.
 
 ---
 
@@ -2056,7 +2030,7 @@ Recommended order:
 12. Customer Reviews
 13. Areas Covered
 14. Automotive Advice
-15. 24-Hour Availability
+15. Appointment Availability
 16. Final Booking CTA
 ```
 
@@ -2631,7 +2605,7 @@ Can you come to my location?
 Do you repair ECU/module faults?
 Do you work on all vehicle makes?
 Do I need an appointment?
-Are you open 24 hours?
+How do I check appointment availability?
 Can you inspect a car before I buy it?
 Do you sell used cars?
 ```
