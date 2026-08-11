@@ -26,7 +26,7 @@ type EnquiryRow = {
   status: string;
   notification_status: string;
   created_at: string;
-  customers: { name: string; email: string | null; phone: string; contact_preference: string | null } | null;
+  customers: { name: string; email: string | null; phone: string } | null;
   vehicles: { registration: string | null; make: string | null; model: string | null; colour: string | null; year: number | null } | null;
   enquiry_attachments: Array<{ id: string; object_path: string; file_name: string }>;
 };
@@ -35,10 +35,12 @@ export default async function EnquiryConversationPage({ params }: { params: Prom
   const { id } = await params;
   const client = await createClient();
   if (!client) notFound();
-  const [{ data: enquiryData }, { data: messagesData }] = await Promise.all([
-    client.from("enquiries").select("id,type,description,location_postcode,status,notification_status,created_at,customers(name,email,phone,contact_preference),vehicles(registration,make,model,colour,year),enquiry_attachments(id,object_path,file_name)").eq("id", id).maybeSingle(),
+  const [{ data: enquiryData, error: enquiryError }, { data: messagesData, error: messagesError }] = await Promise.all([
+    client.from("enquiries").select("id,type,description,location_postcode,status,notification_status,created_at,customers(name,email,phone),vehicles(registration,make,model,colour,year),enquiry_attachments(id,object_path,file_name)").eq("id", id).maybeSingle(),
     client.from("enquiry_messages").select("id,direction,message_type,sender_name,text_body,delivery_status,created_at").eq("enquiry_id", id).order("created_at", { ascending: true }).order("id", { ascending: true }),
   ]);
+  if (enquiryError) throw new Error("Could not load the enquiry");
+  if (messagesError) throw new Error("Could not load the enquiry conversation");
   if (!enquiryData) notFound();
   const enquiry = enquiryData as unknown as EnquiryRow;
   const storedMessages = (messagesData || []) as MessageRow[];

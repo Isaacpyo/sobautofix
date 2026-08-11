@@ -1,18 +1,22 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const port = process.env.PLAYWRIGHT_PORT || "3000";
+const host = process.env.PLAYWRIGHT_HOST || "127.0.0.1";
+const baseURL = `http://${host}:${port}`;
+
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
-  workers: 2,
+  workers: process.env.E2E_ADMIN_ENQUIRY_IDS ? 1 : 2,
   retries: process.env.CI ? 2 : 0,
   reporter: "html",
   use: {
-    baseURL: "http://127.0.0.1:3000",
+    baseURL,
     trace: "on-first-retry",
   },
   webServer: {
-    command: "pnpm dev",
-    url: "http://127.0.0.1:3000",
+    command: `pnpm dev --port ${port}`,
+    url: baseURL,
     reuseExistingServer: !process.env.CI,
     env: {
       ...process.env,
