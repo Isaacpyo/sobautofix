@@ -3,6 +3,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { getResendConfig, sendTransactionalEmail } from "@/lib/email/resend";
 import { createAdminClient } from "@/lib/supabase/server";
+import { createInitialEnquiryMessage } from "./thread-repository";
 import type { EnquiryRequest } from "./schema";
 
 type NotificationInput = Omit<EnquiryRequest, "turnstileToken">;
@@ -51,6 +52,15 @@ export async function createEnquiry(input: EnquiryRequest) {
     driveable: input.driveable ?? null,
   }).select("id").single();
   if (enquiryError) throw new Error("Could not save enquiry");
+
+  try {
+    await createInitialEnquiryMessage(enquiry.id, { type: input.type, customerName: input.contact.name, customerEmail: input.contact.email, description: input.description });
+  } catch {
+    await admin.from("enquiries").delete().eq("id", enquiry.id);
+    if (vehicleId) await admin.from("vehicles").delete().eq("id", vehicleId);
+    await admin.from("customers").delete().eq("id", customer.id);
+    throw new Error("Could not create the enquiry conversation");
+  }
 
   const notificationStatus = await sendNotifications(enquiry.id, input);
   await admin.from("enquiries").update({ notification_status: notificationStatus }).eq("id", enquiry.id);

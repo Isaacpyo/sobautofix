@@ -2,10 +2,18 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { contentEntrySchema } from "@/lib/content/schema";
 import { calculateReadingMinutes, parseArticleMetadata } from "@/lib/news/article";
+import { ctaSectionForPreset, defaultArticleSeoDescription, defaultArticleSeoTitle, slugifyArticleTitle } from "@/lib/news/editor";
 
 const read = (path: string) => readFileSync(path, "utf8");
 
 describe("News & Blog publishing", () => {
+  it("generates staff-friendly URL and search defaults", () => {
+    expect(slugifyArticleTitle("How to Understand Your Engine Management Light")).toBe("how-to-understand-your-engine-management-light");
+    expect(slugifyArticleTitle("Battery & Charging: What’s Happening?")).toBe("battery-and-charging-whats-happening");
+    expect(defaultArticleSeoTitle("A useful diagnostic guide")).toBe("A useful diagnostic guide");
+    expect(defaultArticleSeoDescription(" A useful article summary. ")).toBe("A useful article summary.");
+    expect(ctaSectionForPreset("diagnostics")).toMatchObject({ label: "Explore diagnostics", href: "/diagnostics" });
+  });
   it("normalises article metadata and calculates reading time", () => {
     expect(parseArticleMetadata({ category: "Diagnostics", author: "  Jane Doe  ", featured: true })).toEqual({
       category: "Diagnostics",
@@ -30,6 +38,16 @@ describe("News & Blog publishing", () => {
       status: "draft",
     });
     expect(result.success).toBe(true);
+  });
+
+  it("rejects reserved article URLs and maps database uniqueness failures", () => {
+    const reserved = contentEntrySchema.safeParse({
+      kind: "article", slug: "feed", title: "Reserved article URL", excerpt: "A sufficiently detailed article summary for validation.",
+      sections: [{ type: "richText", paragraphs: ["Useful article guidance."] }], metadata: { category: "Diagnostics", author: "SOB Autofix Team" },
+      seoTitle: "Reserved article URL validation", seoDescription: "A sufficiently detailed article description used to validate reserved routes.", status: "draft",
+    });
+    expect(reserved.success).toBe(false);
+    expect(read("src/app/admin/(protected)/actions.ts")).toContain('error.code === "23505" ? "That slug is already in use."');
   });
 
   it("keeps unpublished articles out of public repository reads", () => {

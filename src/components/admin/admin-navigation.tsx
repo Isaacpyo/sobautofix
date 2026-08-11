@@ -3,16 +3,17 @@
 import {
   BadgePoundSterling,
   Bell,
+  CalendarClock,
   CarFront,
-  FileText,
   Gauge,
   Gift,
   ImageIcon,
   Inbox,
-  Link2,
   LogOut,
   Menu,
   Newspaper,
+  PanelLeftClose,
+  PanelLeftOpen,
   Settings,
   Star,
   X,
@@ -33,15 +34,14 @@ const navigationGroups: Array<{ label: string; links: AdminLink[] }> = [
     links: [
       { href: "/admin", label: "Dashboard", icon: Gauge },
       { href: "/admin/enquiries", label: "Enquiries", icon: Inbox },
+      { href: "/admin/bookings", label: "Bookings", icon: CalendarClock },
       { href: "/admin/inventory", label: "Vehicle stock", icon: CarFront },
     ],
   },
   {
     label: "Content",
     links: [
-      { href: "/admin/content", label: "Content", icon: FileText },
       { href: "/admin/news", label: "News & Blog", icon: Newspaper },
-      { href: "/admin/navigation", label: "Navigation", icon: Link2 },
       { href: "/admin/media", label: "Media", icon: ImageIcon },
       { href: "/admin/reviews", label: "Reviews", icon: Star },
     ],
@@ -62,7 +62,7 @@ const navigationGroups: Array<{ label: string; links: AdminLink[] }> = [
   },
 ];
 
-export function AdminNavigation({ displayName, notificationCount }: { displayName: string; notificationCount: number }) {
+export function AdminNavigation({ displayName, notificationCount, collapsed, onToggleCollapsed }: { displayName: string; notificationCount: number; collapsed: boolean; onToggleCollapsed: () => void }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const menuButton = useRef<HTMLButtonElement>(null);
   const pathname = usePathname();
@@ -80,11 +80,11 @@ export function AdminNavigation({ displayName, notificationCount }: { displayNam
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [mobileOpen]);
 
-  const navigation = (
+  const navigation = (compact = false) => (
     <nav aria-label="Admin navigation" className="grid gap-6">
       {navigationGroups.map((group) => (
         <div key={group.label}>
-          <p className="mb-2 px-3 text-[0.65rem] font-extrabold tracking-[0.16em] text-[#71839A] uppercase">{group.label}</p>
+          {!compact && <p className="mb-2 px-3 text-[0.65rem] font-extrabold tracking-[0.16em] text-[#71839A] uppercase">{group.label}</p>}
           <div className="grid gap-1">
             {group.links.map(({ href, label, icon: Icon }) => {
               const active = href === "/admin" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
@@ -93,15 +93,18 @@ export function AdminNavigation({ displayName, notificationCount }: { displayNam
                   key={href}
                   href={href}
                   aria-current={active ? "page" : undefined}
+                  aria-label={compact ? label : undefined}
+                  title={compact ? label : undefined}
                   onClick={() => setMobileOpen(false)}
                   className={cn(
                     "relative flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold text-[#B8C6D6] transition hover:bg-white/[0.06] hover:text-white",
+                    compact && "justify-center px-2",
                     active && "bg-[#1974E2]/18 text-white before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:rounded-full before:bg-[#67B9FF]",
                   )}
                 >
                   <Icon size={18} className={active ? "text-[#67B9FF]" : "text-[#8FA4BC]"} aria-hidden="true" />
-                  <span>{label}</span>
-                  {href === "/admin/notifications" && notificationCount > 0 && (
+                  {!compact && <span>{label}</span>}
+                  {href === "/admin/notifications" && notificationCount > 0 && !compact && (
                     <span className="ml-auto min-w-6 rounded-full bg-[#1974E2] px-1.5 py-0.5 text-center text-xs font-black text-white" aria-label={`${notificationCount} notifications requiring attention`}>
                       {countLabel}
                     </span>
@@ -115,13 +118,12 @@ export function AdminNavigation({ displayName, notificationCount }: { displayNam
     </nav>
   );
 
-  const account = (
+  const account = (compact = false) => (
     <div className="border-t border-white/10 pt-5">
-      <p className="px-3 text-xs text-[#8F9EAF]">Signed in as</p>
-      <p className="mt-1 truncate px-3 text-sm font-bold text-white">{displayName}</p>
+      {!compact && <><p className="px-3 text-xs text-[#8F9EAF]">Signed in as</p><p className="mt-1 truncate px-3 text-sm font-bold text-white">{displayName}</p></>}
       <form action={signOut}>
-        <button className="mt-3 flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-sm font-semibold text-[#C6D2DF] hover:bg-white/[0.06] hover:text-white">
-          <LogOut size={18} aria-hidden="true" /> Sign out
+        <button aria-label={compact ? "Sign out" : undefined} title={compact ? "Sign out" : undefined} className={cn("mt-3 flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-sm font-semibold text-[#C6D2DF] hover:bg-white/[0.06] hover:text-white", compact && "justify-center px-2")}>
+          <LogOut size={18} aria-hidden="true" /> {!compact && "Sign out"}
         </button>
       </form>
     </div>
@@ -129,10 +131,15 @@ export function AdminNavigation({ displayName, notificationCount }: { displayNam
 
   return (
     <>
-      <aside className="hidden h-screen min-h-0 flex-col bg-[#030712] p-5 text-white lg:sticky lg:top-0 lg:flex">
-        <div className="w-28 shrink-0"><Logo inverse /></div>
-        <div className="mt-7 min-h-0 flex-1 overflow-y-auto pr-1">{navigation}</div>
-        <div className="mt-5 shrink-0">{account}</div>
+      <aside className={cn("hidden h-screen min-h-0 flex-col bg-[#030712] text-white transition-[padding] lg:sticky lg:top-0 lg:flex", collapsed ? "p-4" : "p-5")}>
+        <div className={cn("flex shrink-0 items-center", collapsed ? "justify-center" : "justify-between gap-3")}>
+          {!collapsed && <div className="w-28"><Logo inverse /></div>}
+          <button type="button" onClick={onToggleCollapsed} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} title={collapsed ? "Expand sidebar" : "Collapse sidebar"} className="grid size-10 shrink-0 place-items-center rounded-xl border border-white/15 text-[#DCE6F2] hover:bg-white/[0.06]">
+            {collapsed ? <PanelLeftOpen size={19} aria-hidden="true" /> : <PanelLeftClose size={19} aria-hidden="true" />}
+          </button>
+        </div>
+        <div className="mt-7 min-h-0 flex-1 overflow-y-auto">{navigation(collapsed)}</div>
+        <div className="mt-5 shrink-0">{account(collapsed)}</div>
       </aside>
 
       <div className="sticky top-0 z-40 flex h-16 items-center gap-3 border-b border-white/10 bg-[#030712] px-4 text-white lg:hidden">
@@ -158,8 +165,8 @@ export function AdminNavigation({ displayName, notificationCount }: { displayNam
             <div className="w-24"><Logo inverse /></div>
             <button type="button" className="grid size-10 place-items-center rounded-xl border border-white/15" onClick={() => setMobileOpen(false)} aria-label="Close admin menu"><X size={20} /></button>
           </div>
-          <div className="mt-6 min-h-0 flex-1 overflow-y-auto pr-1">{navigation}</div>
-          <div className="mt-5 shrink-0">{account}</div>
+          <div className="mt-6 min-h-0 flex-1 overflow-y-auto pr-1">{navigation()}</div>
+          <div className="mt-5 shrink-0">{account()}</div>
         </aside>
       </div>
     </>

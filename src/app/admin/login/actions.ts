@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { isAllowedAdminEmail } from "@/config/admin";
+import { siteConfig } from "@/config/site";
 import { createClient } from "@/lib/supabase/server";
 
 export type LoginState = { message: string };
@@ -37,6 +38,41 @@ export async function loginWithPassword(_: LoginState, formData: FormData): Prom
   }
 
   redirect("/admin");
+}
+
+export async function requestPasswordReset(_: LoginState, formData: FormData): Promise<LoginState> {
+  const parsed = z.object({ email: z.email() }).safeParse({ email: formData.get("email") });
+  const genericMessage = "If that address belongs to the authorised administrator, a password reset link has been sent.";
+  if (!parsed.success || !isAllowedAdminEmail(parsed.data.email)) return { message: genericMessage };
+
+  const client = await createClient();
+  if (!client) return { message: "Password recovery is not configured." };
+  const redirectTo = new URL("/auth/confirm?next=/admin/reset-password", siteConfig.siteUrl).toString();
+  const { error } = await client.auth.resetPasswordForEmail(parsed.data.email.trim().toLowerCase(), { redirectTo });
+  return { message: error ? "We couldn't send the reset email. Please try again shortly." : genericMessage };
+}
+
+export async function resetAdminPassword(_: LoginState, formData: FormData): Promise<LoginState> {
+  const parsed = z.object({
+    password: z.string().min(12, "Use at least 12 characters.").max(1_024),
+    confirmPassword: z.string().max(1_024),
+  }).refine((value) => value.password === value.confirmPassword, { message: "The passwords do not match.", path: ["confirmPassword"] }).safeParse({
+    password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
+  });
+  if (!parsed.success) return { message: parsed.error.issues[0]?.message || "Check the new password and try again." };
+
+  const client = await createClient();
+  if (!client) return { message: "Password recovery is not configured." };
+  const { data: { user } } = await client.auth.getUser();
+  if (!user?.email || !isAllowedAdminEmail(user.email)) return { message: "This reset link is invalid or has expired. Request a new link." };
+  const { data: profile } = await client.from("admin_profiles").select("user_id").eq("user_id", user.id).maybeSingle();
+  if (!profile) return { message: "This account is not authorised for the CMS." };
+
+  const { error } = await client.auth.updateUser({ password: parsed.data.password });
+  if (error) return { message: "The password could not be updated. Request a new reset link and try again." };
+  await client.auth.signOut();
+  redirect("/admin/login?reset=success");
 }
 
 export async function signOut() {

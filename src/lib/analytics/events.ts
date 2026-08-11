@@ -1,7 +1,8 @@
 export const analyticsEvents = [
   "vehicle_lookup_started", "vehicle_lookup_success", "vehicle_lookup_failed",
   "diagnostic_service_viewed", "problem_selected", "service_selected",
-  "booking_opened", "booking_completed", "quote_started", "quote_submitted",
+  "booking_started", "booking_vehicle_confirmed", "booking_service_selected", "booking_slot_viewed", "booking_completed",
+  "quote_started", "quote_submitted",
   "mobile_mechanic_started", "mobile_mechanic_submitted",
   "inspection_enquiry_submitted", "recovery_enquiry_submitted",
   "phone_clicked", "whatsapp_clicked", "directions_clicked",

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { assertCustomerFacingContent } from "@/lib/content-guard";
 
 const linkSchema = z.object({ label: z.string().min(1), href: z.string().startsWith("/") });
+const reservedArticleSlugs = new Set(["feed", "rss", "index", "new", "admin"]);
 
 export const sectionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("hero"), eyebrow: z.string().optional(), title: z.string().min(1), body: z.string().min(1), primaryCta: z.string().optional() }),
@@ -14,7 +15,7 @@ export const sectionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("offer"), offerId: z.string().min(1) }),
   z.object({ type: z.literal("reviews"), heading: z.string().min(1) }),
   z.object({ type: z.literal("areas"), heading: z.string().min(1) }),
-  z.object({ type: z.literal("gallery"), heading: z.string().min(1), category: z.string().optional() }),
+  z.object({ type: z.literal("gallery"), heading: z.string().min(1), category: z.string().optional(), mediaIds: z.array(z.string().uuid()).optional() }),
   z.object({ type: z.literal("faqs"), heading: z.string().min(1), items: z.array(z.object({ question: z.string().min(1), answer: z.string().min(1) })).min(1) }),
   z.object({ type: z.literal("relatedLinks"), heading: z.string().min(1), links: z.array(linkSchema).min(1) }),
   z.object({ type: z.literal("cta"), heading: z.string().min(1), body: z.string().min(1), label: z.string().min(1), href: z.string().startsWith("/") }),
@@ -33,6 +34,9 @@ export const contentEntrySchema = z.object({
   status: z.enum(["draft", "scheduled", "published", "archived"]),
   publishedAt: z.string().datetime().optional(),
 }).superRefine((value, context) => {
+  if (value.kind === "article" && reservedArticleSlugs.has(value.slug)) {
+    context.addIssue({ code: "custom", path: ["slug"], message: "Choose a different article URL" });
+  }
   if (value.status === "scheduled" && !value.publishedAt) {
     context.addIssue({ code: "custom", path: ["publishedAt"], message: "Choose a publication time for scheduled content" });
   }

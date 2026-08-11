@@ -188,6 +188,7 @@ export function Header({ settings = siteConfig }: HeaderProps) {
 
           <DesktopLink label="Cars for Sale" href="/cars-for-sale" pathname={pathname} />
           <DesktopLink label="News & Blog" href="/news" pathname={pathname} />
+          <DesktopLink label="Manage Booking" href="/manage-booking" pathname={pathname} />
           <DesktopLink label="Contact" href="/contact" pathname={pathname} />
         </nav>
 
@@ -292,6 +293,7 @@ export function Header({ settings = siteConfig }: HeaderProps) {
 
               <MobileNavigationItem label="Cars for Sale" href="/cars-for-sale" pathname={pathname} onNavigate={closeMobileMenu} />
               <MobileNavigationItem label="News & Blog" href="/news" pathname={pathname} onNavigate={closeMobileMenu} />
+              <MobileNavigationItem label="Manage a Booking" href="/manage-booking" pathname={pathname} onNavigate={closeMobileMenu} />
               <MobileNavigationItem label="Contact" href="/contact" pathname={pathname} onNavigate={closeMobileMenu} />
             </nav>
 

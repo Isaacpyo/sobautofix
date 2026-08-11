@@ -11,7 +11,7 @@ export default async function CarsForSalePage() {
 
   return (
     <>
-      <PageHero eyebrow="Vehicle sales" title="Used cars for sale in Doncaster." cta={false} compact showTrustFacts={false} />
+      <PageHero title="Used cars for sale in Doncaster." cta={false} compact showTrustFacts={false} />
       <section className="py-8 sm:py-10 lg:py-12">
         <Container>
           <div className="mb-6 sm:mb-8">

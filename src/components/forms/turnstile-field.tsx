@@ -14,13 +14,14 @@ declare global {
 
 export function TurnstileField({ onToken, theme = "light" }: { onToken: (token: string) => void; theme?: "light" | "dark" }) {
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  const development = process.env.NODE_ENV !== "production";
   const ref = useRef<HTMLDivElement>(null);
   const widget = useRef<string | null>(null);
   const id = useId();
 
   useEffect(() => {
-    if (!siteKey) onToken("development");
-  }, [siteKey, onToken]);
+    if (development || !siteKey) onToken("development");
+  }, [development, siteKey, onToken]);
 
   function render() {
     if (!siteKey || !ref.current || !window.turnstile || widget.current) return;
@@ -36,6 +37,6 @@ export function TurnstileField({ onToken, theme = "light" }: { onToken: (token: 
     if (widget.current && window.turnstile) window.turnstile.remove(widget.current);
   }, []);
 
-  if (!siteKey) return null;
+  if (development || !siteKey) return null;
   return <><Script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" strategy="lazyOnload" onLoad={render} /><div id={id} ref={ref} /></>;
 }

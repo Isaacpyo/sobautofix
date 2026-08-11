@@ -22,6 +22,7 @@ export type VehicleDetails = {
 
 export type VehicleSession = {
   vehicle: VehicleDetails | null;
+  vehicleConfirmed?: boolean;
   selectedProblem?: string;
   selectedService?: string;
   source?: string;
@@ -62,10 +63,11 @@ export type Enquiry = {
   createdAt: string;
 };
 
-export type SaleVehicleStatus = "available" | "reserved" | "sold";
+export type SaleVehicleStatus = "draft" | "available" | "reserved" | "sold" | "archived";
 
 export type SaleVehicle = {
   id: string;
+  registration?: string;
   slug: string;
   make: string;
   model: string;
@@ -77,6 +79,7 @@ export type SaleVehicle = {
   transmission: string;
   engineSize?: string;
   colour?: string;
+  bodyType?: string;
   description: string;
   features: string[];
   images: Array<{ id: string; url: string; alt: string; position: number }>;
@@ -108,7 +111,7 @@ export type ContentSection =
   | { type: "offer"; offerId: string }
   | { type: "reviews"; heading: string }
   | { type: "areas"; heading: string }
-  | { type: "gallery"; heading: string; category?: string }
+  | { type: "gallery"; heading: string; category?: string; mediaIds?: string[] }
   | { type: "faqs"; heading: string; items: Array<{ question: string; answer: string }> }
   | { type: "relatedLinks"; heading: string; links: Array<{ label: string; href: string }> }
   | { type: "cta"; heading: string; body: string; label: string; href: string };

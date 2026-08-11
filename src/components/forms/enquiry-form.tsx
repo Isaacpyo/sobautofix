@@ -49,6 +49,10 @@ export function EnquiryForm({ type, title = "Tell us what you need", defaultServ
 
   async function onSubmit(values: Fields) {
     setResult(null);
+    if (!turnstileToken) {
+      setResult({ success: false, message: "Please complete the security check, then send your request again." });
+      return;
+    }
     try {
       const response = await fetch("/api/enquiries", {
         method: "POST",
@@ -97,7 +101,7 @@ export function EnquiryForm({ type, title = "Tell us what you need", defaultServ
       {errors.privacyAccepted && <p className="mt-2 text-sm text-red-700">{errors.privacyAccepted.message}</p>}
       <div className="mt-5"><TurnstileField onToken={handleToken} /></div>
       {result && <div role="status" className={result.success ? "mt-5 flex gap-3 rounded-xl bg-green-50 p-4 text-sm text-green-800" : "mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-800"}>{result.success && <CheckCircle2 className="shrink-0" size={19} />}{result.message}</div>}
-      <Button type="submit" disabled={isSubmitting || !turnstileToken} className="mt-6 w-full disabled:cursor-not-allowed disabled:opacity-55">{isSubmitting ? <><LoaderCircle className="animate-spin" size={18} /> Sending…</> : <><Send size={18} /> Send request</>}</Button>
+      <Button type="submit" disabled={isSubmitting} className="mt-6 w-full disabled:cursor-wait disabled:opacity-70">{isSubmitting ? <><LoaderCircle className="animate-spin" size={18} /> Sending…</> : <><Send size={18} /> Send request</>}</Button>
     </form>
   );
 }

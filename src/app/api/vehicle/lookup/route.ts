@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { consumeRateLimit } from "@/lib/rate-limit";
-import { DvlaProvider } from "@/lib/vehicle/dvla";
-import { mockVehicleProvider } from "@/lib/vehicle/mock";
+import { getConfiguredVehicleProvider } from "@/lib/vehicle/configured-provider";
 import { VehicleLookupError } from "@/lib/vehicle/provider";
 import { registrationSchema } from "@/lib/vehicle/registration";
 
@@ -15,12 +14,11 @@ export async function POST(request: NextRequest) {
   const parsed = registrationSchema.safeParse(body?.registration);
   if (!parsed.success) return NextResponse.json({ success: false, error: { code: "invalid", message: "Enter a valid UK registration." } }, { status: 400 });
 
-  const useTestProvider = process.env.PLAYWRIGHT_TEST === "true" && process.env.VEHICLE_LOOKUP_PROVIDER === "mock";
-  const apiKey = process.env.DVLA_API_KEY;
-  if (!useTestProvider && !apiKey) return NextResponse.json({ success: false, error: { code: "unavailable", message: "Vehicle lookup is not configured. You can continue manually." } }, { status: 503 });
+  const provider = getConfiguredVehicleProvider();
+  if (!provider) return NextResponse.json({ success: false, error: { code: "unavailable", message: "Vehicle lookup is not configured. You can continue manually." } }, { status: 503 });
 
   try {
-    const vehicle = await (useTestProvider ? mockVehicleProvider : new DvlaProvider(apiKey!)).lookup(parsed.data);
+    const vehicle = await provider.lookup(parsed.data);
     return NextResponse.json({ success: true, vehicle }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     const known = error instanceof VehicleLookupError ? error : new VehicleLookupError("Vehicle lookup is unavailable", "unavailable");

@@ -1,5 +1,6 @@
 import { Activity, Binary, Cable, CheckCircle2, ScanLine, SearchCheck } from "lucide-react";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
+import { ContextualServiceImage } from "@/components/marketing/contextual-service-image";
 import { PageHero } from "@/components/marketing/page-hero";
 import { ServiceCard } from "@/components/marketing/service-card";
 import { CategoryFaqs, ServiceCategoryNavigation, type CategoryFaq } from "@/components/services/category-hub";
@@ -52,6 +53,7 @@ export default function DiagnosticsPage() {
       <section className="py-20 sm:py-24">
         <Container className="grid gap-12 lg:grid-cols-[.8fr_1.2fr] lg:items-start">
           <div>
+            <ContextualServiceImage id="diagnostics" className="mb-8 min-h-96" />
             <Eyebrow>Diagnosis before parts</Eyebrow>
             <h2 className="text-balance text-4xl font-extrabold text-[#071127] sm:text-5xl">A fault code is a clue—not a replacement instruction.</h2>
           </div>

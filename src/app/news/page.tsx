@@ -1,4 +1,5 @@
 import { Newspaper } from "lucide-react";
+import { PageHero } from "@/components/marketing/page-hero";
 import { ArticleCard } from "@/components/news/article-card";
 import { Container } from "@/components/ui/container";
 import { createMetadata } from "@/lib/seo";
@@ -17,17 +18,17 @@ export default async function NewsPage() {
 
   return (
     <>
-      <section className="hero-grid py-14 text-white sm:py-20 lg:py-24">
-        <Container>
-          <p className="text-xs font-extrabold tracking-[0.17em] text-[#67B9FF] uppercase">From the workshop</p>
-          <h1 className="text-balance mt-4 text-6xl leading-[0.9] font-extrabold sm:text-7xl lg:text-8xl">News & Blog</h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-[#C6D2DF]">Practical vehicle advice, diagnostic insight and considered updates from SOB Autofix.</p>
-        </Container>
-      </section>
+      <PageHero
+        title="News & Blog"
+        body="Practical vehicle advice, diagnostic insight and considered updates from SOB Autofix."
+        cta={false}
+        compact
+        showTrustFacts={false}
+      />
 
       {featured ? (
         <>
-          <section className="py-14 sm:py-20" aria-labelledby="featured-article-heading">
+          <section className="py-8 sm:py-10 lg:py-12" aria-labelledby="featured-article-heading">
             <Container>
               <p className="text-xs font-extrabold tracking-[0.16em] text-[#1974E2] uppercase">Featured article</p>
               <h2 id="featured-article-heading" className="sr-only">Featured article</h2>

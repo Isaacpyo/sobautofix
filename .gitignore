@@ -18,9 +18,14 @@ test-results/
 
 # deployment and tooling
 .vercel/
+.wrangler/
+.wrangler-dry-run/
 .turbo/
+.wrangler/
+.wrangler-dry-run/
 *.tsbuildinfo
 next-env.d.ts
+.codex-next-dev.log
 
 # operating systems/editors
 .DS_Store

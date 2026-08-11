@@ -22,7 +22,7 @@ The marketing site builds without external credentials so approved copy can be r
 ## Database and staff access
 
 1. Link the Supabase CLI to the intended staging project.
-2. Apply `supabase/migrations/202608080001_initial_schema.sql`.
+2. Apply every migration in `supabase/migrations` in filename order.
 3. Apply `supabase/seed.sql` for the editable full-service offer.
 4. Invite each staff user through Supabase Auth.
 5. Insert the invited user ID into `public.admin_profiles` as shown in `supabase/seed.sql`.
@@ -36,7 +36,11 @@ Copy `.env.example` into the hosting provider and supply all values. Launch is b
 
 - Production domain, clean logo assets and Google Business Profile/Maps URL
 - Separate phone and WhatsApp numbers
-- Calendly event URL and custom-answer order (`a1` vehicle, `a2` service, `a3` problem)
+- A server-only Cal.com API v2 key and webhook secret
+- Cal.com Event Types for each approved online-bookable workshop/mobile service
+- Service-to-Event-Type mappings in Admin Bookings, enabled only after availability is verified
+- A Cal.com webhook for `BOOKING_CREATED`, `BOOKING_RESCHEDULED`, and `BOOKING_CANCELLED` targeting `/api/webhooks/calcom`
+- An independent high-entropy `BOOKING_MANAGEMENT_SECRET`
 - Verified Resend sender domain and business notification recipient
 - DVLA, Google Places, Turnstile, Sentry, GA4 and tawk.to credentials
 - Approved privacy, cookie and website terms
@@ -72,4 +76,7 @@ pnpm test:lighthouse
 - The only Vercel cron is the signed daily retention cleanup, which is compatible with the Hobby plan.
 - Sold vehicle pages become non-indexable immediately and redirect to inventory after 90 days.
 - Optional gallery, review and advice content remains non-indexable until genuine approved records exist.
-- Customer portals, payments, reminders and service history are intentionally outside Phase 1.
+- `/manage-booking` uses local booking records reconciled through Cal.com, a non-sequential SOB reference, and reference + registration + email verification; booking tables are never exposed directly to anonymous clients.
+- Payments, reminders and service history remain outside the current scope.
+
+See [`docs/calcom-booking-setup.md`](docs/calcom-booking-setup.md) for Event Type, webhook, calendar, environment, notification, and production acceptance setup.

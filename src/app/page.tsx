@@ -1,5 +1,7 @@
 import { ArrowRight, BatteryCharging, Check, MapPin, ScanLine, Smartphone, Wrench } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
+import { heroImage } from "@/components/marketing/contextual-service-image";
 import { JsonLd } from "@/components/seo/json-ld";
 import { ArticleCard } from "@/components/news/article-card";
 import { ServiceCard } from "@/components/marketing/service-card";
@@ -24,6 +26,8 @@ export default async function HomePage() {
     <>
       <JsonLd value={localBusinessJsonLd()} />
       <section className="hero-grid relative overflow-hidden py-16 text-white sm:py-20 lg:py-28">
+        <Image src={heroImage} alt="" fill priority sizes="100vw" className="object-cover object-center opacity-30" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#071127] via-[#071127]/90 to-[#071127]/55" />
         <Container className="relative grid items-center gap-12 lg:grid-cols-[1fr_.95fr]">
           <div>
             <Eyebrow className="text-[#67B9FF]">Automotive diagnostics · Doncaster</Eyebrow>

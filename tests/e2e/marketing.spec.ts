@@ -156,15 +156,26 @@ test("homepage has no automatically detectable accessibility violations", async 
 
 test("registration context survives into booking", async ({ page }) => {
   await mockVehicleLookup(page);
+  await page.route("**/api/bookings/services", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({ services: [{ key: "vehicle-servicing", name: "Vehicle Servicing", description: "Scheduled servicing and vehicle health checks.", locationMode: "workshop" }] }),
+  }));
   await setEssentialCookies(page);
   await page.goto("/vehicle-check");
   await page.getByLabel("Enter your registration").fill("ab12 cde");
   await page.getByRole("button", { name: "Find my vehicle" }).click();
   await expect(page.getByRole("heading", { name: /vauxhall astra/i })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("heading", { name: /vauxhall astra/i })).toBeVisible();
   await page.getByRole("button", { name: /that's my vehicle/i }).click();
-  await page.getByRole("link", { name: "Warning light is on" }).click();
+  await expect(page.getByRole("heading", { name: "What are you looking for?" })).toBeVisible();
+  const servicingLink = page.getByRole("main").getByRole("link", { name: "Vehicle Servicing", exact: true });
+  await expect(servicingLink).toBeVisible();
+  await servicingLink.click();
   await expect(page).toHaveURL(/\/book$/);
-  await expect(page.getByText(/Vauxhall Astra/i)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Which vehicle are we booking in?" })).toBeVisible();
+  await expect(page.getByText("Vauxhall Astra", { exact: true })).toBeVisible();
 });
 
 test("provider outage offers manual continuation", async ({ page }) => {
@@ -175,7 +186,7 @@ test("provider outage offers manual continuation", async ({ page }) => {
   await page.getByRole("button", { name: "Find my vehicle" }).click();
   await expect(page.getByRole("heading", { name: /couldn't confirm/i })).toBeVisible();
   await page.getByRole("button", { name: "Continue manually" }).click();
-  await expect(page.getByRole("heading", { name: "What can we help with?" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "What are you looking for?" })).toBeVisible();
 });
 
 test("quote validation and successful submission", async ({ page }) => {
@@ -244,9 +255,21 @@ test("notification centre is protected by admin authentication", async ({ page }
   await expect(page).toHaveURL(/\/admin\/login$/);
 });
 
+test("enquiry conversation detail is protected by admin authentication", async ({ page }) => {
+  await page.goto("/admin/enquiries/68ae0835-6325-485b-b7e7-cb29e08f2f10");
+  await expect(page).toHaveURL(/\/admin\/login$/);
+});
+
 test("operations dashboard is protected by admin authentication", async ({ page }) => {
   await page.goto("/admin");
   await expect(page).toHaveURL(/\/admin\/login$/);
+});
+
+test("registration-first inventory creation is protected by admin authentication", async ({ page }) => {
+  await page.goto("/admin/inventory/new");
+  await expect(page).toHaveURL(/\/admin\/login$/);
+  const response = await page.request.post("/api/admin/inventory/lookup", { data: { registration: "LM17XXA" } });
+  expect(response.status()).toBe(401);
 });
 
 test("news listing, feed and former advice routes behave correctly", async ({ page, request }) => {
@@ -299,6 +322,8 @@ test("News sitemap and homepage reflect only genuine published articles", async 
 test("News & Blog CMS is protected by admin authentication", async ({ page }) => {
   await page.goto("/admin/news");
   await expect(page).toHaveURL(/\/admin\/login$/);
+  await page.goto("/admin/news/new");
+  await expect(page).toHaveURL(/\/admin\/login$/);
 });
 
 test("optional integrations remain gated by consent", async ({ page }) => {
@@ -313,10 +338,19 @@ test("admin login accepts email and password without displaying the allowed addr
   await page.goto("/admin/login");
   await expect(page.getByLabel("Email")).toBeVisible();
   await expect(page.getByLabel("Password")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Forgot password?" })).toHaveAttribute("href", "/admin/forgot-password");
   await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
   await expect(page.getByText("sobautofix@gmail.com", { exact: true })).toHaveCount(0);
   await expect(page.getByText(/secure sign-in link/i)).toHaveCount(0);
   await expect(page.getByLabel("Email")).toHaveValue("");
+});
+
+test("admin password recovery can be requested without exposing the authorised address", async ({ page }) => {
+  await page.goto("/admin/forgot-password");
+  await expect(page.getByRole("heading", { name: "Reset your password" })).toBeVisible();
+  await expect(page.getByLabel("Admin email")).toHaveValue("");
+  await expect(page.getByRole("button", { name: "Send reset link" })).toBeVisible();
+  await expect(page.getByText("sobautofix@gmail.com", { exact: true })).toHaveCount(0);
 });
 
 test("mobile navigation is keyboard operable", async ({ page, isMobile }) => {

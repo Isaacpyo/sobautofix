@@ -30,7 +30,6 @@ export const siteConfig = {
   },
   yearsInBusiness: 4,
   accreditations: ["NABTEB", "Automotive Service Management Certificate"],
-  calendlyUrl: process.env.NEXT_PUBLIC_CALENDLY_URL ?? "",
   googleMapsUrl: process.env.NEXT_PUBLIC_GOOGLE_MAPS_URL ?? "",
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
 } as const;
@@ -116,6 +115,7 @@ export const mainNavigation = [
   { label: "Vehicle Inspections", href: "/vehicle-inspections" },
   { label: "Fleet", href: "/fleet" },
   { label: "Cars for Sale", href: "/cars-for-sale" },
+  { label: "Manage a Booking", href: "/manage-booking" },
   { label: "Areas", href: "/areas" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },

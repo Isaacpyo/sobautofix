@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   experimental: {
     inlineCss: true,
+    serverActions: {
+      bodySizeLimit: "36mb",
+    },
   },
   images: {
     formats: ["image/avif", "image/webp"],

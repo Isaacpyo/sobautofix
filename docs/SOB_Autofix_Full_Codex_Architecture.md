@@ -3,7 +3,7 @@
 > **Project type:** UK automotive diagnostics, repair, servicing, mobile mechanic and vehicle sales website  
 > **Primary service area:** Doncaster and South Yorkshire
 > **Primary objective:** Generate qualified repair bookings, diagnostic enquiries, vehicle-sales leads and local organic traffic  
-> **Booking system:** Calendly  
+> **Booking system:** SOB Autofix booking UI with Cal.com API v2 scheduling
 > **Vehicle identification:** UK vehicle registration lookup  
 > **SEO priority:** Very high  
 > **MOT services:** Completely excluded from the website  
@@ -82,7 +82,7 @@ export const siteConfig = {
     "Automotive Service Management Certificate",
   ],
 
-  calendlyUrl: process.env.NEXT_PUBLIC_CALENDLY_URL,
+  bookingProvider: "calcom",
   googleMapsUrl: null,
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL,
 }
@@ -285,7 +285,7 @@ Choose Service
         ↓
 Book Appointment
         ↓
-Calendly
+SOB Autofix booking wizard → Cal.com API v2
         ↓
 Appointment Confirmed
 ```
@@ -389,7 +389,7 @@ Server Components by default
 Zod
 React Hook Form
 PostgreSQL / Supabase
-Calendly
+Cal.com API v2 (server-side scheduling only)
 Resend
 Pluggable UK VRM / vehicle lookup provider
 Vercel
@@ -1353,7 +1353,7 @@ Inspection enquiry
 
 ---
 
-# 41. Calendly Booking
+# 41. Website-Owned Booking
 
 Create:
 
@@ -1361,9 +1361,9 @@ Create:
 /book
 ```
 
-Embed Calendly within the SOB Autofix website.
+Collect vehicle, service, problem, location and customer details in an SOB Autofix wizard. Load bounded availability through the server-side Cal.com API v2 adapter, then create the provider booking only after explicit review and confirmation.
 
-Do not automatically redirect customers to an external booking page unless necessary.
+Do not embed or redirect to a third-party booking page. Provider credentials remain server-only.
 
 ---
 
@@ -1386,12 +1386,12 @@ Engine management light
 
 Choose Your Appointment
 
-[CALENDLY EMBED]
+[SOB AUTOFIX DATE AND TIME SELECTOR]
 ```
 
 ---
 
-# 43. Calendly Prefill
+# 43. Booking Context
 
 Where supported, prefill:
 
@@ -1408,17 +1408,9 @@ Avoid asking customers to enter the same information repeatedly.
 
 ---
 
-# 44. Calendly Performance
+# 44. Booking Performance
 
-Do not load Calendly JavaScript on every marketing page.
-
-Load it:
-
-```text
-on /book
-or
-when booking modal/section is explicitly opened
-```
+Do not load third-party scheduling JavaScript. Fetch bounded slot windows only when the customer reaches the appointment step, and do not cache availability longer than is safe.
 
 The booking system must not unnecessarily damage Core Web Vitals.
 
@@ -1948,7 +1940,7 @@ Inspection enquiry
 Vehicle sales enquiry
 ```
 
-Calendly can manage booking confirmations.
+SOB Autofix sends branded booking confirmations through Resend. Provider notifications must be configured to avoid duplicate customer messages.
 
 Avoid duplicate booking emails unless deliberately required.
 
@@ -2005,7 +1997,7 @@ unless later supplied and verified.
 
 # 68. Opening-Hours Status
 
-Opening hours are not yet approved and must remain unpublished. Calendly shows
+Opening hours are not yet approved and must remain unpublished. The booking engine shows
 online appointment options only; do not infer business hours, emergency roadside
 attendance or response times from calendar availability.
 
@@ -3087,7 +3079,7 @@ src/
 │
 ├── lib/
 │   ├── analytics/
-│   ├── calendly/
+│   ├── calcom/
 │   ├── db/
 │   ├── email/
 │   ├── seo/
@@ -3126,7 +3118,7 @@ RepairServiceCard
 
 MobileMechanicCTA
 
-CalendlyEmbed
+BookingWizard
 BookingSummary
 
 QuoteForm
@@ -3231,7 +3223,7 @@ Responsive images
 next/font
 Code splitting
 Lazy-loaded gallery
-Deferred Calendly
+Bounded server-side booking availability
 Deferred live chat
 Minimal third-party JavaScript
 ```
@@ -3440,7 +3432,7 @@ Core repair pages
 Mobile mechanic
 Vehicle lookup
 Vehicle session context
-Calendly booking
+Custom booking wizard and provider adapter
 Quote request
 Vehicle inspections
 Vehicle recovery
@@ -3659,7 +3651,7 @@ Confirmed WhatsApp number
 Actual Google Maps URL
 Final service pricing/ranges
 Diagnostic pricing
-Final Calendly link
+Verified Cal.com Event Type mappings
 Workshop photos
 Before/after photos
 Videos
@@ -3707,8 +3699,8 @@ The Phase 1 website is ready when all of the following are true.
 
 ## Booking
 
-- Calendly works
-- Calendly only loads when needed
+- Cal.com API v2 slots/create/reschedule/cancel work through the server adapter
+- no third-party booking embed or redirect is present
 - customer details can be prefilled where supported
 - booking UX preserves vehicle/service context
 
@@ -3763,7 +3755,7 @@ The Phase 1 website is ready when all of the following are true.
 ## Performance
 
 - images are optimised
-- Calendly is deferred
+- appointment availability is loaded only when requested
 - live chat is deferred
 - Core Web Vitals targets are pursued
 - mobile-first UX is strong

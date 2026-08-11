@@ -8,9 +8,11 @@ import { assertCustomerFacingContent } from "@/lib/content-guard";
 import { contentEntrySchema } from "@/lib/content/schema";
 import { attachmentRequestSchema } from "@/lib/enquiries/schema";
 import { retryEnquiryNotifications } from "@/lib/enquiries/repository";
+import { addInternalNote, linkUnmatchedInboundEmail, markEnquiryThreadRead, sendEnquiryReply, type ReplyState } from "@/lib/enquiries/thread-repository";
 import { createAdminClient, getAdminUser } from "@/lib/supabase/server";
 import { diagnostics, services } from "@/config/site";
 import { articleCategories } from "@/lib/news/article";
+import { normalizeRegistration } from "@/lib/vehicle/registration-format";
 
 async function requireAdmin() {
   const auth = await getAdminUser();
@@ -77,7 +79,7 @@ export async function saveContent(formData: FormData) {
     await audit(client, auth.user.id, parsed.status === "published" ? "publish" : "create", parsed.kind === "article" ? "article" : "content", data.id, { kind: parsed.kind, slug: parsed.slug, status: parsed.status });
   }
   revalidateContent(parsed.kind, parsed.slug);
-  redirect(formData.get("returnTo") === "news" ? "/admin/news" : "/admin/content");
+  redirect("/admin/news");
 }
 
 export async function restoreContentRevision(formData: FormData) {
@@ -106,7 +108,7 @@ export async function restoreContentRevision(formData: FormData) {
   if (snapshot.kind !== current.kind || snapshot.slug !== current.slug) {
     revalidateContent(String(snapshot.kind), String(snapshot.slug));
   }
-  redirect(current.kind === "article" ? `/admin/news/${contentId}` : `/admin/content/${contentId}`);
+  redirect(`/admin/news/${contentId}`);
 }
 
 export async function deleteContent(formData: FormData) {
@@ -118,8 +120,8 @@ export async function deleteContent(formData: FormData) {
   if (error) throw new Error("Content entry could not be deleted");
   await audit(client, auth.user.id, "delete", data.kind === "article" ? "article" : "content", id, { kind: data.kind, slug: data.slug });
   revalidateContent(data.kind, data.slug);
-  revalidatePath(data.kind === "article" ? "/admin/news" : "/admin/content");
-  redirect(data.kind === "article" ? "/admin/news" : "/admin/content");
+  revalidatePath("/admin/news");
+  redirect("/admin/news");
 }
 
 function toContentRow(parsed: z.infer<typeof contentEntrySchema>, authorId: string) {
@@ -158,7 +160,60 @@ export async function updateEnquiryStatus(formData: FormData) {
   await client.from("enquiries").update({ status, closed_at: status === "closed" ? new Date().toISOString() : null }).eq("id", id);
   await audit(client, auth.user.id, "status_change", "enquiry", id, { status });
   revalidatePath("/admin/enquiries");
+  revalidatePath(`/admin/enquiries/${id}`);
   revalidatePath("/admin/notifications");
+}
+
+export async function sendEnquiryReplyAction(previous: ReplyState, formData: FormData): Promise<ReplyState> {
+  const { auth } = await requireAdmin();
+  const enquiryId = String(formData.get("enquiryId") || "");
+  const draft = String(formData.get("body") || "");
+  const clientRequestId = String(formData.get("clientRequestId") || previous.clientRequestId || "");
+  try {
+    await sendEnquiryReply({ enquiryId, body: draft, clientRequestId, actorId: auth.user.id, actorName: auth.profile.display_name });
+    revalidateEnquiryThread(enquiryId);
+    return { status: "sent", message: "Reply sent to the customer.", draft: "", clientRequestId: crypto.randomUUID() };
+  } catch (error) {
+    return { status: "error", message: error instanceof Error ? error.message : "The reply could not be sent.", draft, clientRequestId };
+  }
+}
+
+export async function saveInternalNoteAction(previous: ReplyState, formData: FormData): Promise<ReplyState> {
+  const { auth } = await requireAdmin();
+  const enquiryId = String(formData.get("enquiryId") || "");
+  const draft = String(formData.get("body") || "");
+  try {
+    await addInternalNote({ enquiryId, body: draft, actorId: auth.user.id, actorName: auth.profile.display_name });
+    revalidateEnquiryThread(enquiryId);
+    return { status: "sent", message: "Internal note saved. It was not emailed.", draft: "", clientRequestId: crypto.randomUUID() };
+  } catch (error) {
+    return { status: "error", message: error instanceof Error ? error.message : "The note could not be saved.", draft, clientRequestId: previous.clientRequestId };
+  }
+}
+
+export async function markEnquiryThreadReadAction(enquiryId: string) {
+  await requireAdmin();
+  await markEnquiryThreadRead(enquiryId);
+  revalidateEnquiryThread(enquiryId);
+}
+
+export async function linkUnmatchedInboundAction(formData: FormData) {
+  const { auth } = await requireAdmin();
+  const enquiryId = await linkUnmatchedInboundEmail({
+    unmatchedId: String(formData.get("unmatchedId") || ""),
+    enquiryId: String(formData.get("enquiryId") || ""),
+    actorId: auth.user.id,
+  });
+  revalidateEnquiryThread(enquiryId);
+  revalidatePath("/admin/enquiries/unmatched");
+  redirect(`/admin/enquiries/${enquiryId}`);
+}
+
+function revalidateEnquiryThread(enquiryId: string) {
+  revalidatePath(`/admin/enquiries/${enquiryId}`);
+  revalidatePath("/admin/enquiries");
+  revalidatePath("/admin/notifications");
+  revalidatePath("/admin", "layout");
 }
 
 export async function resendEnquiryNotifications(formData: FormData) {
@@ -170,16 +225,79 @@ export async function resendEnquiryNotifications(formData: FormData) {
   revalidatePath("/admin/notifications");
 }
 
+export type NewVehicleSaveState = { status: "idle" | "error" | "saved"; message: string; vehicleId?: string };
+
+export async function saveNewSaleVehicle(_previous: NewVehicleSaveState, formData: FormData): Promise<NewVehicleSaveState> {
+  try {
+    const saved = await persistSaleVehicle(formData);
+    revalidateSaleVehicle(saved.slug);
+    return { status: "saved", message: "Vehicle saved.", vehicleId: saved.entityId };
+  } catch (error) {
+    return { status: "error", message: friendlyVehicleSaveError(error) };
+  }
+}
+
 export async function saveSaleVehicle(formData: FormData) {
-  const { auth, client } = await requireAdmin();
-  const schema = z.object({ id: z.string().uuid().optional(), slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/), make: z.string().min(1), model: z.string().min(1), derivative: z.string().optional(), year: z.coerce.number().int().min(1885), mileage: z.coerce.number().int().nonnegative(), price: z.coerce.number().int().nonnegative(), fuelType: z.string().min(1), transmission: z.string().min(1), engineSize: z.string().optional(), colour: z.string().optional(), description: z.string().min(20), features: z.string(), financeAvailable: z.coerce.boolean(), warrantyAvailable: z.coerce.boolean(), warrantyDescription: z.string().optional(), status: z.enum(["available", "reserved", "sold"]) });
-  const parsed = schema.parse(Object.fromEntries(formData)); assertCustomerFacingContent(parsed);
-  const row = { slug: parsed.slug, make: parsed.make, model: parsed.model, derivative: parsed.derivative || null, year: parsed.year, mileage: parsed.mileage, price: parsed.price, fuel_type: parsed.fuelType, transmission: parsed.transmission, engine_size: parsed.engineSize || null, colour: parsed.colour || null, description: parsed.description, features: parsed.features.split("\n").map((value) => value.trim()).filter(Boolean), finance_available: parsed.financeAvailable, warranty: parsed.warrantyAvailable ? { available: true, description: parsed.warrantyDescription || undefined } : { available: false }, status: parsed.status, sold_at: parsed.status === "sold" ? new Date().toISOString() : null };
-  let entityId = parsed.id;
-  if (parsed.id) await client.from("sale_vehicles").update(row).eq("id", parsed.id); else { const { data, error } = await client.from("sale_vehicles").insert(row).select("id").single(); if (error) throw new Error("Vehicle could not be saved"); entityId = data.id; }
-  await audit(client, auth.user.id, parsed.id ? "update" : "create", "sale_vehicle", entityId!, { status: parsed.status, slug: parsed.slug, price: parsed.price });
-  revalidatePath("/cars-for-sale"); revalidatePath(`/cars-for-sale/${parsed.slug}`); revalidatePath("/admin/inventory"); revalidatePath("/sitemap.xml");
+  const saved = await persistSaleVehicle(formData);
+  revalidateSaleVehicle(saved.slug);
   redirect("/admin/inventory");
+}
+
+async function persistSaleVehicle(formData: FormData) {
+  const { auth, client } = await requireAdmin();
+  const schema = z.object({ id: z.string().uuid().optional(), registration: z.string().max(9).optional(), slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/), make: z.string().min(1), model: z.string().min(1), derivative: z.string().optional(), year: z.coerce.number().int().min(1885).max(2100), mileage: z.coerce.number().int().nonnegative(), price: z.coerce.number().int().nonnegative(), fuelType: z.string().min(1), transmission: z.string().min(1), engineSize: z.string().optional(), colour: z.string().optional(), bodyType: z.string().optional(), description: z.string(), features: z.string().default(""), financeAvailable: z.coerce.boolean(), warrantyAvailable: z.coerce.boolean(), warrantyDescription: z.string().optional(), status: z.enum(["draft", "available", "reserved", "sold", "archived"]).optional(), inventoryIntent: z.enum(["draft", "publish"]).optional() });
+  const parsed = schema.parse(Object.fromEntries(formData));
+  const registration = parsed.registration ? normalizeRegistration(parsed.registration) : null;
+  if (registration !== null && (registration.length < 2 || registration.length > 8)) throw new Error("Check the registration number and try again.");
+  const status = parsed.inventoryIntent === "publish" ? "available" : parsed.inventoryIntent === "draft" ? "draft" : parsed.status || "draft";
+  if (status !== "draft" && parsed.description.trim().length < 20) throw new Error("Add a vehicle description of at least 20 characters before publishing.");
+  assertCustomerFacingContent({ ...parsed, registration: undefined });
+  if (!parsed.id && registration) {
+    const { data: existing } = await client.from("sale_vehicles").select("id").eq("registration", registration).maybeSingle();
+    if (existing) throw new Error("This registration already exists in Vehicle Stock.");
+  }
+  const row = { registration, slug: parsed.slug, make: parsed.make, model: parsed.model, derivative: parsed.derivative || null, year: parsed.year, mileage: parsed.mileage, price: parsed.price, fuel_type: parsed.fuelType, transmission: parsed.transmission, engine_size: parsed.engineSize || null, colour: parsed.colour || null, body_type: parsed.bodyType || null, description: parsed.description.trim(), features: parsed.features.split("\n").map((value) => value.trim()).filter(Boolean), finance_available: parsed.financeAvailable, warranty: parsed.warrantyAvailable ? { available: true, description: parsed.warrantyDescription || undefined } : { available: false }, status, sold_at: status === "sold" ? new Date().toISOString() : null };
+  let entityId = parsed.id;
+  const previousStatus = parsed.id ? (await client.from("sale_vehicles").select("status").eq("id", parsed.id).maybeSingle()).data?.status : null;
+  if (parsed.id) { const { error } = await client.from("sale_vehicles").update(row).eq("id", parsed.id); if (error) throw vehicleDatabaseError(error); } else { const { data, error } = await client.from("sale_vehicles").insert(row).select("id").single(); if (error) throw vehicleDatabaseError(error); entityId = data.id; }
+  const photos = formData.getAll("photos").filter((value): value is File => value instanceof File && value.size > 0);
+  if (photos.length > 8 || photos.reduce((total, file) => total + file.size, 0) > 32 * 1024 * 1024) throw new Error("Choose up to eight photos with a combined size under 32 MB.");
+  for (const [position, file] of photos.entries()) {
+    z.object({ type: z.enum(["image/jpeg", "image/png", "image/webp"]), size: z.number().int().positive().max(8 * 1024 * 1024) }).parse({ type: file.type, size: file.size });
+    const extension = file.type === "image/jpeg" ? "jpg" : file.type.split("/")[1];
+    const path = `${entityId}/${randomUUID()}.${extension}`;
+    const { error: uploadError } = await client.storage.from("vehicle-sales").upload(path, file, { contentType: file.type, upsert: false });
+    if (uploadError) throw new Error("The vehicle was saved, but a photo could not be uploaded.");
+    const alt = `${parsed.year} ${parsed.make} ${parsed.model} vehicle photo ${position + 1}`;
+    const { error: imageError } = await client.from("sale_vehicle_images").insert({ sale_vehicle_id: entityId, object_path: path, alt_text: alt, position });
+    if (imageError) { await client.storage.from("vehicle-sales").remove([path]); throw new Error("The vehicle was saved, but a photo could not be added."); }
+  }
+  const action = status === "available" && previousStatus !== "available" ? "publish" : parsed.id ? "update" : "create";
+  await audit(client, auth.user.id, action, "sale_vehicle", entityId!, { status, slug: parsed.slug, price: parsed.price, photoCount: photos.length });
+  return { entityId: entityId!, slug: parsed.slug };
+}
+
+function vehicleDatabaseError(error: { code?: string }) {
+  if (error.code === "23505") return new Error("This registration already exists in Vehicle Stock.");
+  if (error.code === "42703" || error.code === "PGRST204" || error.code === "22P02") return new Error("Vehicle Stock needs its database update before vehicles can be saved.");
+  return new Error("Vehicle could not be saved. Please check the details and try again.");
+}
+
+function friendlyVehicleSaveError(error: unknown) {
+  if (error instanceof z.ZodError) return "Check the required vehicle and sales details, then try again.";
+  if (error instanceof Error && [
+    "This registration already exists in Vehicle Stock.",
+    "Vehicle Stock needs its database update before vehicles can be saved.",
+    "Vehicle could not be saved. Please check the details and try again.",
+    "The vehicle was saved, but a photo could not be uploaded.",
+    "The vehicle was saved, but a photo could not be added.",
+    "Choose up to eight photos with a combined size under 32 MB.",
+  ].includes(error.message)) return error.message;
+  return "Vehicle could not be saved. Please try again.";
+}
+
+function revalidateSaleVehicle(slug: string) {
+  revalidatePath("/cars-for-sale"); revalidatePath(`/cars-for-sale/${slug}`); revalidatePath("/admin/inventory"); revalidatePath("/sitemap.xml");
 }
 
 export async function uploadSaleVehicleImage(formData: FormData) {
@@ -241,6 +359,46 @@ export async function uploadMedia(formData: FormData) {
   await audit(client, auth.user.id, "upload", "media", data?.id || path, { path }); revalidatePath("/admin/media");
 }
 
+export async function uploadArticleCover(formData: FormData): Promise<{ error?: string; asset?: { id: string; alt: string; category: string; published: boolean; url: string } }> {
+  try {
+    const { auth, client } = await requireAdmin();
+    const file = formData.get("file");
+    const alt = z.string().trim().min(5).max(180).parse(formData.get("alt"));
+    if (!(file instanceof File)) return { error: "Choose a JPG, PNG or WebP image." };
+    const parsedFile = attachmentRequestSchema.safeParse({ name: file.name, contentType: file.type, size: file.size });
+    if (!parsedFile.success) {
+      return { error: file.size > 8 * 1024 * 1024 ? "This image is too large. Please choose an image under 8 MB." : "Please upload a JPG, PNG or WebP image." };
+    }
+    if (!(await hasValidImageSignature(file))) return { error: "This file does not appear to be a valid JPG, PNG or WebP image." };
+    assertCustomerFacingContent(alt);
+    const extension = file.type === "image/jpeg" ? "jpg" : file.type.split("/")[1];
+    const path = `news/${randomUUID()}.${extension}`;
+    const { error: uploadError } = await client.storage.from("public-media").upload(path, file, { contentType: file.type, upsert: false });
+    if (uploadError) return { error: "The image could not be uploaded. Please try again." };
+    const { data, error: insertError } = await client.from("media_assets").insert({ object_path: path, alt_text: alt, category: "news", created_by: auth.user.id, published: false }).select("id").single();
+    if (insertError || !data) {
+      await client.storage.from("public-media").remove([path]);
+      return { error: "The image could not be added to the Media Library. Please try again." };
+    }
+    await audit(client, auth.user.id, "upload", "media", data.id, { path, source: "article_cover" });
+    revalidatePath("/admin/media");
+    const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (!base) return { error: "The image was uploaded, but its preview is not configured." };
+    return { asset: { id: data.id, alt, category: "news", published: false, url: `${base}/storage/v1/object/public/public-media/${path}` } };
+  } catch (error) {
+    if (error instanceof z.ZodError) return { error: "Add useful alt text of at least five characters." };
+    return { error: error instanceof Error && error.message === "Unauthorised" ? "Your admin session has expired. Refresh and sign in again." : "The image could not be uploaded. Please try again." };
+  }
+}
+
+async function hasValidImageSignature(file: File) {
+  const bytes = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+  if (file.type === "image/jpeg") return bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+  if (file.type === "image/png") return bytes.slice(0, 8).every((value, index) => value === [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a][index]);
+  if (file.type === "image/webp") return String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" && String.fromCharCode(...bytes.slice(8, 12)) === "WEBP";
+  return false;
+}
+
 export async function toggleMediaPublication(formData: FormData) { const { auth, client } = await requireAdmin(); const id = z.string().uuid().parse(formData.get("id")); const published = formData.get("published") === "true"; const { data } = await client.from("media_assets").select("alt_text").eq("id", id).single(); if (published && (!data?.alt_text || data.alt_text.trim().length < 5)) throw new Error("Alt text is required"); await client.from("media_assets").update({ published }).eq("id", id); await audit(client, auth.user.id, published ? "publish" : "unpublish", "media", id); revalidatePath("/admin/media"); revalidatePath("/gallery"); }
 
 export async function syncGoogleReviews() {
@@ -285,8 +443,6 @@ export async function saveSettings(formData: FormData) {
   revalidatePath("/", "layout");
   redirect("/admin/settings");
 }
-
-export async function saveNavigationItem(formData: FormData) { const { auth, client } = await requireAdmin(); const parsed = z.object({ id: z.string().uuid().optional(), label: z.string().min(1).max(60), href: z.string().startsWith("/").max(160), position: z.coerce.number().int().min(0).max(100), published: z.coerce.boolean() }).parse({ id: formData.get("id") || undefined, label: formData.get("label"), href: formData.get("href"), position: formData.get("position"), published: formData.get("published") === "on" }); assertCustomerFacingContent(parsed); let id = parsed.id; const row = { label: parsed.label, href: parsed.href, position: parsed.position, published: parsed.published, parent_id: null }; if (id) await client.from("navigation_items").update(row).eq("id", id); else { const { data } = await client.from("navigation_items").insert(row).select("id").single(); id = data?.id; } await audit(client, auth.user.id, parsed.id ? "update" : "create", "navigation", id || parsed.href, { href: parsed.href, published: parsed.published }); revalidatePath("/", "layout"); redirect("/admin/navigation"); }
 
 export async function saveOffer(formData: FormData) { const { auth, client } = await requireAdmin(); const parsed = z.object({ id: z.string().uuid().optional(), title: z.string().min(3).max(120), description: z.string().min(10).max(500), active: z.coerce.boolean() }).parse({ id: formData.get("id") || undefined, title: formData.get("title"), description: formData.get("description"), active: formData.get("active") === "on" }); assertCustomerFacingContent(parsed); let id = parsed.id; const row = { title: parsed.title, description: parsed.description, active: parsed.active }; if (id) await client.from("offers").update(row).eq("id", id); else { const { data } = await client.from("offers").insert(row).select("id").single(); id = data?.id; } await audit(client, auth.user.id, parsed.id ? "update" : "create", "offer", id || parsed.title, { active: parsed.active }); revalidatePath("/"); redirect("/admin/offers"); }
 

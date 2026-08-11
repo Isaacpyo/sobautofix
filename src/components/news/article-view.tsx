@@ -1,6 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { ArticleCard } from "@/components/news/article-card";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { ButtonLink } from "@/components/ui/button";
@@ -70,7 +71,7 @@ async function renderArticleSection(section: ContentSection, index: number) {
         <section key={index} className="py-7 first:pt-0">
           <Container className="max-w-3xl">
             {section.heading && <h2 className="text-3xl font-extrabold text-[#071127] sm:text-4xl">{section.heading}</h2>}
-            <div className="mt-5 space-y-5 text-lg leading-8 text-[#3F4B59]">{section.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</div>
+            <div className="mt-5 space-y-5 text-lg leading-8 text-[#3F4B59]">{renderArticleBody(section.paragraphs)}</div>
           </Container>
         </section>
       );
@@ -104,7 +105,11 @@ async function renderArticleSection(section: ContentSection, index: number) {
       ) : null;
     }
     case "gallery": {
-      const media = (await getPublishedMedia(section.category)).slice(0, 4);
+      const publishedMedia = await getPublishedMedia(section.category);
+      const media = (section.mediaIds !== undefined
+        ? section.mediaIds.map((id) => publishedMedia.find((asset) => asset.id === id)).filter((asset): asset is NonNullable<typeof asset> => Boolean(asset))
+        : publishedMedia
+      ).slice(0, 4);
       return media.length ? (
         <section key={index} className="py-8">
           <Container className="max-w-5xl">
@@ -129,4 +134,70 @@ async function renderArticleSection(section: ContentSection, index: number) {
     default:
       return null;
   }
+}
+
+function renderArticleBody(paragraphs: string[]) {
+  const lines = paragraphs.join("\n\n").split(/\r?\n/);
+  const blocks: ReactNode[] = [];
+
+  for (let index = 0; index < lines.length;) {
+    const line = lines[index]?.trim() || "";
+    if (!line) { index += 1; continue; }
+
+    if (line.startsWith("## ")) {
+      blocks.push(<h2 key={index} className="pt-4 text-3xl font-extrabold text-[#071127] sm:text-4xl">{renderInlineMarkup(line.slice(3))}</h2>);
+      index += 1;
+      continue;
+    }
+    if (line.startsWith("### ")) {
+      blocks.push(<h3 key={index} className="pt-3 text-2xl font-bold text-[#071127]">{renderInlineMarkup(line.slice(4))}</h3>);
+      index += 1;
+      continue;
+    }
+    if (line.startsWith("> ")) {
+      blocks.push(<blockquote key={index} className="border-l-4 border-[#1974E2] bg-[#F4F7FA] px-5 py-4 font-semibold text-[#334155]">{renderInlineMarkup(line.slice(2))}</blockquote>);
+      index += 1;
+      continue;
+    }
+    if (line.startsWith("- ")) {
+      const items: string[] = [];
+      while ((lines[index]?.trim() || "").startsWith("- ")) { items.push((lines[index]?.trim() || "").slice(2)); index += 1; }
+      blocks.push(<ul key={`ul-${index}`} className="list-disc space-y-2 pl-6">{items.map((item, itemIndex) => <li key={`${item}-${itemIndex}`}>{renderInlineMarkup(item)}</li>)}</ul>);
+      continue;
+    }
+    if (/^\d+\.\s/.test(line)) {
+      const items: string[] = [];
+      while (/^\d+\.\s/.test(lines[index]?.trim() || "")) { items.push((lines[index]?.trim() || "").replace(/^\d+\.\s/, "")); index += 1; }
+      blocks.push(<ol key={`ol-${index}`} className="list-decimal space-y-2 pl-6">{items.map((item, itemIndex) => <li key={`${item}-${itemIndex}`}>{renderInlineMarkup(item)}</li>)}</ol>);
+      continue;
+    }
+
+    blocks.push(<p key={index}>{renderInlineMarkup(line)}</p>);
+    index += 1;
+  }
+
+  return blocks;
+}
+
+function renderInlineMarkup(value: string) {
+  const pattern = /(\*\*[^*]+\*\*|\*[^*]+\*|\[[^\]]+\]\((?:\/|https?:\/\/)[^)]+\))/g;
+  const nodes: ReactNode[] = [];
+  let cursor = 0;
+
+  for (const match of value.matchAll(pattern)) {
+    const start = match.index ?? 0;
+    if (start > cursor) nodes.push(value.slice(cursor, start));
+    const token = match[0];
+    if (token.startsWith("**")) nodes.push(<strong key={start}>{token.slice(2, -2)}</strong>);
+    else if (token.startsWith("*")) nodes.push(<em key={start}>{token.slice(1, -1)}</em>);
+    else {
+      const link = token.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+      const label = link?.[1];
+      const href = link?.[2];
+      if (label && href) nodes.push(<Link key={start} href={href} className="font-semibold text-[#1974E2] underline underline-offset-4">{label}</Link>);
+    }
+    cursor = start + token.length;
+  }
+  if (cursor < value.length) nodes.push(value.slice(cursor));
+  return nodes;
 }
