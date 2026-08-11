@@ -18,7 +18,16 @@ describe("enquiry email threading", () => {
     const address = buildEnquiryReplyAddress(token, "Reply.SobAutofix.com");
     expect(address).toBe(`enquiry+${token}@reply.sobautofix.com`);
     expect(extractReplyToken([address], "reply.sobautofix.com")).toBe(token);
+    expect(extractReplyToken([address.toUpperCase()], "reply.sobautofix.com")).toBe(token);
     expect(extractReplyToken([`enquiry+${token}@example.com`], "reply.sobautofix.com")).toBeNull();
+  });
+
+  it("rejects malformed or non-enquiry reply recipients", () => {
+    expect(extractReplyToken(["enquiry@reply.sobautofix.com"], "reply.sobautofix.com")).toBeNull();
+    expect(extractReplyToken(["enquiry+@reply.sobautofix.com"], "reply.sobautofix.com")).toBeNull();
+    expect(extractReplyToken(["enquiry+malformed-token@reply.sobautofix.com"], "reply.sobautofix.com")).toBeNull();
+    expect(extractReplyToken([`random+${token}@reply.sobautofix.com`], "reply.sobautofix.com")).toBeNull();
+    expect(extractReplyToken([`enquiry+${token}@sobautofix.com`], "reply.sobautofix.com")).toBeNull();
   });
 
   it("extracts bounded unique message IDs for References headers", () => {
