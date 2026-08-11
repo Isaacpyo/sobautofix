@@ -203,8 +203,10 @@ describe("Cal.com webhook reconciliation", () => {
     const payload = event("BOOKING_RESCHEDULED", {
       uid: "new-uid",
       rescheduleUid: "old-uid",
-      rescheduleStartTime: "2026-08-20T12:00:00.000Z",
-      rescheduleEndTime: "2026-08-20T13:00:00.000Z",
+      startTime: "2026-08-20T12:00:00.000Z",
+      endTime: "2026-08-20T13:00:00.000Z",
+      rescheduleStartTime: "2026-08-18T08:00:00.000Z",
+      rescheduleEndTime: "2026-08-18T09:00:00.000Z",
     });
     await processCalComWebhook(payload, JSON.stringify(payload));
     expect(harness.state.booking).toMatchObject({

@@ -518,12 +518,12 @@ export async function processCalComWebhook(event: CalComWebhook, rawBody: string
       update.cancellation_reason = event.payload.cancellationReason || null;
       update.cancelled_at = occurredAt;
     } else if (event.triggerEvent === "BOOKING_RESCHEDULED") {
-      const start = event.payload.rescheduleStartTime || event.payload.startTime;
+      const start = event.payload.startTime;
       action = "rescheduled";
       notificationType = "rescheduled";
       update.status = "rescheduled";
       if (start) update.appointment_start = start;
-      if (event.payload.rescheduleEndTime || event.payload.endTime) update.appointment_end = event.payload.rescheduleEndTime || event.payload.endTime;
+      if (event.payload.endTime) update.appointment_end = event.payload.endTime;
     } else {
       action = "confirmed";
       notificationType = "confirmed";

@@ -18,6 +18,7 @@ test-results/
 
 # deployment and tooling
 .vercel/
+supabase/.temp/
 .wrangler/
 .wrangler-dry-run/
 .turbo/
