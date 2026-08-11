@@ -3,22 +3,77 @@
 import { GripVertical, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import type { ContentEntry, ContentSection } from "@/types/domain";
 import { Button } from "@/components/ui/button";
+import { articleCategories, parseArticleMetadata } from "@/lib/news/article";
+import type { ContentEntry, ContentSection } from "@/types/domain";
 
 const sectionTypes: Array<ContentSection["type"]> = ["hero", "richText", "vehicleLookup", "symptomSelector", "serviceCards", "process", "trustFacts", "offer", "reviews", "areas", "gallery", "faqs", "relatedLinks", "cta"];
+const articleSectionTypes: Array<ContentSection["type"]> = ["richText", "serviceCards", "gallery", "faqs", "relatedLinks", "cta"];
 
-export function ContentEditor({ entry, action }: { entry?: ContentEntry; action: (formData: FormData) => void | Promise<void> }) {
-  const [sections, setSections] = useState<ContentSection[]>(entry?.sections || [{ type: "hero", eyebrow: "SOB Autofix", title: "", body: "", primaryCta: "vehicle-lookup" }]);
-  function update(index: number, next: ContentSection) { setSections((current) => current.map((section, position) => position === index ? next : section)); }
+type MediaOption = { id: string; alt: string; category?: string; published: boolean };
+
+export function ContentEditor({ entry, action, articleMode = false, media = [] }: {
+  entry?: ContentEntry;
+  action: (formData: FormData) => void | Promise<void>;
+  articleMode?: boolean;
+  media?: MediaOption[];
+}) {
+  const initialArticle = parseArticleMetadata(entry?.metadata || {});
+  const [articleMetadata, setArticleMetadata] = useState(initialArticle);
+  const [sections, setSections] = useState<ContentSection[]>(entry?.sections || (articleMode
+    ? [
+        { type: "richText", heading: "", paragraphs: [""] },
+        { type: "relatedLinks", heading: "Related information", links: [{ label: "Vehicle diagnostics", href: "/diagnostics" }] },
+        { type: "cta", heading: "Need help with your vehicle?", body: "Book an appointment with SOB Autofix.", label: "Book appointment", href: "/book" },
+      ]
+    : [{ type: "hero", eyebrow: "SOB Autofix", title: "", body: "", primaryCta: "vehicle-lookup" }]));
+  const availableSections = articleMode ? articleSectionTypes : sectionTypes;
+
+  function update(index: number, next: ContentSection) {
+    setSections((current) => current.map((section, position) => position === index ? next : section));
+  }
   function add(type: ContentSection["type"]) { setSections((current) => [...current, blankSection(type)]); }
   function remove(index: number) { setSections((current) => current.filter((_, position) => position !== index)); }
 
-  return <form action={action} className="grid gap-6"><input type="hidden" name="id" value={entry?.id || ""} /><input type="hidden" name="sections" value={JSON.stringify(sections)} /><input type="hidden" name="metadata" value={JSON.stringify(entry?.metadata || {})} />
-    <div className="grid gap-5 rounded-2xl border border-[#E4EAF0] bg-white p-6 md:grid-cols-2"><AdminField label="Content type"><select name="kind" defaultValue={entry?.kind || "core_page"}><option value="core_page">Core page</option><option value="service">Service</option><option value="diagnostic">Diagnostic</option><option value="area">Area</option><option value="article">Article</option><option value="faq">FAQ collection</option></select></AdminField><AdminField label="Slug"><input name="slug" required pattern="[a-z0-9-]+" defaultValue={entry?.slug} placeholder="page-slug" /></AdminField><AdminField label="Title"><input name="title" required defaultValue={entry?.title} /></AdminField><AdminField label="Status"><select name="status" defaultValue={entry?.status || "draft"}><option value="draft">Draft</option><option value="scheduled">Scheduled</option><option value="published">Published</option><option value="archived">Archived</option></select></AdminField><AdminField label="Scheduled publication time"><input name="publishedAt" type="datetime-local" defaultValue={entry?.status === "scheduled" && entry.publishedAt ? entry.publishedAt.slice(0, 16) : ""} /></AdminField><p className="self-end text-sm leading-6 text-[#667586]">Publishing is immediate. Scheduled entries remain private until a staff member changes their status to Published.</p><div className="md:col-span-2"><AdminField label="Excerpt"><textarea name="excerpt" required rows={3} defaultValue={entry?.excerpt} /></AdminField></div></div>
-    <div><div className="flex flex-wrap items-center justify-between gap-4"><div><h2 className="text-2xl font-bold text-[#071127]">Structured sections</h2><p className="text-sm text-[#667586]">Every field is validated again when saved.</p></div><label className="flex items-center gap-2 rounded-lg border border-[#1974E2]/25 bg-white px-3 py-2 text-sm font-bold text-[#1974E2]"><Plus size={16} /><select className="bg-transparent outline-none" value="" onChange={(event) => { if (event.target.value) add(event.target.value as ContentSection["type"]); event.target.value = ""; }}><option value="">Add section…</option>{sectionTypes.map((type) => <option key={type} value={type}>{type}</option>)}</select></label></div><div className="mt-5 grid gap-4">{sections.map((section, index) => <section key={`${section.type}-${index}`} className="rounded-2xl border border-[#E4EAF0] bg-white p-5"><div className="mb-5 flex items-center justify-between"><h3 className="flex items-center gap-2 text-lg font-bold text-[#071127]"><GripVertical size={18} className="text-[#9AA7B6]" />{section.type}</h3><button type="button" onClick={() => remove(index)} className="grid h-9 w-9 place-items-center rounded-lg text-red-700 hover:bg-red-50" aria-label={`Remove ${section.type} section`}><Trash2 size={17} /></button></div><SectionFields section={section} onChange={(next) => update(index, next)} /></section>)}</div></div>
+  return <form action={action} className="grid gap-6">
+    <input type="hidden" name="id" value={entry?.id || ""} />
+    <input type="hidden" name="sections" value={JSON.stringify(sections)} />
+    <input type="hidden" name="metadata" value={JSON.stringify(articleMode ? articleMetadata : entry?.metadata || {})} />
+    <input type="hidden" name="returnTo" value={articleMode ? "news" : "content"} />
+    {articleMode && <input type="hidden" name="kind" value="article" />}
+
+    <div className="grid gap-5 rounded-2xl border border-[#E4EAF0] bg-white p-6 md:grid-cols-2">
+      {!articleMode && <AdminField label="Content type"><select name="kind" defaultValue={entry?.kind || "core_page"}><option value="core_page">Core page</option><option value="service">Service</option><option value="diagnostic">Diagnostic</option><option value="area">Area</option><option value="faq">FAQ collection</option></select></AdminField>}
+      <AdminField label="Slug"><input name="slug" required pattern="[a-z0-9-]+" defaultValue={entry?.slug} placeholder="article-slug" /></AdminField>
+      <AdminField label="Title"><input name="title" required defaultValue={entry?.title} /></AdminField>
+      <AdminField label="Status"><select name="status" defaultValue={entry?.status || "draft"}><option value="draft">Draft</option><option value="scheduled">Scheduled</option><option value="published">Published</option><option value="archived">Archived</option></select></AdminField>
+      <AdminField label="Scheduled publication time"><input name="publishedAt" type="datetime-local" defaultValue={entry?.status === "scheduled" && entry.publishedAt ? entry.publishedAt.slice(0, 16) : ""} /></AdminField>
+      <p className="self-end text-sm leading-6 text-[#667586]">Scheduled entries remain private until their publication process changes them to Published.</p>
+      <div className="md:col-span-2"><AdminField label="Excerpt"><textarea name="excerpt" required rows={3} defaultValue={entry?.excerpt} /></AdminField></div>
+    </div>
+
+    {articleMode && <div className="grid gap-5 rounded-2xl border border-[#E4EAF0] bg-white p-6 md:grid-cols-2">
+      <div className="md:col-span-2"><h2 className="text-2xl font-bold text-[#071127]">Article details</h2><p className="mt-1 text-sm text-[#667586]">The canonical public URL will be /news/{entry?.slug || "article-slug"}.</p></div>
+      <AdminField label="Category"><select value={articleMetadata.category} onChange={(event) => setArticleMetadata((current) => ({ ...current, category: event.target.value as typeof current.category }))}>{articleCategories.map((category) => <option key={category}>{category}</option>)}</select></AdminField>
+      <AdminField label="Author"><input value={articleMetadata.author} onChange={(event) => setArticleMetadata((current) => ({ ...current, author: event.target.value }))} /></AdminField>
+      <AdminField label="Cover image"><select value={articleMetadata.coverImageId || ""} onChange={(event) => setArticleMetadata((current) => ({ ...current, coverImageId: event.target.value || undefined }))}><option value="">No cover image</option>{media.map((item) => <option key={item.id} value={item.id}>{item.published ? "Published" : "Draft"} · {item.alt}{item.category ? ` (${item.category})` : ""}</option>)}</select></AdminField>
+      <label className="flex items-center gap-3 self-end rounded-xl border border-[#D7E0E9] px-4 py-3 text-sm font-bold text-[#071127]"><input type="checkbox" checked={articleMetadata.featured || false} onChange={(event) => setArticleMetadata((current) => ({ ...current, featured: event.target.checked }))} />Feature this article on the News page</label>
+    </div>}
+
+    <div>
+      <div className="flex flex-wrap items-center justify-between gap-4"><div><h2 className="text-2xl font-bold text-[#071127]">Structured sections</h2><p className="text-sm text-[#667586]">Every field is validated again when saved.</p></div><label className="flex items-center gap-2 rounded-lg border border-[#1974E2]/25 bg-white px-3 py-2 text-sm font-bold text-[#1974E2]"><Plus size={16} /><select className="bg-transparent outline-none" value="" onChange={(event) => { if (event.target.value) add(event.target.value as ContentSection["type"]); event.target.value = ""; }}><option value="">Add section…</option>{availableSections.map((type) => <option key={type} value={type}>{type}</option>)}</select></label></div>
+      <div className="mt-5 grid gap-4">{sections.map((section, index) => <section key={`${section.type}-${index}`} className="rounded-2xl border border-[#E4EAF0] bg-white p-5"><div className="mb-5 flex items-center justify-between"><h3 className="flex items-center gap-2 text-lg font-bold text-[#071127]"><GripVertical size={18} className="text-[#9AA7B6]" />{section.type}</h3><button type="button" onClick={() => remove(index)} className="grid h-9 w-9 place-items-center rounded-lg text-red-700 hover:bg-red-50" aria-label={`Remove ${section.type} section`}><Trash2 size={17} /></button></div><SectionFields section={section} onChange={(next) => update(index, next)} /></section>)}</div>
+    </div>
+
     <div className="grid gap-5 rounded-2xl border border-[#E4EAF0] bg-white p-6"><h2 className="text-2xl font-bold text-[#071127]">Search appearance</h2><AdminField label="SEO title"><input name="seoTitle" required minLength={10} maxLength={70} defaultValue={entry?.seoTitle} /></AdminField><AdminField label="SEO description"><textarea name="seoDescription" required minLength={30} maxLength={170} rows={3} defaultValue={entry?.seoDescription} /></AdminField></div>
-    <div className="sticky bottom-4 flex items-center justify-end gap-3 rounded-2xl border border-[#E4EAF0] bg-white/95 p-4 shadow-xl backdrop-blur">{entry && <Link href={`/admin/preview/${entry.id}`} target="_blank" className="min-h-11 rounded-xl border border-[#1974E2]/30 px-5 py-3 text-sm font-bold text-[#1974E2]">Preview</Link>}<Button type="submit">Save and validate</Button></div>
+
+    <div className="sticky bottom-4 flex flex-wrap items-center justify-end gap-3 rounded-2xl border border-[#E4EAF0] bg-white/95 p-4 shadow-xl backdrop-blur">
+      {entry && <Link href={`/admin/preview/${entry.id}`} target="_blank" className="min-h-11 rounded-xl border border-[#1974E2]/30 px-5 py-3 text-sm font-bold text-[#1974E2]">Preview</Link>}
+      {articleMode && <Button type="submit" name="articleIntent" value="draft" variant="outline">Save draft</Button>}
+      {articleMode && <Button type="submit" variant="outline">Save changes</Button>}
+      {articleMode && entry?.status === "published" && <Button type="submit" name="articleIntent" value="archived" variant="outline">Archive</Button>}
+      <Button type="submit" name={articleMode ? "articleIntent" : undefined} value={articleMode ? "published" : undefined}>{articleMode ? "Publish" : "Save and validate"}</Button>
+    </div>
   </form>;
 }
 

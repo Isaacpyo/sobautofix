@@ -10,6 +10,7 @@ import { attachmentRequestSchema } from "@/lib/enquiries/schema";
 import { retryEnquiryNotifications } from "@/lib/enquiries/repository";
 import { createAdminClient, getAdminUser } from "@/lib/supabase/server";
 import { diagnostics, services } from "@/config/site";
+import { articleCategories } from "@/lib/news/article";
 
 async function requireAdmin() {
   const auth = await getAdminUser();
@@ -19,7 +20,8 @@ async function requireAdmin() {
 }
 
 async function audit(client: NonNullable<ReturnType<typeof createAdminClient>>, actorId: string, action: string, entityType: string, entityId: string, detail: Record<string, unknown> = {}) {
-  await client.from("admin_audit_log").insert({ actor_id: actorId, action, entity_type: entityType, entity_id: entityId, detail });
+  const { error } = await client.from("admin_audit_log").insert({ actor_id: actorId, action, entity_type: entityType, entity_id: entityId, detail });
+  if (error) throw new Error("The change was saved, but its required audit entry could not be recorded.");
 }
 
 export async function saveContent(formData: FormData) {
@@ -27,35 +29,55 @@ export async function saveContent(formData: FormData) {
   const id = String(formData.get("id") || "");
   const sections = JSON.parse(String(formData.get("sections") || "[]")) as unknown;
   const metadata = JSON.parse(String(formData.get("metadata") || "{}")) as unknown;
+  const articleIntent = String(formData.get("articleIntent") || "");
+  const requestedStatus = articleIntent === "draft" || articleIntent === "published" || articleIntent === "archived"
+    ? articleIntent
+    : formData.get("status");
   const publicationValue = String(formData.get("publishedAt") || "");
   const parsed = contentEntrySchema.parse({
     id: id || undefined,
     kind: formData.get("kind"), slug: formData.get("slug"), title: formData.get("title"), excerpt: formData.get("excerpt"),
-    sections, metadata, seoTitle: formData.get("seoTitle"), seoDescription: formData.get("seoDescription"), status: formData.get("status"),
+    sections, metadata, seoTitle: formData.get("seoTitle"), seoDescription: formData.get("seoDescription"), status: requestedStatus,
     publishedAt: publicationValue ? new Date(publicationValue).toISOString() : undefined,
   });
+  if (parsed.kind === "article") {
+    const articleMetadata = z.object({
+      category: z.enum(articleCategories),
+      author: z.string().trim().min(2).max(100),
+      coverImageId: z.string().uuid().optional(),
+      featured: z.boolean().optional(),
+    }).parse(parsed.metadata);
+    if ((parsed.status === "published" || parsed.status === "scheduled") && articleMetadata.coverImageId) {
+      const { data: cover } = await client.from("media_assets").select("published,alt_text").eq("id", articleMetadata.coverImageId).maybeSingle();
+      if (!cover?.published) throw new Error("Publish the selected cover image in the Media Library before publishing this article.");
+      if (!cover.alt_text || cover.alt_text.trim().length < 5) throw new Error("The selected cover image needs meaningful alt text before this article can be published.");
+    }
+  }
   if (parsed.status === "published" || parsed.status === "scheduled") await validateInternalLinks(client, sections);
 
   if (id) {
     const { data: existing } = await client.from("content_entries").select("*").eq("id", id).single();
     if (!existing) throw new Error("Content entry not found");
-    await client.from("content_revisions").insert({ content_entry_id: id, snapshot: existing, created_by: auth.user.id });
+    const { error: revisionError } = await client.from("content_revisions").insert({ content_entry_id: id, snapshot: existing, created_by: auth.user.id });
+    if (revisionError) throw new Error("The current revision could not be preserved, so the content was not changed.");
     const { error } = await client.from("content_entries").update(toContentRow(parsed, auth.user.id)).eq("id", id);
     if (error) throw new Error(error.code === "23505" ? "That slug is already in use." : "Content could not be saved.");
-    const auditAction = parsed.status === "published" && existing.status !== "published"
-      ? "publish"
-      : parsed.status !== "published" && existing.status === "published"
-        ? "unpublish"
-        : "update";
-    await audit(client, auth.user.id, auditAction, "content", id, { kind: parsed.kind, slug: parsed.slug, status: parsed.status });
+    const auditAction = parsed.status === "archived" && existing.status !== "archived"
+      ? "archive"
+      : parsed.status === "published" && existing.status !== "published"
+        ? "publish"
+        : parsed.status !== "published" && existing.status === "published"
+          ? "unpublish"
+          : "update";
+    await audit(client, auth.user.id, auditAction, parsed.kind === "article" ? "article" : "content", id, { kind: parsed.kind, slug: parsed.slug, status: parsed.status });
     if (existing.kind !== parsed.kind || existing.slug !== parsed.slug) revalidateContent(existing.kind, existing.slug);
   } else {
     const { data, error } = await client.from("content_entries").insert(toContentRow(parsed, auth.user.id)).select("id").single();
     if (error) throw new Error(error.code === "23505" ? "That slug is already in use." : "Content could not be created.");
-    await audit(client, auth.user.id, parsed.status === "published" ? "publish" : "create", "content", data.id, { kind: parsed.kind, slug: parsed.slug, status: parsed.status });
+    await audit(client, auth.user.id, parsed.status === "published" ? "publish" : "create", parsed.kind === "article" ? "article" : "content", data.id, { kind: parsed.kind, slug: parsed.slug, status: parsed.status });
   }
   revalidateContent(parsed.kind, parsed.slug);
-  redirect("/admin/content");
+  redirect(formData.get("returnTo") === "news" ? "/admin/news" : "/admin/content");
 }
 
 export async function restoreContentRevision(formData: FormData) {
@@ -69,7 +91,8 @@ export async function restoreContentRevision(formData: FormData) {
   if (!revision || !current) throw new Error("Revision not found");
   const snapshot = revision.snapshot as Record<string, unknown>;
   assertCustomerFacingContent(snapshot);
-  await client.from("content_revisions").insert({ content_entry_id: contentId, snapshot: current, created_by: auth.user.id });
+  const { error: revisionError } = await client.from("content_revisions").insert({ content_entry_id: contentId, snapshot: current, created_by: auth.user.id });
+  if (revisionError) throw new Error("The current revision could not be preserved, so the rollback was not applied.");
   const restored = {
     kind: snapshot.kind, slug: snapshot.slug, title: snapshot.title, excerpt: snapshot.excerpt,
     sections: snapshot.sections, metadata: snapshot.metadata, seo_title: snapshot.seo_title,
@@ -78,9 +101,12 @@ export async function restoreContentRevision(formData: FormData) {
   };
   const { error } = await client.from("content_entries").update(restored).eq("id", contentId);
   if (error) throw new Error("Revision could not be restored");
-  await audit(client, auth.user.id, "rollback", "content", contentId, { revisionId });
-  revalidatePath("/", "layout"); revalidatePath("/sitemap.xml");
-  redirect(`/admin/content/${contentId}`);
+  await audit(client, auth.user.id, "rollback", current.kind === "article" ? "article" : "content", contentId, { revisionId });
+  revalidateContent(current.kind, current.slug);
+  if (snapshot.kind !== current.kind || snapshot.slug !== current.slug) {
+    revalidateContent(String(snapshot.kind), String(snapshot.slug));
+  }
+  redirect(current.kind === "article" ? `/admin/news/${contentId}` : `/admin/content/${contentId}`);
 }
 
 export async function deleteContent(formData: FormData) {
@@ -90,9 +116,10 @@ export async function deleteContent(formData: FormData) {
   if (!data) throw new Error("Content entry not found");
   const { error } = await client.from("content_entries").delete().eq("id", id);
   if (error) throw new Error("Content entry could not be deleted");
-  await audit(client, auth.user.id, "delete", "content", id, { kind: data.kind, slug: data.slug });
-  revalidateContent(data.kind, data.slug); revalidatePath("/admin/content");
-  redirect("/admin/content");
+  await audit(client, auth.user.id, "delete", data.kind === "article" ? "article" : "content", id, { kind: data.kind, slug: data.slug });
+  revalidateContent(data.kind, data.slug);
+  revalidatePath(data.kind === "article" ? "/admin/news" : "/admin/content");
+  redirect(data.kind === "article" ? "/admin/news" : "/admin/content");
 }
 
 function toContentRow(parsed: z.infer<typeof contentEntrySchema>, authorId: string) {
@@ -102,8 +129,8 @@ function toContentRow(parsed: z.infer<typeof contentEntrySchema>, authorId: stri
 
 async function validateInternalLinks(client: NonNullable<ReturnType<typeof createAdminClient>>, sections: unknown) {
   const serialized = JSON.stringify(sections);
-  const links = [...serialized.matchAll(/"href":"\/(services|diagnostics|areas|advice)\/([a-z0-9-]+)"/g)];
-  const kindMap = { services: "service", diagnostics: "diagnostic", areas: "area", advice: "article" } as const;
+  const links = [...serialized.matchAll(/"href":"\/(services|diagnostics|areas|advice|news)\/([a-z0-9-]+)"/g)];
+  const kindMap = { services: "service", diagnostics: "diagnostic", areas: "area", advice: "article", news: "article" } as const;
   for (const link of links) {
     const group = link[1] as keyof typeof kindMap; const slug = link[2];
     if (group === "services" && services.some((item) => item.slug === slug && item.published)) continue;
@@ -115,8 +142,13 @@ async function validateInternalLinks(client: NonNullable<ReturnType<typeof creat
 }
 
 function revalidateContent(kind: string, slug: string) {
-  const prefix = kind === "service" ? "/services" : kind === "diagnostic" ? "/diagnostics" : kind === "area" ? "/areas" : kind === "article" ? "/advice" : "";
+  const prefix = kind === "service" ? "/services" : kind === "diagnostic" ? "/diagnostics" : kind === "area" ? "/areas" : kind === "article" ? "/news" : "";
   revalidatePath(prefix ? `${prefix}/${slug}` : `/${slug}`);
+  if (kind === "article") {
+    revalidatePath("/news");
+    revalidatePath("/news/feed.xml");
+    revalidatePath("/");
+  }
   revalidatePath("/sitemap.xml");
 }
 

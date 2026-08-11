@@ -24,6 +24,7 @@ const serviceLinks: FooterLink[] = [
 
 const exploreLinks: FooterLink[] = [
   { label: "Who We Are", href: "/about" },
+  { label: "News & Blog", href: "/news" },
   { label: "FAQs", href: "/faqs" },
   { label: "Gallery", href: "/gallery" },
   { label: "Cars for Sale", href: "/cars-for-sale" },

@@ -244,6 +244,63 @@ test("notification centre is protected by admin authentication", async ({ page }
   await expect(page).toHaveURL(/\/admin\/login$/);
 });
 
+test("operations dashboard is protected by admin authentication", async ({ page }) => {
+  await page.goto("/admin");
+  await expect(page).toHaveURL(/\/admin\/login$/);
+});
+
+test("news listing, feed and former advice routes behave correctly", async ({ page, request }) => {
+  const response = await page.goto("/news");
+  expect(response?.ok()).toBe(true);
+  await expect(page.getByRole("heading", { level: 1, name: "News & Blog" })).toBeVisible();
+
+  const feed = await request.get("/news/feed.xml");
+  expect(feed.status()).toBe(200);
+  expect(feed.headers()["content-type"]).toContain("application/rss+xml");
+  expect(await feed.text()).toContain("<rss version=\"2.0\">");
+
+  const advice = await request.get("/advice", { maxRedirects: 0 });
+  expect(advice.status()).toBe(308);
+  expect(advice.headers().location).toBe("/news");
+  await page.goto("/advice");
+  await expect(page).toHaveURL(/\/news$/);
+
+  const missingArticle = await page.goto("/news/article-that-does-not-exist");
+  expect(missingArticle?.status()).toBe(404);
+});
+
+test("News & Blog is present in public navigation and the footer", async ({ page, isMobile }) => {
+  await page.goto("/");
+  if (isMobile) {
+    await page.getByRole("button", { name: "Open menu" }).click();
+    await expect(page.getByRole("navigation", { name: "Mobile navigation" }).getByRole("link", { name: "News & Blog" })).toBeVisible();
+  } else {
+    await expect(page.getByRole("navigation", { name: "Primary navigation" }).getByRole("link", { name: "News & Blog" })).toBeVisible();
+  }
+  await expect(page.getByRole("navigation", { name: "Explore footer links" }).getByRole("link", { name: "News & Blog" })).toHaveAttribute("href", "/news");
+});
+
+test("News sitemap and homepage reflect only genuine published articles", async ({ page, request }) => {
+  const sitemap = await request.get("/sitemap.xml");
+  const sitemapBody = await sitemap.text();
+  expect(sitemap.status()).toBe(200);
+  expect(sitemapBody).toContain("https://sobautofix.com/news");
+  expect(sitemapBody).not.toContain("https://sobautofix.com/advice");
+
+  await page.goto("/news");
+  const publishedLinks = page.locator('main a[href^="/news/"]');
+  const publishedCount = await publishedLinks.count();
+  await page.goto("/");
+  const homepageNews = page.getByRole("heading", { name: "Useful advice from the workshop." });
+  if (publishedCount === 0) await expect(homepageNews).toHaveCount(0);
+  else await expect(homepageNews).toBeVisible();
+});
+
+test("News & Blog CMS is protected by admin authentication", async ({ page }) => {
+  await page.goto("/admin/news");
+  await expect(page).toHaveURL(/\/admin\/login$/);
+});
+
 test("optional integrations remain gated by consent", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator('script[src*="googletagmanager"], script[src*="embed.tawk.to"]')).toHaveCount(0);

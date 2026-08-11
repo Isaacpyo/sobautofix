@@ -1,6 +1,7 @@
 import { ArrowRight, BatteryCharging, Check, MapPin, ScanLine, Smartphone, Wrench } from "lucide-react";
 import Link from "next/link";
 import { JsonLd } from "@/components/seo/json-ld";
+import { ArticleCard } from "@/components/news/article-card";
 import { ServiceCard } from "@/components/marketing/service-card";
 import { TrustBar } from "@/components/marketing/trust-bar";
 import { VehicleJourney } from "@/components/vehicle/vehicle-journey";
@@ -9,6 +10,7 @@ import { Container, Eyebrow } from "@/components/ui/container";
 import { areas, contactLinks, diagnostics, services } from "@/config/site";
 import { createMetadata, localBusinessJsonLd } from "@/lib/seo";
 import { getActiveOffer } from "@/lib/offers/repository";
+import { getPublishedArticles } from "@/lib/news/repository";
 
 export const metadata = createMetadata(
   "Professional Diagnostics. Not Guesswork.",
@@ -17,7 +19,7 @@ export const metadata = createMetadata(
 );
 
 export default async function HomePage() {
-  const offer = await getActiveOffer();
+  const [offer, articles] = await Promise.all([getActiveOffer(), getPublishedArticles(3)]);
   return (
     <>
       <JsonLd value={localBusinessJsonLd()} />
@@ -88,6 +90,7 @@ export default async function HomePage() {
       </section>
 
       <section className="hero-grid py-20 text-white"><Container className="text-center"><ScanLine className="mx-auto mb-5 text-[#67B9FF]" size={44} /><h2 className="text-balance text-5xl font-extrabold">Don’t replace parts based on guesswork.</h2><p className="mx-auto mt-5 max-w-2xl text-lg text-[#C6D2DF]">Identify the fault first. Then make an informed repair decision.</p><div className="mt-8 flex flex-wrap justify-center gap-3"><ButtonLink href="/book">Book diagnostics</ButtonLink><ButtonLink href="/get-a-quote" variant="secondary">Request an estimate</ButtonLink></div></Container></section>
+      {articles.length > 0 && <section className="deferred-section border-y border-[#E4EAF0] bg-[#F4F7FA] py-20 sm:py-24"><Container><div className="flex flex-wrap items-end justify-between gap-5"><div><Eyebrow>News &amp; Blog</Eyebrow><h2 className="text-4xl font-extrabold text-[#071127] sm:text-5xl">Useful advice from the workshop.</h2></div><Link className="inline-flex items-center gap-2 font-bold text-[#1974E2]" href="/news">View all articles <ArrowRight size={16} /></Link></div><div className="mt-10 grid gap-5 md:grid-cols-3">{articles.map((article) => <ArticleCard key={article.id} article={article} />)}</div></Container></section>}
     </>
   );
 }

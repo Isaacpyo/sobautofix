@@ -6,7 +6,7 @@ function publicPath(kind: string, slug: string) {
   if (kind === "service") return `/services/${slug}`;
   if (kind === "diagnostic") return `/diagnostics/${slug}`;
   if (kind === "area") return `/areas/${slug}`;
-  if (kind === "article") return `/advice/${slug}`;
+  if (kind === "article") return `/news/${slug}`;
   return `/${slug}`;
 }
 
@@ -26,8 +26,13 @@ export async function GET(request: NextRequest) {
   const ids = due.map((entry) => entry.id);
   const { error: updateError } = await admin.from("content_entries").update({ status: "published" }).in("id", ids);
   if (updateError) return NextResponse.json({ error: "Scheduled publishing failed" }, { status: 500 });
-  await admin.from("admin_audit_log").insert(due.map((entry) => ({ actor_id: null, action: "scheduled_publish", entity_type: "content", entity_id: entry.id, detail: { kind: entry.kind, slug: entry.slug } })));
+  await admin.from("admin_audit_log").insert(due.map((entry) => ({ actor_id: null, action: "scheduled_publish", entity_type: entry.kind === "article" ? "article" : "content", entity_id: entry.id, detail: { kind: entry.kind, slug: entry.slug } })));
   for (const entry of due) revalidatePath(publicPath(entry.kind, entry.slug));
+  if (due.some((entry) => entry.kind === "article")) {
+    revalidatePath("/news");
+    revalidatePath("/news/feed.xml");
+    revalidatePath("/");
+  }
   revalidatePath("/sitemap.xml");
   return NextResponse.json({ success: true, published: due.length });
 }
