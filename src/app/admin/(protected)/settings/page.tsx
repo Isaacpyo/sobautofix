@@ -24,6 +24,11 @@ export default async function SettingsPage() {
       <h1 className="mt-2 text-4xl font-extrabold text-[#071127]">Settings</h1>
       <p className="mt-3 text-[#586575]">Manage the business details used across the website and customer communications.</p>
 
+      <nav aria-label="Configuration pages" className="mt-6 flex w-fit gap-1 rounded-xl border border-[#D7E0E9] bg-white p-1">
+        <Link href="/admin/settings" aria-current="page" className="rounded-lg bg-[#071127] px-4 py-2 text-sm font-bold text-white">Settings</Link>
+        <Link href="/admin/configuration/security" className="rounded-lg px-4 py-2 text-sm font-bold text-[#586575] hover:bg-[#F4F7FA] hover:text-[#1974E2]">Security</Link>
+      </nav>
+
       <div className="mt-8 grid items-start gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
         <nav aria-label="Settings sections" className="rounded-2xl border border-[#E4EAF0] bg-white p-2 lg:sticky lg:top-6">
           <p className="px-3 pb-2 pt-2 text-[0.65rem] font-extrabold uppercase tracking-[0.16em] text-[#8794A3]">General</p>

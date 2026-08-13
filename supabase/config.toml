@@ -59,4 +59,11 @@ content_path = "./supabase/templates/recovery.html"
 [auth.email.notification.password_changed]
 enabled = true
 subject = "Your SOB Autofix admin password was changed"
-content_path = "./supabase/templates/password_changed_notification.html"
+content_path = "./templates/password_changed_notification.html"
+
+[auth.mfa]
+max_enrolled_factors = 10
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true

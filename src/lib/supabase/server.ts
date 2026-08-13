@@ -4,6 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { isAllowedAdminEmail } from "@/config/admin";
+import { requiresMfaChallenge } from "@/lib/auth/mfa";
 
 export function isSupabaseConfigured() {
   return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
@@ -41,17 +42,26 @@ export function createAdminClient() {
   });
 }
 
-export async function getAdminUser() {
+export async function getAdminUser(options: { requireMfa?: boolean } = {}) {
+  const requireMfa = options.requireMfa ?? true;
   const client = await createClient();
   if (!client) return null;
   const { data: { user } } = await client.auth.getUser();
   if (!user || !isAllowedAdminEmail(user.email)) return null;
 
-  const { data: profile } = await client
+  const profileClient = createAdminClient();
+  if (!profileClient) return null;
+  const { data: profile } = await profileClient
     .from("admin_profiles")
     .select("user_id, display_name")
     .eq("user_id", user.id)
     .maybeSingle();
 
-  return profile ? { user, profile, client } : null;
+  if (!profile) return null;
+  const { data: assurance, error: assuranceError } = await client.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (assuranceError || !assurance) return null;
+  const mfaRequired = assurance.nextLevel === "aal2";
+  const mfaVerified = assurance.currentLevel === "aal2";
+  if (requireMfa && requiresMfaChallenge(assurance)) return null;
+  return { user, profile, client, assurance, mfaRequired, mfaVerified };
 }
