@@ -1,0 +1,352 @@
+-- Editorial source only. This file is intentionally non-executable and is
+-- consumed by the validated draft importer.
+with articles (slug,title,excerpt,category,seo_title,seo_description,body,faqs,links,cta_heading,cta_body,cta_label,cta_href) as (
+values
+('car-overheating-causes-what-to-do','Car Overheating: Common Causes and What You Should Do','An overheating engine can be damaged within minutes. Stop safely, switch off and let it cool; never open a hot cooling system.','Car Care','Car Overheating: Causes and What to Do | SOB Autofix','Car overheating? Learn the safe immediate steps, common coolant, fan, pump and thermostat causes, and why driving a hot engine risks major damage.', $body$
+If your car is overheating, reduce load, turn off the air conditioning and pull over safely as soon as possible. Switch the engine off if the gauge enters the hot zone, a red temperature warning appears, steam is visible or power drops. Do not open the coolant cap while the system is hot: pressurised coolant can cause severe burns. Continuing to drive can distort cylinder-head components, damage seals and turn a leak or fan fault into major engine damage.
+
+## Warning signs of overheating
+
+The temperature gauge rising above its normal stable position, a red thermometer symbol, steam, a sweet smell, coolant beneath the car or a heater suddenly blowing cold can all indicate trouble. Some modern gauges remain centred across a broad temperature range, so a warning message deserves immediate attention even if the needle has only just moved.
+
+Loss of cabin heat while temperature rises can mean coolant is no longer circulating through the heater. Stop rather than treating the heater as a way to continue. A boiling expansion tank or visibly escaping steam must be left untouched until completely cool.
+
+## Common causes
+
+- Low coolant caused by an external or internal leak.
+- A thermostat that does not open correctly.
+- Cooling-fan, relay, wiring or control faults, often noticed in traffic.
+- A water-pump or drive-belt problem that reduces circulation.
+- A restricted radiator or air trapped after cooling-system work.
+- Combustion gases entering the cooling system through engine damage.
+
+These possibilities overlap. Overheating at motorway speed suggests a different load and airflow pattern from overheating only while idling. A technician should pressure-test, inspect circulation and fan control, and check temperature data rather than replace the thermostat by assumption.
+
+## What to do at the roadside
+
+Signal early and stop somewhere away from traffic. Switch off, move occupants to a safe location and call for assistance if steam, coolant loss or a red warning is present. On a fast road, personal safety takes priority over inspecting the car.
+
+Wait until the engine is fully cool before any level check. This can take a considerable time. Never pour cold water over a hot engine and never remove a pressurised cap with a cloth as a supposed precaution. If coolant has been lost, topping up does not make the system dependable; the leak and correct coolant mixture still need attention.
+
+## Can you drive after it cools down?
+
+Cooling down does not repair the cause. If coolant is missing, a belt is damaged, the warning returns, steam appears or the reason is unknown, arrange recovery. A very short movement to escape immediate danger may be necessary, but planning a journey risks another rapid temperature rise.
+
+Repeated overheating is especially harmful. Each event can worsen gasket sealing, warp surfaces and contaminate oil. If the engine runs roughly, emits persistent white smoke or the oil appears contaminated, leave it off.
+
+## Coolant leaks and pressure
+
+Hoses, radiator seams, the expansion tank, cap, thermostat housing, pump and cabin heater circuit can leak. Some leaks occur only hot and pressurised, then evaporate without leaving a puddle. UV dye or a cold pressure test can reveal them. The cap is part of system pressure control and should be tested rather than dismissed.
+
+Our guide to [coolant disappearing without a visible leak](/news/coolant-disappearing-no-visible-leak) explains internal loss and hard-to-see external leaks. Never use stop-leak products as a default; they can restrict small passages and complicate proper repair.
+
+## Fan faults and traffic overheating
+
+At road speed, air flows through the radiator naturally. In slow traffic the electric fan becomes more important, so a fan-control fault may first appear when stationary. Causes include the motor, fuse, relay, resistor or module, temperature input and air-conditioning pressure strategy.
+
+Do not place hands near a fan even with the engine off; electric fans can start unexpectedly. Electrical tests should verify power, earth and command before the motor or module is replaced.
+
+## How the cause is diagnosed
+
+Diagnosis begins only when the system is safe and cool. Coolant level and condition, visible leakage, belt drive and fault codes are checked. Pressure testing, fan actuation, temperature comparison and circulation checks follow. Combustion-gas testing or mechanical tests may be needed if pressure builds abnormally or coolant loss has no external source.
+
+SOB Autofix offers [engine repairs](/services/engine-repair) and [vehicle diagnostics](/diagnostics/car-diagnostics) in Doncaster. The repair should be followed by correct filling and bleeding, verification of fan operation and a controlled temperature test.
+
+## Preventing another event
+
+Check coolant only when cold and investigate repeated top-ups. Use the exact coolant specification and mixture for the vehicle; colour alone does not prove compatibility. Attend to belt noise, leaks and warning messages promptly, and never assume a gauge that returned to normal has made the cause disappear.
+ $body$,
+ $faqs$[{"question":"Can I add water to an overheating car?","answer":"Only after the system is completely cool and only as an emergency measure permitted by the handbook. A leak still needs repair and the correct coolant mixture restored."},{"question":"Why does my car overheat only in traffic?","answer":"Reduced natural airflow makes fan operation important, so fan motor, relay, wiring or control faults become more likely. Coolant circulation problems remain possible."},{"question":"How long should I wait before opening the coolant cap?","answer":"There is no fixed safe time. Wait until the engine and hoses are fully cool; if uncertain, leave the cap closed and seek assistance."},{"question":"Can overheating damage the engine immediately?","answer":"Yes. Severe temperature can cause damage within minutes. A red warning, steam or gauge in the hot zone requires a safe stop and shutdown."}]$faqs$::jsonb,
+ $links$[{"label":"Engine repairs","href":"/services/engine-repair"},{"label":"Unexplained coolant loss guide","href":"/news/coolant-disappearing-no-visible-leak"},{"label":"Exhaust smoke colours explained","href":"/news/white-blue-black-exhaust-smoke"}]$links$::jsonb,
+ 'Has the temperature warning appeared?','Arrange cooling-system testing before another overheat risks more extensive engine damage.','Get the cooling system checked','/get-a-quote'),
+
+('coolant-disappearing-no-visible-leak','Coolant Keeps Disappearing but There’s No Visible Leak: What Could Cause It?','Coolant can escape only when hot, evaporate on engine parts, enter the cabin or be consumed internally without leaving a puddle.','Diagnostics','Coolant Disappearing With No Visible Leak | SOB Autofix','Coolant disappearing with no visible leak? Learn about pressure leaks, heater matrices, caps and internal engine loss, plus the tests that find the cause.', $body$
+Coolant that keeps disappearing without a puddle may be leaking only when the system is hot and pressurised, evaporating on a hot surface, escaping through the cap, entering the cabin through the heater matrix or passing internally into a cylinder or the oil. A falling level is not normal consumption. Check it only when cold, record how quickly it drops and arrange testing before the engine overheats.
+
+## Why a leak may leave no mark
+
+A pinhole can spray a fine mist only at operating pressure. Coolant landing on an exhaust or engine surface may evaporate and leave a pale or coloured crust rather than a pool. Undertrays can catch fluid and release it elsewhere. Pump seals may also leak intermittently or only while the shaft is turning.
+
+A cold pressure test can reproduce leakage with the engine off, while UV dye may trace small external losses. The test pressure must remain within the vehicle specification; excessive pressure can create damage rather than diagnose it.
+
+## Expansion-tank cap and overflow loss
+
+The cap maintains a designed pressure and allows controlled expansion. A weak seal can release vapour or coolant too early. Conversely, abnormal combustion pressure or overheating can force coolant out even when the cap is functional. Replacing the cap is inexpensive but should not be used to dismiss signs of overpressure.
+
+Look for dried residue around the tank and overflow path when cold. Cracks in plastic tanks and seams may open with heat. Never inspect closely or loosen the cap while hot.
+
+## Heater-matrix leaks
+
+The cabin heater uses engine coolant. A sweet smell inside, persistent windscreen mist, damp carpet or reduced coolant can indicate a heater-matrix or connection leak. Coolant vapour can irritate, and a significant leak may worsen rapidly.
+
+Air-conditioning condensation is normally clear water beneath the car and does not lower the coolant level. Fluid colour and location help, but modern coolant colours vary, so do not identify it by colour alone.
+
+## Internal coolant loss
+
+Coolant can enter a combustion chamber through a sealing failure, cracked component or other internal fault. Persistent dense white vapour after the exhaust is fully warm, misfiring on start-up, unusually hard cooling hoses, repeated bubbling or pressure building rapidly from cold are relevant clues. None proves a head-gasket fault by itself.
+
+Water vapour from a cold exhaust is normal, particularly in cool weather. Tests may include cooling-system pressure behaviour, combustion-gas detection, spark-plug or cylinder inspection, compression and leak-down testing. The [exhaust smoke guide](/news/white-blue-black-exhaust-smoke) helps distinguish persistent smoke from condensation.
+
+Coolant entering oil can sometimes create a pale emulsion, but small deposits under an oil cap may also result from condensation on short journeys. Check the dipstick and overall oil condition, and rely on testing rather than one visual sign. Do not run the engine if oil level has risen unexpectedly or contamination is substantial.
+
+## Can you keep topping it up?
+
+No. Repeated topping up masks the rate of loss, risks the wrong mixture and allows sudden overheating. Air drawn into the system can create hot spots and unreliable heater operation. If the level drops below minimum again, or a warning appears, the car should not be relied upon.
+
+Use only the specified coolant when instructed and never mix products based on colour. Emergency water may reduce freeze and corrosion protection and must be corrected after repair. Stop-leak additives can block narrow passages and interfere with later diagnosis.
+
+## What to record
+
+Marking the cold level externally or taking a photograph can show the rate without opening the system hot. Note mileage, cabin smells, visible residue, exhaust behaviour, heater changes and whether loss follows long journeys. Check for oil or coolant warnings and rising temperature.
+
+If temperature rises, follow the [car overheating guide](/news/car-overheating-causes-what-to-do): stop safely, switch off and do not open the cap. A cooling system low enough to overheat needs recovery rather than another top-up and journey.
+
+## How the leak is found
+
+The technician inspects the cold system, tests cap and system pressure, checks hidden areas and may use dye. Temperature data and fan operation are reviewed because overheating itself can expel coolant. If no external path is found, evidence-led internal-engine tests follow.
+
+SOB Autofix provides [engine diagnostics and repair](/services/engine-repair) in Doncaster. A sound repair includes the source, correct coolant specification, proper bleeding and a repeat pressure and temperature check—not simply refilling the tank.
+ $body$,
+ $faqs$[{"question":"Can coolant evaporate without a leak?","answer":"The sealed system should not require routine top-ups. Fluid may evaporate after escaping from a tiny hot leak, but there is still a fault to locate."},{"question":"Does white exhaust smoke prove a head-gasket failure?","answer":"No. Cold condensation is normal and several faults can create persistent vapour. Cooling pressure, gas and mechanical tests are needed."},{"question":"Why can I smell coolant inside the car?","answer":"A heater-matrix or cabin connection leak is possible, especially with misting or damp carpet. Arrange prompt cooling-system inspection."},{"question":"Can I use stop-leak additive?","answer":"It is not a dependable diagnosis or repair and may restrict small cooling passages. Finding and repairing the source is safer."}]$faqs$::jsonb,
+ $links$[{"label":"Engine repairs","href":"/services/engine-repair"},{"label":"Car overheating advice","href":"/news/car-overheating-causes-what-to-do"},{"label":"Exhaust smoke guide","href":"/news/white-blue-black-exhaust-smoke"}]$links$::jsonb,
+ 'Coolant level dropping again?','Pressure, temperature and internal-engine tests can locate loss that never reaches the ground.','Request cooling-system diagnostics','/get-a-quote'),
+
+('white-blue-black-exhaust-smoke','White, Blue or Black Smoke From Your Exhaust: What Each Colour Means','Persistent white, blue or black exhaust smoke points towards different coolant, oil, fuel or airflow problems and should not be diagnosed by colour alone.','Diagnostics','White, Blue or Black Exhaust Smoke | SOB Autofix','White, blue or black smoke from your exhaust? Learn what each colour can mean, when to stop driving and which engine tests confirm the real cause.', $body$
+Exhaust smoke colour is a clue, not a diagnosis. Persistent thick white smoke can indicate coolant or unburnt fuel, blue-grey smoke usually suggests oil is entering combustion, and black smoke indicates excessive fuel or insufficient air. Brief white vapour from a cold exhaust is normal condensation. Stop driving for dense smoke, rapid oil or coolant loss, overheating, severe misfiring, a runaway diesel engine or an oil-pressure warning.
+
+## White smoke or normal condensation?
+
+Water is a normal combustion product, so a cold exhaust often emits thin vapour that disappears as the system warms. Condensation may drip as clear water. Concern rises when a dense plume continues at full temperature, has a sweet smell, accompanies coolant loss or makes the engine misfire.
+
+Internal coolant entry is one possibility, but injector faults on a diesel can also create pale unburnt-fuel smoke. Cooling-system pressure, combustion-gas tests, cylinder inspection and engine data separate them. Read the guide to [coolant loss without a visible leak](/news/coolant-disappearing-no-visible-leak) if the expansion-tank level also falls.
+
+## Blue or blue-grey smoke
+
+Blue smoke normally indicates engine oil being burnt. Worn valve-stem seals may show after idling or on start-up; turbocharger seal or drain problems can produce smoke under load; piston-ring or crankcase-ventilation faults can create more continuous consumption. Oil spilled during service can smoke briefly from an external hot surface rather than the tailpipe.
+
+Check oil level correctly when safe. If it is very low, pressure warning is on or smoke is heavy, switch off. A diesel engine that begins accelerating uncontrollably while consuming its own oil is an emergency: do not stand in front of it or attempt risky intervention; move away and call emergency assistance if danger persists.
+
+## Black smoke
+
+Black smoke means more fuel is present than available air can burn cleanly. A restricted air path, boost leak, airflow-sensor error, injector fault, exhaust recirculation issue or control problem may be involved. Older diesels can emit a brief puff under load, but sustained visible smoke on a modern car is not normal.
+
+Continuing can contaminate oil, damage emissions components and load the diesel particulate filter. Do not respond by driving harder until the air, fuel and boost data are checked. If power has also dropped, see [why cars lose power when accelerating](/news/car-losing-power-when-accelerating).
+
+## Smoke only at certain times
+
+Timing helps. Smoke after a cold start, after long idling, during acceleration or on overrun loads engine systems differently. A plume after a downhill coast may suggest oil entering under high intake vacuum on some petrol engines; smoke under turbo boost directs attention elsewhere. Fuel smell, sweet smell and oil consumption add context.
+
+Record a short video from a safe stationary position or ask a passenger to observe. Do not follow the car closely or inhale exhaust fumes. Diagnosis in an enclosed building is dangerous without extraction.
+
+## Is it safe to keep driving?
+
+Brief condensation with stable fluid levels and normal running is expected. Persistent coloured smoke needs prompt assessment. Stop for overheating, falling coolant, low oil, flashing engine light, loss of power, strong fuel smell or a smoke cloud that obscures other road users.
+
+Even when performance feels normal, oil or excess fuel can damage the catalyst and particulate filter. Avoid long journeys and high load. A warning-free dashboard does not guarantee that mechanical oil consumption is safe.
+
+## What not to assume
+
+Smoke colour changes with lighting and can be hard to judge. Steam can look blue against a dark background, while fine oil smoke may look grey. Do not order a turbocharger, injectors or head-gasket repair from colour alone. Several cheaper airflow, ventilation and wiring faults can imitate major failures.
+
+Likewise, an exhaust additive cannot repair mechanical wear or a leaking cooling system. Fixing the cause before cleaning an emissions component prevents a quick repeat.
+
+## Diagnostic tests
+
+An assessment checks fluid levels and condition, fault codes, fuel corrections, airflow and boost data, crankcase pressure and cooling-system behaviour. Compression or leak-down testing, turbo inspection and injector tests are selected only when evidence points there. Exhaust after-treatment pressure and temperatures may also be relevant.
+
+SOB Autofix offers [vehicle diagnostics](/diagnostics/car-diagnostics), [DPF diagnostics](/diagnostics/dpf-diagnostics) and [engine repairs](/services/engine-repair) in Doncaster. The final recommendation should connect the smoke pattern to measurements and verify that fluid consumption and emissions have returned to normal.
+ $body$,
+ $faqs$[{"question":"Is white smoke on a cold morning normal?","answer":"Thin vapour that clears as the exhaust warms is usually condensation. Persistent dense smoke with coolant loss, misfiring or a sweet smell needs testing."},{"question":"Can too much engine oil cause blue smoke?","answer":"Yes. Overfilling can affect crankcase ventilation and oil control. Verify the level correctly and do not run substantially over the maximum mark."},{"question":"Does black smoke mean the injectors are faulty?","answer":"Not necessarily. Restricted air, boost leaks, sensors and control faults can create the same rich condition. Air and fuel measurements should guide testing."},{"question":"Can I drive if the exhaust smokes only under acceleration?","answer":"Avoid hard load and arrange diagnosis. Turbo, fuelling, airflow or oil-control faults may worsen and damage emissions components."}]$faqs$::jsonb,
+ $links$[{"label":"Vehicle diagnostics","href":"/diagnostics/car-diagnostics"},{"label":"DPF diagnostics","href":"/diagnostics/dpf-diagnostics"},{"label":"Coolant loss guide","href":"/news/coolant-disappearing-no-visible-leak"}]$links$::jsonb,
+ 'Persistent exhaust smoke?','Record when it appears and arrange fluid, engine-data and mechanical checks before further damage develops.','Book vehicle diagnostics','/book'),
+
+('dpf-warning-light-uk','DPF Warning Light On? What UK Diesel Drivers Need to Know','A DPF light means soot loading or regeneration needs attention, but sensor and engine faults must be ruled out before forced regeneration.','Diagnostics','DPF Warning Light: UK Driver Guide | SOB Autofix','DPF warning light on? Learn when a steady drive may help, when to stop, why regeneration fails and how proper diesel diagnostics prevent repeat blockage.', $body$
+A diesel particulate filter warning means the system has detected soot loading or a regeneration problem. If the handbook permits and there are no other warnings, normal temperature, adequate fuel and normal performance, a steady drive may allow an automatic regeneration. A flashing light, limp mode, red warning, overheating, low oil pressure, heavy smoke or rising oil level requires diagnosis rather than a harder drive. A blocked filter is often the result of another fault, not the complete cause.
+
+## What the DPF does
+
+The filter traps soot from diesel exhaust and periodically burns it into a smaller quantity of ash. Passive regeneration occurs when exhaust temperature is naturally high enough; active regeneration uses engine controls to raise temperature. Ash does not burn away and eventually requires appropriate servicing or replacement.
+
+Pressure and temperature sensors help the control unit estimate loading. A split hose, biased sensor or wiring fault can produce a warning even when physical soot loading is not the only issue. Measured pressure and regeneration history matter.
+
+## Why regeneration may not complete
+
+Repeated short, cold journeys can interrupt active regeneration. Low fuel level, cooling-system faults that prevent normal temperature, glow-system faults, engine warning codes or unsafe oil condition may also inhibit it. Boost leaks, injector problems and exhaust recirculation faults can create excessive soot faster than regeneration removes it.
+
+That is why clearing the light or cleaning the filter without checking engine operation can lead to a rapid repeat. A full scan should identify blocking conditions and related engine faults.
+
+## Can a motorway drive clear the light?
+
+Follow the exact vehicle handbook. Some manufacturers advise a sustained drive at a specified speed or engine range for an initial steady warning. Choose a legal, safe route and never hold a lower gear or high speed solely to create heat beyond those instructions.
+
+Do not attempt a regeneration drive if the warning flashes, the car is in limp mode, temperature is abnormal, oil is above maximum, fuel is very low or another serious warning is present. If the light does not clear after the permitted attempt, book [DPF diagnostics](/diagnostics/dpf-diagnostics).
+
+## Signs a regeneration is happening
+
+The idle may be slightly higher, cooling fans may run, fuel consumption can rise and the exhaust may smell hotter. Stop-start may be unavailable. These signs vary and should not distract from driving. If practical and safe, avoiding shutdown for a few minutes can allow completion, but never leave a running vehicle unattended or in an enclosed space.
+
+Extreme heat around the exhaust is normal during regeneration. Do not park over dry grass or combustible material. Smoke, harsh running or a temperature warning is not a normal event to ignore.
+
+## Oil level matters
+
+Interrupted regeneration can allow fuel to dilute engine oil on some vehicles, raising its level and reducing lubrication quality. If oil is above the maximum mark or smells strongly of fuel, do not initiate a forced drive. Arrange assessment and follow manufacturer requirements for oil replacement.
+
+Low oil pressure or very low oil level is also an immediate stop condition. The DPF warning never takes priority over engine lubrication safety.
+
+## Forced regeneration is not always appropriate
+
+A workshop regeneration deliberately creates high exhaust temperatures. It should be performed only after checking soot estimate, ash load, pressure readings, oil condition, sensor plausibility and faults that could make the process unsafe. A filter loaded beyond limits or contaminated with oil or coolant may need removal or replacement instead.
+
+Resetting learned DPF values without completing the specified repair can make monitoring inaccurate. Any replacement or professional cleaning must be recorded in the control system according to vehicle requirements.
+
+## Symptoms of a restricted DPF
+
+Reduced power, poor acceleration, increased fuel use, frequent fan operation and limp mode can accompany restriction. These symptoms also occur with boost, fuel and sensor faults. The [limp-mode guide](/news/car-limp-mode-causes) explains why the protection strategy does not name the failed part.
+
+Heavy black smoke on a DPF-equipped vehicle suggests the system is not controlling soot as intended or there is an upstream fault. Avoid continued driving that may damage the filter or catalyst.
+
+## How diagnosis prevents recurrence
+
+A technician reads soot and ash estimates, differential pressure at controlled flow, temperature sensors, regeneration history and engine faults. Hoses and wiring are inspected, and engine temperature, boost, airflow and fuelling are checked when relevant. The outcome may be a safe regeneration, sensor or hose repair, correction of an engine fault, professional cleaning or replacement.
+
+SOB Autofix provides [DPF diagnostics](/diagnostics/dpf-diagnostics) in Doncaster. The aim is to restore the system and address why loading developed, rather than sell an unnecessary filter or clear a warning that will return.
+
+## Reducing future DPF trouble
+
+Use the correct low-ash oil, maintain the engine, respond to warning lights promptly and include longer fully warmed journeys where this suits the vehicle's use. If a diesel is consistently used only for short trips, discuss whether its operating pattern is compatible with reliable regeneration. Driving style cannot compensate for a sensor, injector or cooling fault.
+ $body$,
+ $faqs$[{"question":"Can I drive with the DPF light on?","answer":"A handbook-approved steady drive may be suitable for an initial steady light with no other symptoms. Flashing warnings, limp mode, abnormal temperature or oil level require diagnosis."},{"question":"How long does DPF regeneration take?","answer":"It varies by vehicle, loading and conditions. Follow the handbook rather than a universal time, and seek diagnostics if the warning remains."},{"question":"Will cleaning a DPF solve the problem permanently?","answer":"Only if the filter condition is the cause and upstream faults are resolved. Boost, sensor, injector and temperature problems can quickly load it again."},{"question":"Why is my engine oil level rising?","answer":"On some diesels, interrupted regeneration can dilute oil with fuel. Do not attempt another forced drive above the maximum level; arrange assessment."}]$faqs$::jsonb,
+ $links$[{"label":"DPF diagnostics","href":"/diagnostics/dpf-diagnostics"},{"label":"Limp mode guide","href":"/news/car-limp-mode-causes"},{"label":"Car losing power guide","href":"/news/car-losing-power-when-accelerating"}]$links$::jsonb,
+ 'DPF warning not clearing?','Check loading, pressure sensors and the engine conditions required for safe regeneration before forcing more heat through the filter.','Book DPF diagnostics','/book'),
+
+('car-diagnostics-cost-uk','How Much Does Car Diagnostics Cost in the UK?','Diagnostic cost depends on symptom complexity, test time, equipment and access. A code scan is not the same as finding the cause.','Advice & Guides','Car Diagnostics Cost in the UK | SOB Autofix','How much does car diagnostics cost in the UK? Learn what affects the quote, what proper fault finding includes and why a cheap code read may cost more later.', $body$
+The cost of car diagnostics in the UK depends on the symptom, vehicle, equipment, access and time required to prove the fault. A basic code read can be quick, while an intermittent electrical or mechanical problem may require road testing, circuit measurements and monitored data over several hours. SOB Autofix does not publish a single invented price for every case: request an accurate quote based on the vehicle and symptoms. Ask what the quoted diagnostic stage includes and whether further testing requires authorisation.
+
+## Code reading versus diagnosis
+
+Connecting a scan tool retrieves diagnostic trouble codes and data reported by control modules. That is an important first step, but a code usually describes a detected condition, circuit or relationship. It rarely proves that the component named in a short description should be replaced.
+
+Diagnosis interprets the code alongside symptoms, technical information and physical tests. An airflow code might require intake smoke testing and wiring measurements; a starting fault may need voltage-drop and fuel-pressure checks; a vibration may need mechanical inspection rather than scanning at all. Comparing prices without comparing scope can be misleading.
+
+## What affects diagnostic cost?
+
+- **Time and intermittency:** a permanent fault is often quicker to reproduce than one appearing only after rain or a long journey.
+- **Vehicle access:** buried connectors or components require more preparation than accessible test points.
+- **System complexity:** network, high-current and multiple-module faults can need specialised equipment and information.
+- **The required test:** pressure, smoke, oscilloscope, current, mechanical or road tests involve different setup.
+- **Previous intervention:** cleared codes, swapped parts and altered wiring can remove evidence or introduce additional faults.
+
+The cheapest initial offer is not automatically the lowest final cost. Unproven parts replacement adds parts, labour and fresh uncertainty while the original complaint remains.
+
+## What a diagnostic quote should explain
+
+Ask whether the charge covers an initial investigation period, a specific test package or diagnosis through to a confirmed cause. A fair process may pause after initial findings and request approval for deeper dismantling or intermittent monitoring. This keeps control of spending without promising that every complex fault fits one fixed session.
+
+Also ask what output you receive: stored codes, measurements, the evidence-based conclusion and recommended next step. Raw codes alone are not equivalent to a repair plan. If repair is authorised, clarify whether any diagnostic charge is separate; do not assume it is automatically included or waived.
+
+## Why garages charge for diagnostic time
+
+Professional diagnosis uses skilled labour, maintained tools, subscriptions, technical data and controlled test procedures. The value lies in reducing uncertainty. An hour spent proving a broken wire can save the cost of a control unit; a smoke test can separate a hose leak from a turbocharger fault.
+
+Charging for investigation also supports an honest stopping point. When evidence does not yet justify a part, the technician can explain what is known and what additional test would answer the next question.
+
+## Mobile diagnostics versus workshop testing
+
+Some battery, starting, scan and electrical checks can be completed at the vehicle. A workshop is better when a lift, extensive dismantling, prolonged monitoring or specialist equipment is required. A mobile visit may avoid recovery but should not promise tests that the location cannot support safely.
+
+SOB Autofix offers [vehicle diagnostics](/diagnostics/car-diagnostics) with mobile availability depending on the fault. The [mobile mechanic versus garage guide](/news/mobile-mechanic-vs-garage) helps you choose the suitable setting.
+
+## Information that helps produce an accurate quote
+
+Provide the registration, make and model, exact warning or symptom, when it occurs, whether the vehicle starts and drives safely, and any recent work. Photographs of messages and a short safe recording can help. Mention parts already replaced and whether codes have been cleared.
+
+“Engine light on” may allow a defined initial scan and assessment. “Intermittently loses all dashboard communication after two hours in heavy rain” signals a different scope. Honest detail makes the estimate more useful and helps the technician bring appropriate equipment.
+
+## Avoid false economy
+
+Free or very cheap code reads can be useful information, but problems begin when a code is treated as a shopping list. Replacing a sensor will not repair a split hose, missing supply, corroded terminal or mechanical condition producing its reading. Ask what test proves the proposed part is faulty.
+
+Likewise, avoid paying repeatedly for separate scans without sharing earlier reports. A coherent diagnostic history allows the next technician to build on evidence instead of starting again.
+
+## When diagnosis is urgent
+
+Cost comparison should not delay action for red oil-pressure or temperature warnings, poor braking, unstable steering, smoke, fuel smell or a flashing engine light. Stop safely and arrange recovery when continued driving risks people or major damage. The first quote should then include how the non-driveable vehicle will be assessed.
+
+## Getting a price from SOB Autofix
+
+Use [Get a Quote](/get-a-quote) and describe the vehicle and fault. SOB Autofix can outline the appropriate first diagnostic stage and any mobile or workshop requirements without publishing a figure that may not fit your case. No repair should be assumed merely because testing has started; findings support a separate, informed decision.
+ $body$,
+ $faqs$[{"question":"Is a diagnostic test just plugging in a computer?","answer":"No. Scanning gathers evidence, but confirming a cause may require live data, wiring, pressure, smoke or mechanical tests matched to the symptom."},{"question":"Why can diagnostic prices vary between cars?","answer":"Access, system design, specialist equipment and the time needed to reproduce an intermittent fault vary. The scope should be explained before work begins."},{"question":"Will diagnostics guarantee the repair price?","answer":"Diagnostics should reduce uncertainty and identify the next action. Some faults require staged testing or dismantling, so approve each additional scope clearly."},{"question":"Does SOB Autofix have one fixed diagnostic price?","answer":"This article does not claim one. Request a current quote using your registration and symptoms so the proposed test stage matches the vehicle."}]$faqs$::jsonb,
+ $links$[{"label":"Vehicle diagnostics","href":"/diagnostics/car-diagnostics"},{"label":"Get an accurate quote","href":"/get-a-quote"},{"label":"Mobile mechanic or garage guide","href":"/news/mobile-mechanic-vs-garage"}]$links$::jsonb,
+ 'Want an accurate diagnostic quote?','Share the registration, warning, symptoms and whether the car is safe to drive so SOB Autofix can scope the right first tests.','Get a diagnostic quote','/get-a-quote'),
+
+('mobile-mechanic-vs-garage','Mobile Mechanic vs Garage: Which Is Better for Your Car Repair?','Mobile service is convenient for suitable diagnostics and minor work; a garage is better for lifts, heavy repairs and controlled facilities.','Advice & Guides','Mobile Mechanic vs Garage: Which Is Best? | SOB Autofix','Mobile mechanic or garage? Compare convenience, equipment, safety and repair scope so you choose the right setting for diagnostics or car repair.', $body$
+A mobile mechanic is often the better choice when the car will not start, travel is inconvenient, or the diagnosis and repair can be completed safely with portable equipment. A garage is better when the job needs a vehicle lift, heavy dismantling, controlled indoor conditions, prolonged testing or equipment that cannot sensibly travel. The right answer depends on the fault, not simply convenience. A responsible provider should triage the symptom and recommend the setting where it can be tested and repaired safely.
+
+## When a mobile mechanic makes sense
+
+Battery, charging and starting checks are well suited to mobile work when the vehicle is parked safely. Many warning-light scans, electrical measurements, minor repairs and pre-arranged servicing tasks can also be completed at home or work. The technician sees the vehicle in the environment where an intermittent fault may occur and you avoid arranging recovery for a non-starter.
+
+Mobile does not mean “roadside anywhere”. There must be legal parking, enough working space, stable ground, acceptable weather and no traffic danger. Apartment car parks may restrict access or repairs. Tell the provider the exact location before booking.
+
+## When a garage is the better setting
+
+Work requiring a lift, alignment equipment, extensive underbody access, heavy component removal, welding, fluid handling or controlled cleanliness belongs in a suitable workshop. Intermittent faults needing overnight monitoring and repairs requiring several specialist tools may also be more efficient there.
+
+Brake, steering and suspension concerns may be inspected initially, but the car should not be driven to a garage when braking or wheel security is doubtful. Recovery connects a non-driveable vehicle with the safer facility.
+
+## Diagnostic capability matters more than location
+
+A scan tool can travel easily, but effective diagnosis may also need wiring information, oscilloscopes, smoke equipment, current clamps, pressure gauges and safe road-test conditions. Ask how the provider will confirm the cause, not merely whether they can read codes at your address.
+
+SOB Autofix offers [vehicle diagnostics](/diagnostics/car-diagnostics), [electrical fault finding](/diagnostics/electrical-fault-finding) and battery testing with mobile availability depending on the job. If workshop equipment becomes necessary, a staged plan should explain why.
+
+## Comparing convenience and disruption
+
+Mobile work saves travel and waiting-room time, particularly for a car that cannot start. You can describe the symptom directly and may continue normal activity nearby. However, weather, parts availability and site limitations can require a second visit.
+
+A garage concentrates equipment, parts delivery and technicians in one location, which can make larger repairs more efficient. It also removes the vehicle from your drive for the work period. Consider childcare, work and transport alongside the technical requirements, but never choose convenience over safe conditions.
+
+## What about cost?
+
+Neither option is always cheaper. A mobile visit includes travel and portable setup but may save recovery. A workshop has premises and equipment overheads but can complete lift-intensive jobs faster. Compare the defined scope: call-out, diagnostic time, parts, labour, travel area and what happens if workshop testing is required.
+
+For fault finding, read [how UK diagnostic costs are structured](/news/car-diagnostics-cost-uk). Avoid a provider who promises a guaranteed repair from a brief symptom without seeing or testing the car.
+
+## Questions to ask before booking
+
+- Is this symptom safe and suitable for mobile attendance?
+- What access, space and keys will the technician need?
+- What does the quoted first stage include?
+- Can the provider complete the likely repair, or only diagnose it?
+- What happens if a lift or further workshop equipment is needed?
+- Will findings and additional work be explained before authorisation?
+
+Provide the registration and warning messages so parts and technical information match the exact vehicle. Mention height restrictions, permit parking and whether the car can be moved.
+
+## Safety and weather limits
+
+The vehicle should be on firm, level ground away from moving traffic. Rain, high wind, darkness or extreme temperature can make electrical, lifting or underbody work unsafe and contaminate exposed components. A professional may reschedule or relocate the work; that is sound risk control, not poor service.
+
+Never ask someone to work beneath a vehicle on an unsuitable jack or public roadside. Children and pets should remain away from the work area, and the keys should stay under the technician's control during testing.
+
+## Choosing for common problems
+
+**Car will not start:** mobile battery, starter and scan tests are often ideal, unless unsafe parking or major mechanical failure is suspected. **Engine warning light with normal driving:** an initial mobile diagnostic session may be suitable. **Grinding brakes or unstable steering:** do not drive; discuss recovery and workshop inspection. **Clutch, gearbox or substantial engine repair:** workshop facilities are generally appropriate.
+
+**Intermittent electrical drain:** mobile measurement may reproduce the home-parked condition, though long monitoring or dismantling can move to a workshop. **Routine servicing:** either can work when the service scope, waste handling and location are suitable.
+
+## Mobile diagnosis followed by workshop repair
+
+The choice is not always either-or. An initial mobile assessment can establish whether the car is safe to move, identify likely systems and plan parts or recovery. Workshop repair then starts with useful evidence rather than an unexplained vehicle arrival.
+
+Records should travel with the car: codes, measurements, observations and work already completed. This prevents duplicated diagnostic time and protects against conclusions being reduced to “the computer says”.
+
+## How SOB Autofix can help
+
+Use [Get a Quote](/get-a-quote) with the vehicle, symptom and location. SOB Autofix can advise whether its mobile or workshop route is suitable in Doncaster and avoid promising work that the setting cannot support. For a confirmed appointment, use [Book](/book); for unusual access or safety questions, [contact SOB Autofix](/contact) first.
+ $body$,
+ $faqs$[{"question":"Can a mobile mechanic diagnose an engine warning light?","answer":"Often yes, using scanning and portable tests. Some faults later require a lift, extended road testing or workshop equipment, which should be explained."},{"question":"Can a mobile mechanic work on a car in the street?","answer":"Only where parking is legal and the space, traffic, ground and weather make the task safe. Share the location before booking."},{"question":"Is a mobile mechanic cheaper than a garage?","answer":"Not always. Compare travel, diagnostic scope, equipment needs and whether recovery or a second visit is likely rather than only the hourly figure."},{"question":"Should I drive grinding brakes to a garage?","answer":"No. Grinding with reduced braking or an abnormal pedal can be unsafe. Discuss recovery and an appropriate inspection location."}]$faqs$::jsonb,
+ $links$[{"label":"Mobile and specialist services","href":"/services/mobile-specialist"},{"label":"Vehicle diagnostics","href":"/diagnostics/car-diagnostics"},{"label":"Car diagnostic cost guide","href":"/news/car-diagnostics-cost-uk"}]$links$::jsonb,
+ 'Mobile visit or workshop appointment?','Describe the fault and parking location so SOB Autofix can recommend the safe, properly equipped route.','Get the right repair quote','/get-a-quote')
+)

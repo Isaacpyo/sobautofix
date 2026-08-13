@@ -1,0 +1,256 @@
+-- Editorial source only. This file is intentionally non-executable and is
+-- consumed by the validated draft importer.
+with articles (slug,title,excerpt,category,seo_title,seo_description,body,faqs,links,cta_heading,cta_body,cta_label,cta_href) as (
+values
+('battery-warning-light-while-driving','Battery Warning Light Came On While Driving: Can You Keep Driving?','The red battery light usually means the charging system is failing, not simply that the battery is old. Minimise electrical load and stop safely.','Diagnostics','Battery Warning Light While Driving | SOB Autofix','Battery warning light on while driving? Learn why charging may have stopped, when to pull over and how battery, alternator, belt and wiring are tested.', $body$
+If the red battery warning light comes on while driving, the charging system is usually no longer maintaining the vehicle's electrical supply. The battery may be healthy yet is now powering the car alone, so the engine can eventually stop when its stored energy is exhausted. An alternator fault, broken or slipping drive belt, wiring problem, poor connection or control fault may be responsible. Switch off non-essential electrical loads, avoid restarting the engine unnecessarily and head only to the nearest safe place. Stop sooner if steering becomes heavy, temperature rises or other warnings appear.
+
+## What the battery symbol actually monitors
+
+The symbol is commonly called the battery light, but it indicates charging-system performance. With the ignition on and engine stopped it should normally illuminate as a bulb check, then go out after starting. If it stays on or returns while running, system voltage or alternator control is outside the expected range.
+
+Modern alternators can be computer controlled, so voltage does not remain at one simple figure in every condition. Diagnosis needs the vehicle's strategy, battery state and electrical load to be considered. Replacing the battery solely because its symbol is lit misses the most common meaning of the warning.
+
+## Common causes
+
+- An alternator internal fault or worn drive mechanism.
+- A loose, damaged or broken auxiliary belt.
+- A failed tensioner or pulley that prevents reliable belt drive.
+- Corroded battery terminals, engine earths or alternator cables.
+- A blown high-current fuse, wiring fault or communication problem.
+- Battery monitoring or charging-control faults on smart systems.
+
+Low voltage can make several unrelated warning lights appear as modules begin to shut down. That does not necessarily mean every system has failed. The charging fault should be stabilised before secondary codes are interpreted.
+
+## Can you keep driving?
+
+There is no dependable remaining distance. A fully charged battery with light electrical demand may last longer than a weak battery at night with lamps, wipers, heaters and demisters operating. The engine can stop without much warning and may not restart. Electric steering assistance and other systems can also be affected as voltage falls.
+
+Drive only as far as necessary to leave danger when the car otherwise behaves normally. Avoid a motorway journey or attempting to get home across town. If coolant temperature rises, the steering suddenly becomes heavy, the belt area makes noise, you smell burning or a red temperature warning appears, stop the engine immediately. On some engines the same belt drives the water pump, so belt failure can cause rapid overheating as well as loss of charging.
+
+## What to do immediately
+
+Turn off heated screens, seat heaters, audio, chargers and climate loads while retaining whatever lamps and wipers safety requires. Do not switch the engine off until you have reached a safe stopping place because it may not restart. Park away from traffic and arrange assistance.
+
+Do not open the bonnet beside fast-moving traffic. When safely parked with the engine off, you may look for an obviously missing belt if it is visible without reaching into the engine bay. Never place hands near a running belt or pulley. Do not disconnect a battery terminal while the engine is running; voltage spikes can damage electronics and the practice is not a valid alternator test.
+
+## Battery or alternator?
+
+A weak battery commonly causes slow starting before the engine runs. A charging fault more often brings the warning on during a journey and leaves the battery progressively discharged. Either can affect the other: repeated undercharging damages a battery, while a failing battery can make the alternator work hard.
+
+The [battery-versus-alternator guide](/news/car-battery-vs-alternator-fault) compares the patterns, but measurement is required. A technician checks battery condition, voltage under load, alternator output, current, ripple, belt drive and cable voltage drop. On smart systems, scan data and commanded charging state may also matter.
+
+## Why a jump start is not the whole answer
+
+A jump may start a car whose battery has been depleted, but if the alternator is not charging it will stop again. Incorrect connections can damage modules, and a swollen, leaking, frozen or unusually hot battery must not be jumped. Use the specified points and procedure in the handbook if a jump is appropriate.
+
+After an apparent recovery, the system still needs testing. If the battery has gone flat repeatedly, read about [overnight battery drain](/news/car-battery-keeps-going-flat-overnight); a parasitic load is investigated differently from a failure while driving.
+
+## How charging faults are diagnosed
+
+A useful test begins with battery state because an almost-flat battery can distort charging measurements. The belt, tensioner, terminals and earths are inspected, then voltage and current are assessed under controlled loads. Voltage-drop tests find resistance in cables that look normal, while ripple can reveal alternator diode problems.
+
+Fault codes alone cannot distinguish every alternator, control and wiring issue. SOB Autofix offers [battery and charging diagnostics](/diagnostics/battery-charging) in Doncaster and can test the system before replacement is recommended. The final check should confirm stable starting and charging after repair.
+ $body$,
+ $faqs$[{"question":"Does the battery light mean I need a new battery?","answer":"Not necessarily. It usually reports a charging-system problem. The alternator, belt, cables, controls and battery condition all need testing."},{"question":"How far can I drive with the battery light on?","answer":"There is no safe guaranteed distance. Electrical demand and remaining battery charge vary, and the engine may stop. Reach the nearest safe place and arrange help."},{"question":"Can a broken belt cause the battery light?","answer":"Yes. If the alternator is no longer driven, charging stops. Some belt layouts also affect coolant circulation, making an accompanying temperature rise especially urgent."},{"question":"Why did several warning lights appear together?","answer":"Falling system voltage can disrupt multiple control modules. Stabilise and test the charging supply before treating every warning as a separate failure."}]$faqs$::jsonb,
+ $links$[{"label":"Battery and charging diagnostics","href":"/diagnostics/battery-charging"},{"label":"Battery or alternator fault guide","href":"/news/car-battery-vs-alternator-fault"},{"label":"Car overheating advice","href":"/news/car-overheating-causes-what-to-do"}]$links$::jsonb,
+ 'Battery light on now?','Arrange charging-system tests before the stored battery energy runs out or low voltage creates further faults.','Book charging diagnostics','/book'),
+
+('car-battery-vs-alternator-fault','How to Tell Whether Your Car Battery or Alternator Is Faulty','Starting symptoms, warning lights and proper load tests help distinguish a weak battery from a charging-system fault.','Diagnostics','Car Battery or Alternator Fault? | SOB Autofix','Battery or alternator fault? Compare slow starting, warning-light and repeated-discharge clues, then learn which tests confirm the charging-system cause.', $body$
+A weak battery most often shows itself when starting: slow cranking, rapid clicking or electrical resets after the car has stood. An alternator or charging fault more often causes the battery warning light while the engine is running, falling brightness, multiple electrical warnings or an engine that stops after a jump start. These patterns overlap, so voltage alone or a successful jump cannot confirm which component is faulty. The battery, charging output, drive belt and cables should be tested as one system.
+
+## Signs that point towards the battery
+
+A battery loses capacity with age, repeated deep discharge, heat, cold and long periods undercharged. The starter may turn slowly in the morning, especially after the car has stood or in cold weather. Interior lights can still work because they use far less current than the starter. If a full external charge restores reliable starting and the charging system tests correctly, reduced battery capacity becomes more likely.
+
+Physical swelling, leakage, a cracked case or a strong sulphur smell is unsafe. Do not charge or jump the battery; keep sparks away and arrange professional handling. Corroded or loose terminals can imitate a bad battery and must be corrected before its condition is judged.
+
+## Signs that point towards the alternator or charging circuit
+
+A warning light that appears during driving, electrical functions weakening with the engine running, or repeated stalling after a boost points towards inadequate charging. Noise from the belt or pulley area, a burning smell or intermittent charging as engine speed changes are other clues. However, cable resistance, fuses and computer control can create the same effect as an internally failed alternator.
+
+Modern charging systems deliberately vary voltage to manage fuel use and battery condition. A quick reading that seems low by older standards may be normal at that instant. Diagnosis should examine commanded charge, current flow and battery state using information appropriate to the vehicle.
+
+## Why a multimeter reading is not enough
+
+Open-circuit battery voltage indicates state of charge more than capacity. A tired battery may show a respectable voltage without load and collapse during cranking. Equally, measuring charging voltage with a depleted or defective battery can make alternator behaviour difficult to interpret.
+
+A complete assessment can include battery conductance or load testing, cranking voltage, alternator voltage and current under controlled loads, AC ripple and voltage drop across positive and earth cables. Belt condition and tension also matter. Results need to be compared with manufacturer specifications and temperature.
+
+## The cable and earth problem in the middle
+
+The alternator can generate correctly while resistance in a cable prevents energy reaching the battery. Likewise, a good battery cannot operate the starter through a poor engine earth. Terminals may look clean outside while corrosion hides inside a crimp or connection.
+
+Voltage-drop testing measures the loss while current flows and can expose this hidden resistance. Replacing either major component before checking the circuit can leave the original no-start or warning light unchanged.
+
+## What repeated flat batteries mean
+
+A battery that is flat every morning may be discharged by a light, module, accessory or wiring fault while parked. It may also be failing internally or never receiving enough charge during short journeys. This is different from an obvious warning light during driving, though the problems can coexist.
+
+Read the guide to a [battery that goes flat overnight](/news/car-battery-keeps-going-flat-overnight) before assuming an alternator. Parasitic-drain testing requires the car to enter sleep mode and the current to be monitored without waking modules accidentally.
+
+## Can you test by disconnecting the battery?
+
+Never disconnect a battery lead with the engine running. Older advice suggested that an engine continuing to run proved the alternator worked, but the resulting voltage surge can damage modern electronics and the test says little about output quality. Use proper measurement instead.
+
+Be cautious with plug-in voltmeters and dashboard voltage displays. They can reveal trends but may read at a different point in the circuit and lack the load context needed for diagnosis.
+
+## Jump-start results can mislead
+
+If the car starts with a jump, that confirms the original supply could not start it at that moment. It does not prove the battery itself is the cause. Poor terminals, an overnight drain or inadequate charging may have left it discharged. If the engine stops soon after the jump and the battery light remains on, charging failure is more likely.
+
+Follow the vehicle handbook because hybrids, stop-start cars and vehicles with batteries in remote locations may specify dedicated connection points. Stop for heat, swelling, leakage or reversed polarity.
+
+## When not to keep driving
+
+A battery fault noticed only at starting may leave the car running normally once started, but it can fail again at the next stop. A charging warning during driving is more urgent because the vehicle is consuming a finite reserve. Head to safety and avoid restarting unnecessarily. Stop immediately for overheating, heavy steering, burning smells or belt noise.
+
+Our [battery-warning-light guide](/news/battery-warning-light-while-driving) gives a practical on-road response. Do not rely on an estimated number of miles because battery state and electrical demand are unknown.
+
+## Getting an evidence-based answer
+
+SOB Autofix provides [battery and charging diagnostics](/diagnostics/battery-charging) and electrical fault finding in Doncaster. Testing can identify whether the battery lacks capacity, the alternator cannot meet demand, control signals are incorrect, or voltage is being lost in the circuit.
+
+If replacement is needed, the correct battery technology and rating matter, especially for stop-start vehicles. Some cars also require battery registration so the energy-management system can adapt its charging strategy. After repair, starting and loaded charging should be verified rather than relying on the warning light alone.
+ $body$,
+ $faqs$[{"question":"Will a car run with a bad alternator?","answer":"It may run briefly from battery energy, but voltage will fall and the engine can stop. How long varies too much to treat as a safe distance."},{"question":"Does slow cranking always mean the battery is bad?","answer":"No. A discharged battery, poor terminals, cable resistance or a dragging starter can all slow cranking. Load and voltage-drop tests separate them."},{"question":"Can a new battery fail because of the alternator?","answer":"Persistent undercharging or overcharging can shorten battery life. Charging-system verification protects the replacement and checks that the original cause is resolved."},{"question":"What voltage should my alternator produce?","answer":"The correct value depends on vehicle strategy, temperature, load and battery state. Modern controlled systems cannot always be judged by one universal voltage figure."}]$faqs$::jsonb,
+ $links$[{"label":"Battery and charging diagnostics","href":"/diagnostics/battery-charging"},{"label":"Battery warning light advice","href":"/news/battery-warning-light-while-driving"},{"label":"Overnight battery-drain guide","href":"/news/car-battery-keeps-going-flat-overnight"}]$links$::jsonb,
+ 'Battery, alternator or connection?','Test the complete starting and charging circuit so the evidence identifies the cause before a component is replaced.','Book battery diagnostics','/book'),
+
+('car-battery-keeps-going-flat-overnight','Car Battery Keeps Going Flat Overnight: Common Causes of Battery Drain','An overnight flat battery may be weak, undercharged or drained by a circuit that stays awake after the car is locked.','Diagnostics','Car Battery Going Flat Overnight | SOB Autofix','Car battery keeps going flat overnight? Learn how battery condition, charging, lights, modules and accessories cause drain and how parasitic current is tested.', $body$
+If your car battery keeps going flat overnight, either the battery cannot store sufficient energy, it was not properly recharged, or something continues drawing current after the vehicle should be asleep. A boot light, dash camera, tracker, faulty module, relay or wiring problem can create a parasitic drain. Do not replace the battery repeatedly without checking charging performance and key-off current, because a new battery will also discharge if the underlying load remains.
+
+## Rule out a discharged or worn battery first
+
+A battery can be flat after short journeys, cold weather or a previous starting problem without any abnormal overnight drain. It needs a suitable full charge before meaningful capacity testing. Testing a partly discharged battery may label it defective when it simply has not recovered.
+
+Age alone is not a verdict, but reduced capacity means a normal parked load can flatten it sooner. A conductance or load test after charging assesses its ability to deliver current. Terminals and main earths should be clean and secure because poor connections also produce no-start symptoms.
+
+## Check that the car charges the battery
+
+If alternator output is low, each journey can end with less stored energy than the last. Short urban trips with heaters, lamps and demisters may not replace the energy used to start. A slipping belt, cable resistance or smart-charging control fault can prevent recovery even without a constant warning light.
+
+The [battery-versus-alternator guide](/news/car-battery-vs-alternator-fault) explains why loaded output, current and voltage drop matter more than a single voltage reading. Charging faults and drains can coexist, so both sides of the energy balance must be checked.
+
+## Common sources of overnight drain
+
+- Glovebox, boot, vanity or interior lights that remain on unseen.
+- Aftermarket dash cameras, trackers, stereos, chargers or alarms.
+- A relay stuck on or a module that fails to enter sleep mode.
+- Door, bonnet or boot switches reporting that an opening remains active.
+- Water ingress or wiring damage causing leakage or repeated module wake-ups.
+- A defective alternator diode allowing reverse current when parked.
+
+Keyless-entry systems can wake when a key is stored close to the car. This does not prove they cause the drain, but moving the key farther away is a simple controlled observation. Never defeat security or safety systems as a permanent workaround.
+
+## Why parasitic-drain testing takes time
+
+Many vehicles remain awake for a period after locking while modules save data and monitor systems. Opening a door, moving a key nearby or connecting equipment incorrectly can wake them again. The technician must preserve power through the measurement, wait for the expected sleep process and identify both steady and intermittent current.
+
+Pulling fuses at random can erase evidence, wake networks and create new faults. A current clamp, voltage-drop checks across fuses and circuit information can narrow the load with less disruption. Intermittent drains may need monitored logging over several hours.
+
+## Things to check before booking
+
+Make sure all doors, the boot and glovebox latch fully, and remove accessories from 12-volt and USB outlets. Check whether a camera has a parking mode and whether any new equipment was installed before the problem began. Note how long the car stands before failing and whether weather affects it.
+
+Do not disconnect the battery every night. That hides the pattern, may reset learned values and can create security or convenience problems. If a charger is used, select one compatible with the battery technology and connect as the vehicle manufacturer directs.
+
+## Battery safety
+
+Do not jump or charge a swollen, frozen, leaking or unusually hot battery. Keep flames and sparks away because batteries can release explosive gas. Incorrect jump polarity can damage control modules. Use specified jump points and eye protection, or request assistance when uncertain.
+
+A repeatedly deep-discharged battery may suffer permanent capacity loss even after the drain is fixed. It should be recharged and retested rather than assumed reusable or automatically discarded.
+
+## What if the battery dies only after several days?
+
+The longer interval may indicate a modest abnormal load or simply a small battery with poor capacity. Some parked electrical consumption is normal for alarms, keyless entry and memories. Diagnosis compares measured current and sleep behaviour with vehicle-specific expectations rather than insisting every car reaches one universal figure.
+
+If the failure happens mainly after rain, water ingress or a damp connector becomes more relevant. If it follows one particular journey or accessory use, mention that. Patterns can shorten an otherwise lengthy intermittent investigation.
+
+## How the drain is confirmed
+
+A structured assessment checks battery state and capacity, cranking performance and charging first. Key-off current is then monitored through the sleep cycle. Once an abnormal load is proven, circuits and modules are isolated carefully until the consumer is found, followed by wiring or component tests.
+
+SOB Autofix offers [electrical fault finding](/diagnostics/electrical-fault-finding) and [battery and charging diagnostics](/diagnostics/battery-charging) in Doncaster. The objective is to find why energy is being lost, not just restore enough charge for one more morning.
+
+## Preventing another flat battery
+
+After repair, recharge fully and repeat the key-off test under the same conditions. Confirm that modules sleep, the charging system replenishes the battery and starting remains stable after standing. If the vehicle is used infrequently, an approved maintenance charger may help, but it should not mask an abnormal drain.
+ $body$,
+ $faqs$[{"question":"How do I know if I have a parasitic drain?","answer":"A repeatable discharge while parked after the battery and charging system test healthy is a strong clue. Current must be measured after the vehicle completes its sleep cycle."},{"question":"Can a dash camera flatten a car battery?","answer":"Yes, especially in parking mode or if incorrectly wired. Its actual current, cut-off setting and the battery's capacity should be checked rather than assumed."},{"question":"Will driving recharge a completely flat battery?","answer":"A short drive is not a controlled full charge and makes the alternator work hard. Use a suitable charger, then test the battery and charging system."},{"question":"Can an alternator drain a battery while parked?","answer":"A failed diode can allow reverse current, although many other circuits are possible. Proper key-off current and charging tests can confirm it."}]$faqs$::jsonb,
+ $links$[{"label":"Electrical fault finding","href":"/diagnostics/electrical-fault-finding"},{"label":"Battery and charging diagnostics","href":"/diagnostics/battery-charging"},{"label":"Battery or alternator guide","href":"/news/car-battery-vs-alternator-fault"}]$links$::jsonb,
+ 'Stop another flat-battery morning','Arrange battery, charging and sleep-current tests to locate the loss instead of repeatedly jump starting or replacing parts.','Book electrical diagnostics','/book'),
+
+('car-electrical-problems-signs','Car Electrical Problems: 10 Signs You Should Get Your Vehicle Diagnosed','Intermittent starting, flickering lights, burning smells and multiple warnings can all point to supply, wiring or module faults.','Diagnostics','10 Signs of Car Electrical Problems | SOB Autofix','Spot 10 signs of car electrical problems, from intermittent starting and flickering lights to battery drain, warning lights and communication faults.', $body$
+Car electrical problems often appear as intermittent starting, flickering lamps, repeated flat batteries, blown fuses, erratic accessories or several warning lights at once. The cause can be as simple as a poor earth or as involved as damaged wiring or module communication. Because low voltage can make healthy systems behave strangely, diagnosis should begin with power, earth and charging checks before expensive control units are blamed.
+
+## 1. Starting is intermittent
+
+If turning the key sometimes produces silence, a click or electrical resets, the starting circuit needs testing. Battery condition, terminals, engine earths, relays, selector or clutch switches and the starter command are all possible. The guide to a [car that will not start while lights work](/news/car-wont-start-but-lights-come-on) helps distinguish the sounds.
+
+Repeated attempts can flatten the battery and obscure the original problem. Record whether temperature, key position or gear selection changes it.
+
+## 2. The battery repeatedly goes flat
+
+A parked drain, weak battery or inadequate charging can all leave the car dead. Aftermarket cameras, trackers and audio equipment are worth mentioning, but factory modules and wiring can also remain awake. Proper testing waits for the vehicle to sleep and measures current without waking it.
+
+Read the [overnight battery-drain guide](/news/car-battery-keeps-going-flat-overnight) before buying another battery.
+
+## 3. Lights flicker or change with engine speed
+
+Headlamps that pulse, dim heavily or brighten unusually can indicate unstable charging, poor connections or earth faults. Some controlled lighting behaviour is normal, so compare it with previous operation and other symptoms. A burning smell or very bright lamps can suggest overvoltage and calls for prompt shutdown.
+
+## 4. Several warnings appear together
+
+Multiple dashboard faults can share one cause. Falling voltage or interrupted network communication may cause ABS, steering, engine and gearbox modules to report errors at once. Scanning all systems and checking the timestamp and voltage context is more useful than repairing each message separately.
+
+## 5. Fuses keep blowing
+
+A fuse protects wiring against excessive current. Replacing it with a higher rating removes that protection and can cause fire. A repeated failure suggests a short circuit, overloaded component or damaged wiring. Fit only the specified rating, and arrange fault tracing if it fails again.
+
+## 6. Accessories work intermittently
+
+Windows, locks, wipers, blowers or mirrors that stop and restart may have switch, motor, module, connector or broken-wire faults. Problems that follow door movement often involve wiring through a hinge area. Water ingress can corrode connectors and create several changing symptoms.
+
+Do not force a stalled motor repeatedly. Excess current can overheat wiring or damage control electronics.
+
+## 7. There is a burning smell or hot connector
+
+Hot plastic, smoke, crackling or visible melting is urgent. Switch off the affected equipment and the vehicle when safe, move occupants away and do not refit a fuse. A high-resistance connection can generate heat without drawing enough current to blow the fuse.
+
+If smoke continues or fire is present, contact emergency services and do not open areas that feed the fire with air unnecessarily.
+
+## 8. The battery warning light comes on
+
+The red symbol usually reports charging performance rather than battery age. The alternator, belt, high-current cables and control circuit need checking. The vehicle may stop once stored energy is consumed, so follow the [battery warning-light advice](/news/battery-warning-light-while-driving) and reach safety.
+
+## 9. Electronics behave differently after rain
+
+Weather-related faults raise suspicion of water ingress, insulation damage and corroded terminals. Sunroofs, windscreens, drains and previous body repairs can create paths, but the source is not always directly above the wet connector. Drying the visible area without repairing ingress invites a repeat.
+
+## 10. Diagnostic equipment cannot communicate
+
+A scan tool that cannot reach one module may face a power, earth, network wiring or module fault. Inability to communicate is not proof that the module is dead. The connector supply and data network should be tested, and unrelated aftermarket wiring considered.
+
+## Why electrical faults can be difficult
+
+Wires can break inside insulation, terminals can lose tension and faults can disappear when a harness is moved. Modules share supplies and communicate, so one poor earth can create symptoms in several locations. Parts swapping is expensive and can add programming or configuration problems.
+
+An electrical diagram, measured voltage under load, voltage-drop tests, current measurement and network analysis turn an intermittent symptom into evidence. Fault codes guide the work but do not replace circuit testing.
+
+## What information helps diagnosis
+
+Record the exact time and conditions, which equipment was operating, whether the car was wet or hot, and any recent battery or accessory work. Photograph warnings and avoid clearing codes. Bring all keys if the problem involves starting or locking.
+
+Do not probe modern connectors with unsuitable tools; spread terminals and accidental shorts can create new faults. Never replace a fuse with foil, wire or a higher rating.
+
+## When the car should not be driven
+
+Stop for smoke, burning insulation, a hot cable, loss of lighting at night, heavy steering caused by low voltage or a charging warning with worsening symptoms. Recovery is safer when essential controls are affected. An intermittent window or audio issue may allow normal travel, but should still be booked before it develops.
+
+SOB Autofix provides [electrical fault finding](/diagnostics/electrical-fault-finding) and [ECU diagnostics](/diagnostics/ecu-diagnostics) in Doncaster. A useful diagnosis identifies the failed circuit and verifies the repair under the conditions that caused it.
+ $body$,
+ $faqs$[{"question":"Can a bad earth cause multiple electrical faults?","answer":"Yes. Shared earth resistance can change voltages across several modules and create apparently unrelated symptoms. Voltage-drop testing under load can prove it."},{"question":"Why does an electrical fault disappear at the garage?","answer":"Temperature, vibration, moisture and module sleep states can make faults intermittent. Detailed timing, recordings and monitored measurements help reproduce them."},{"question":"Is it safe to fit a larger fuse?","answer":"No. The specified fuse protects the wiring. A higher rating can allow dangerous overheating and fire instead of solving the excessive-current fault."},{"question":"Does a communication code mean the control unit is faulty?","answer":"Not by itself. Lost power, earth, network wiring, low voltage and another module disrupting the network can all prevent communication."}]$faqs$::jsonb,
+ $links$[{"label":"Electrical fault finding","href":"/diagnostics/electrical-fault-finding"},{"label":"ECU diagnostics","href":"/diagnostics/ecu-diagnostics"},{"label":"Battery drain guide","href":"/news/car-battery-keeps-going-flat-overnight"}]$links$::jsonb,
+ 'Electrical fault becoming unpredictable?','Book systematic circuit and module testing before an intermittent problem strands the vehicle or damages wiring.','Book electrical diagnostics','/book')
+)

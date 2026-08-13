@@ -1,0 +1,379 @@
+-- Editorial source only. This file is intentionally non-executable.
+-- scripts/import-high-intent-articles.mjs parses and validates these values,
+-- always plans new content as a draft, and never imports the SQL tail that was
+-- present in the rejected publication migration.
+with articles (
+  slug, title, excerpt, category, seo_title, seo_description, body, faqs, links,
+  cta_heading, cta_body, cta_label, cta_href, featured
+) as (
+  values
+  (
+    'engine-warning-light-what-it-means',
+    'Car Engine Warning Light On? What It Means and What to Do Next',
+    'An engine warning light means the car has detected a fault. Learn what the colour and behaviour mean, what to check and when to stop driving.',
+    'Diagnostics',
+    'Engine Warning Light: What to Do | SOB Autofix',
+    'Engine warning light on? Understand steady and flashing lights, common causes, safe next steps and when to arrange diagnostics in Doncaster.',
+    $body$
+If your engine warning light is on, the car's control system has recorded a fault that needs attention. A steady amber light often means the vehicle may still drive, but it should be diagnosed promptly. A flashing light, a red warning, severe misfiring, smoke, overheating or an oil-pressure warning calls for a safe stop and recovery rather than continued driving. The light identifies a system, not a failed part, so replacing components from a fault code alone can waste money.
+
+## What the engine warning light is telling you
+
+The engine management light is linked to the systems controlling combustion, emissions and engine performance. Sensors continuously report values such as air flow, oxygen content, temperature, fuel pressure and crankshaft position. When a reading falls outside an expected range, the engine control unit stores a diagnostic trouble code and may illuminate the light. Some cars also display a message or limit performance to protect the engine.
+
+A stored code narrows the investigation, but it does not automatically prove the named sensor is defective. For example, an oxygen-sensor code can be caused by an air leak, poor combustion, damaged wiring or an exhaust leak. Good [engine warning-light diagnostics](/diagnostics/engine-management-light) combine the code with live data, electrical checks and the symptoms you have noticed.
+
+## Steady, flashing and red warnings
+
+**A steady amber engine light** usually indicates a fault that is not immediately critical. Avoid hard acceleration and book an assessment soon, particularly if fuel economy or performance has changed. **A flashing engine light** commonly warns of an active misfire that can overheat and damage the catalytic converter. Ease off, stop somewhere safe and arrange assistance. **A red engine-related warning** can indicate a more urgent condition such as low oil pressure or excessive coolant temperature; switch off as soon as it is safe.
+
+The handbook for your exact make and model remains the best reference for a symbol's meaning. Warning designs vary, and a diesel particulate filter symbol, glow-plug light or service reminder needs a different response from the general engine symbol.
+
+## Common reasons the light comes on
+
+- An ignition misfire caused by a worn spark plug, coil problem or wiring fault.
+- Incorrect air measurement from an intake leak, contaminated sensor or restricted air path.
+- Fuel-pressure, injector or mixture problems that make combustion too rich or too lean.
+- Emissions faults involving oxygen sensors, exhaust leaks, catalyst efficiency or diesel after-treatment.
+- Electrical faults such as damaged connectors, poor earths or an unstable supply voltage.
+
+These are possibilities, not a remote diagnosis. The same warning can have dozens of causes. If the vehicle has also become sluggish, read our guide to a [car losing power when accelerating](/news/car-losing-power-when-accelerating). If performance has been deliberately restricted, the [limp-mode guide](/news/car-limp-mode-causes) explains why.
+
+## Is it safe to keep driving?
+
+Only continue a short distance when the light is steady amber, the engine sounds and feels normal, all fluid-temperature and oil-pressure indications are normal, and the handbook does not say to stop. Drive gently and arrange a check. Stop if the light flashes, the car shakes, power falls sharply, temperature rises, a red warning appears, or you smell fuel or burning. Continuing through an active misfire or overheating can turn a manageable fault into expensive engine or catalyst damage.
+
+If you are on a fast road, prioritise personal safety: leave at the next safe opportunity when possible, use hazard lights if the vehicle cannot maintain a safe speed, and wait behind a barrier away from traffic. Do not open the cooling system while hot.
+
+## Checks you can make without guessing
+
+With the engine cold and the car parked safely, check the engine-oil and coolant levels according to the handbook. Make sure the fuel-filler cap is secure if your vehicle monitors fuel-vapour leaks. Note whether the light appeared after refuelling, during rain, under acceleration or after other work, and record any noises, smells or dashboard messages. This context can shorten a professional investigation.
+
+Avoid clearing codes before the car is assessed. Erasing them removes freeze-frame information showing engine speed, temperature and load when the fault occurred. A cheap code reader can be useful for recording a code, but do not buy the component named in its description without testing the complete circuit and system.
+
+## What professional diagnostics should involve
+
+A proper assessment starts with your description of the fault, a visual inspection and a full-system scan. The technician should consider stored, pending and history codes, then study relevant live data and carry out focused tests. Those tests might include smoke testing for an intake leak, checking ignition waveforms, measuring fuel pressure or verifying power, earth and signal integrity at a sensor.
+
+That evidence-led approach separates the underlying fault from secondary codes. SOB Autofix provides [vehicle diagnostics](/diagnostics/car-diagnostics) and electrical fault finding in Doncaster, with mobile availability depending on the job. The aim is to identify what needs repairing before parts are authorised, not simply to switch the light off.
+
+## After the repair
+
+The warning should be cleared only after the cause has been addressed. A road test and follow-up scan can confirm that monitored values are normal and the code does not return. Some emissions monitors require several journeys to complete, so ask what verification has been performed and whether any further drive cycle is needed.
+
+Keep the diagnosis and repair record. It helps if an intermittent problem returns and gives future technicians a useful starting point. A warning light that disappears by itself should not always be ignored: the code may remain stored, and intermittent wiring or sensor faults can recur.
+    $body$,
+    $faqs$[
+      {"question":"Can a loose fuel cap cause an engine warning light?","answer":"On vehicles that monitor the fuel-vapour system, a loose or damaged cap can contribute to a leak code. Secure it, but arrange diagnosis if the light remains or the car has other symptoms."},
+      {"question":"Will the engine light go off after a repair?","answer":"It may extinguish after successful monitored journeys, or a technician may clear it after verifying the repair. Clearing it without fixing the fault only hides useful information temporarily."},
+      {"question":"Can I drive to work with a steady amber engine light?","answer":"Possibly for a short, gentle journey if the car feels normal and no other warning is present, but prompt diagnosis is safer. Stop if it flashes or performance, temperature or engine sound changes."},
+      {"question":"Does a fault code tell me which part to replace?","answer":"No. A code identifies a detected condition or circuit. Testing is needed because wiring, air leaks, supply faults and mechanical problems can all produce component-related codes."}
+    ]$faqs$::jsonb,
+    $links$[
+      {"label":"Engine management light diagnostics","href":"/diagnostics/engine-management-light"},
+      {"label":"Why cars enter limp mode","href":"/news/car-limp-mode-causes"},
+      {"label":"Why cars lose power under acceleration","href":"/news/car-losing-power-when-accelerating"}
+    ]$links$::jsonb,
+    'Need the warning light investigated?',
+    'Book an evidence-led diagnostic assessment so the stored faults, live data and relevant circuits can be tested before repairs are recommended.',
+    'Book vehicle diagnostics', '/book', true
+  ),
+  (
+    'car-wont-start-but-lights-come-on',
+    'Car Won''t Start but the Lights Come On: Common Causes Explained',
+    'Dashboard lights do not prove the battery is healthy. Learn why a car may click, crank slowly, crank normally or stay silent without starting.',
+    'Diagnostics',
+    'Car Won''t Start but Lights Work | SOB Autofix',
+    'Car won''t start but the lights come on? Compare battery, starter, fuel, ignition and immobiliser symptoms, plus safe checks before booking help.',
+    $body$
+If your car will not start but the lights come on, the battery can still be weak. Dashboard lamps need far less current than the starter motor, so they may illuminate normally while voltage collapses as soon as you turn the key. Other possibilities include poor battery connections, a starter or control-circuit fault, an immobiliser issue, or a fuel, ignition or sensor problem. The most useful clue is what happens when you try to start: a rapid click, one solid click, slow cranking, normal cranking or complete silence each points the investigation in a different direction.
+
+## First identify what the car does
+
+Listen and watch the dashboard during one brief start attempt. **Rapid clicking** often occurs when battery voltage is too low or a connection has high resistance. **One heavy click** can point towards the starter solenoid, starter motor, cable or an engine that cannot turn, although testing is essential. **Slow cranking** strongly suggests insufficient battery power, cable resistance or a dragging starter. **Normal-speed cranking without firing** shifts attention towards fuel delivery, ignition, engine timing, compression or an engine-speed signal.
+
+If nothing happens, check whether the gear selector is fully in Park or Neutral on an automatic, or whether the clutch pedal is fully depressed on a manual. A selector, clutch switch, start button, relay, immobiliser or wiring fault can interrupt the command. Do not repeatedly crank for long periods; that can flatten the battery and overheat the starter.
+
+## Why working lights do not rule out the battery
+
+A healthy fully charged battery has to deliver a very high current for starting. Interior lights, a radio or the instrument panel draw only a small fraction of that load. A battery with reduced capacity may operate them yet fall below the voltage needed by the starter and control modules. Cold weather, infrequent short trips, age and an overnight drain can expose the weakness.
+
+Headlamps that dim dramatically during the start attempt support a supply problem, but this is not a definitive test. A proper assessment measures open-circuit voltage, voltage drop under load and battery conductance or capacity. If the battery repeatedly discharges, investigate the reason rather than assuming replacement is the complete answer. Our guides compare a [battery fault with an alternator fault](/news/car-battery-vs-alternator-fault) and explain [overnight battery drain](/news/car-battery-keeps-going-flat-overnight).
+
+## Battery terminals, earths and main cables
+
+Loose or corroded terminals can carry enough current for small electrical loads but not the starter. With the ignition off, look for visibly loose clamps, heavy corrosion or a damaged cable. Do not place tools across battery terminals, and do not disconnect the battery casually: modern vehicles may need security codes, window resets or battery registration, and disconnecting it can erase diagnostic evidence.
+
+Voltage-drop testing while the circuit is loaded is more informative than simply looking at a cable. Resistance can hide inside a crimp, earth strap or terminal that appears acceptable. A technician can compare voltage at the battery, starter and engine earth during cranking to find where power is being lost.
+
+## When the starter system is involved
+
+The starter motor cannot be condemned from a click alone. The solenoid may receive inadequate voltage because of a weak battery, faulty relay, ignition switch, control module decision or poor connection. The engine may also be mechanically difficult to turn. Diagnosis should establish that the engine rotates freely, battery supply and earth are sound, and the starter command reaches the correct terminal before replacement is proposed.
+
+Push-starting is not suitable for every vehicle and can create safety or catalyst risks. It will not help an automatic, many hybrid systems or a vehicle with certain electrical faults. Follow the manufacturer's guidance rather than treating it as a default solution.
+
+## If it cranks normally but will not fire
+
+Normal cranking means the starter is turning the engine, but combustion is not beginning. The engine needs correct fuel delivery, ignition on petrol engines, compression, timing and reliable position signals. A failed crankshaft sensor may prevent spark or injection. Low fuel pressure, contaminated fuel, a flooded engine, immobiliser authorisation or mechanical timing trouble can produce a similar result.
+
+Avoid spraying starting fluid into the intake. It can damage engines and air-measurement components and can create a fire hazard. A diagnostic scan may show whether engine speed is detected during cranking, but further testing is still needed. Fuel-pressure measurement, spark testing using suitable equipment and mechanical checks should be performed safely.
+
+## Immobiliser and key clues
+
+Look for a flashing key, padlock or security message. If you have a second recognised key, trying it can help distinguish a key problem from a vehicle-side fault. Keep other keys and electronic tags away from the reader area. A flat key-fob battery does not always prevent emergency starting because many cars have a passive transponder or backup position; consult the handbook.
+
+An immobiliser warning is not proof that the key itself has failed. Low vehicle voltage, antenna faults, lost synchronisation, module communication problems and wiring faults can all block authorisation. [Electrical fault finding](/diagnostics/electrical-fault-finding) is often the right route when the start command or module communication is missing.
+
+## Safe checks before requesting help
+
+Confirm there is fuel rather than relying entirely on the gauge, especially if the car is parked on a steep slope. Note the exact sound, warning messages and whether the problem appeared after rain, repair work, refuelling or a period unused. Try one controlled start in Neutral as well as Park if the handbook permits. Switch off heaters, lights and chargers before the attempt.
+
+If jump starting is permitted for the vehicle, use the specified connection points and sequence. Incorrect polarity or unsuitable connections can damage electronic modules. Stop if cables become hot, the battery is swollen, frozen, leaking or smells strongly of sulphur. When the cause is unclear, professional [battery and charging diagnostics](/diagnostics/battery-charging) are safer than repeated boosting.
+
+## Getting the fault confirmed
+
+SOB Autofix can test starting, battery and charging systems and investigate crank-no-start faults. Useful diagnosis follows the symptom: load-test the supply for slow or clicking starts, verify starter commands for silence, and check engine data, fuel and ignition evidence when it cranks normally. That process helps avoid replacing a battery or starter that was only affected by another fault.
+    $body$,
+    $faqs$[
+      {"question":"Can the battery be flat if the radio still works?","answer":"Yes. The radio needs little current compared with the starter. A weak battery can power accessories but suffer a major voltage drop during a start attempt."},
+      {"question":"What does rapid clicking usually mean?","answer":"It commonly means voltage is collapsing and the starter solenoid is repeatedly engaging and releasing. The battery, terminals and main cables should be tested before a starter is blamed."},
+      {"question":"Why does the engine crank but not start?","answer":"Cranking without firing can involve fuel pressure, ignition, timing, compression, immobiliser authorisation or a missing crankshaft signal. Scan data and targeted tests are needed to separate them."},
+      {"question":"Should I keep trying the key?","answer":"No. Repeated long attempts can discharge the battery, overheat the starter and send unburnt fuel into the exhaust. Record the symptom and arrange diagnosis after a few brief attempts."}
+    ]$faqs$::jsonb,
+    $links$[
+      {"label":"Battery and charging diagnostics","href":"/diagnostics/battery-charging"},
+      {"label":"Battery or alternator fault guide","href":"/news/car-battery-vs-alternator-fault"},
+      {"label":"Electrical fault finding","href":"/diagnostics/electrical-fault-finding"}
+    ]$links$::jsonb,
+    'Car still refusing to start?',
+    'Tell SOB Autofix whether it clicks, cranks slowly, cranks normally or stays silent so the right starting and diagnostic checks can be planned.',
+    'Get a diagnostic quote', '/get-a-quote', false
+  ),
+  (
+    'car-losing-power-when-accelerating',
+    'Why Is My Car Losing Power When Accelerating?',
+    'Poor acceleration can come from restricted air or fuel flow, boost leaks, ignition faults, exhaust restriction or protective limp mode.',
+    'Diagnostics',
+    'Car Losing Power When Accelerating | SOB Autofix',
+    'Car losing power when accelerating? Learn the common air, fuel, ignition, turbo and exhaust causes, danger signs and the tests that confirm them.',
+    $body$
+A car that loses power when accelerating may have an air, fuel, ignition, boost-control, exhaust or sensor fault. Petrol and diesel engines can feel similarly sluggish for very different reasons, and the conditions matter: loss only uphill suggests a load-related problem, hesitation at one engine speed can indicate control or ignition trouble, and a sudden limit with a warning light may be limp mode. Ease off and arrange diagnosis; stop if the engine misfires violently, overheats, produces heavy smoke or displays a red warning.
+
+## Describe the loss of power accurately
+
+There is a difference between hesitation, reduced maximum power and the engine speed rising without matching road speed. Hesitation is a stumble or delay when the accelerator is pressed. Reduced power means the engine responds smoothly but weakly. If revs flare while the car does not accelerate, a slipping clutch or transmission issue may be involved rather than low engine output.
+
+Note whether the fault occurs cold or hot, at low or high revs, under full load, after a gear change or only during a regeneration event. Record dashboard messages and smoke colour. These details help a technician reproduce the complaint and avoid guessing from a generic description such as “slow”.
+
+## Air intake and sensor problems
+
+The engine must measure and control the air entering it. A split intake hose, blocked air path, contaminated mass-air-flow sensor or implausible pressure reading can lead to incorrect fuelling and reduced torque. On turbocharged cars, a hose or intercooler leak may open mainly under boost, sometimes producing a hiss or whoosh and oily mist around the leak.
+
+Cleaning or replacing an airflow sensor without data can be misleading. Live readings should be compared with expected values under the conditions where power drops. Smoke or pressure testing can expose leaks that are invisible at idle. Wiring, power supply and earth integrity also need checking when a sensor signal is implausible.
+
+## Fuel delivery and combustion
+
+Under acceleration the engine needs more fuel. A restricted filter, weak pump, pressure-regulation problem or injector fault may only become obvious as demand rises. Water or incorrect fuel can also cause poor running. Low pressure should be measured and traced; it does not automatically identify the pump because supply restrictions, leaks, control signals and regulators affect the same reading.
+
+Petrol engines may hesitate when a spark plug or ignition coil breaks down under cylinder pressure. The car might feel acceptable at idle but misfire under load. Continuing with a severe misfire risks catalytic-converter damage. A flashing [engine warning light](/news/engine-warning-light-what-it-means) is a reason to reduce load and stop safely.
+
+## Turbocharger and boost-control faults
+
+Turbocharged engines rely on a sealed intake path and controlled exhaust energy. Split hoses, sticky actuator mechanisms, vacuum leaks, boost-control solenoids and sensor faults can all produce underboost or overboost. The control unit may then restrict power. A turbocharger should not be replaced merely because an underboost code is stored.
+
+Diagnosis can involve commanded-versus-actual boost data, a smoke test, actuator operation, vacuum checks and inspection for abnormal shaft movement or oil leakage. Whistling alone is not conclusive, but a new siren-like noise, dense blue smoke or rapid oil loss requires the engine to be switched off and assessed.
+
+## Exhaust and emissions restrictions
+
+A restricted exhaust prevents the engine from breathing out, which can reduce power increasingly as revs rise. On diesel vehicles, soot loading in the particulate filter may be the result of short journeys, but it can also be a consequence of another fault that increases soot or prevents regeneration. The [DPF warning-light guide](/news/dpf-warning-light-uk) explains why forced regeneration is not always the first answer.
+
+A damaged catalyst, exhaust-pressure sensor problem or collapsed internal component can create similar symptoms. Relevant pressure and temperature readings should be checked before expensive parts are authorised.
+
+## When the car has entered limp mode
+
+Limp mode is a protective strategy, not a component. It may cap engine speed, disable turbo boost or restrict gear selection after the control system detects a value that could risk damage or unreliable operation. Restarting sometimes restores normal power temporarily, but it does not fix the recorded fault. Read [why cars enter limp mode](/news/car-limp-mode-causes) and arrange a scan before the evidence is lost.
+
+## Can you keep driving with poor acceleration?
+
+Reduced acceleration can make joining a roundabout, overtaking or entering a motorway unsafe. If the vehicle cannot keep pace predictably, avoid driving it. Stop for heavy smoke, fuel smell, loud mechanical noise, overheating, a flashing engine light or low oil-pressure warning. If the loss is mild and the car is otherwise stable, drive gently only as far as needed for a safe assessment.
+
+Do not repeatedly test full throttle to see whether the fault clears. High load can worsen a lean mixture, misfire, boost fault or overheating condition. It also obscures diagnosis if several new codes are created after the original event.
+
+## Useful checks at home
+
+With the engine off and cold, check fluid levels, look for a visibly displaced intake hose and make sure no floor mat is obstructing pedal travel. Check whether a speed limiter or economy mode has been selected. Do not reach around belts, fans or a hot turbo system, and do not loosen pressurised fuel connections.
+
+A maintenance history is useful: overdue filters and plugs can contribute, but servicing should not be presented as a guaranteed cure. Tell the technician about recent repairs, refuelling, battery disconnection and any intermittent warning. SOB Autofix can carry out [vehicle diagnostics](/diagnostics/car-diagnostics) that follow the data from the symptom to a tested cause.
+
+## How the cause is confirmed
+
+An effective road test reproduces the power loss safely while scan data records air flow, pressure, fuelling corrections, misfire counts and requested versus actual torque. Findings guide physical tests rather than replacing them. The final recommendation should explain what failed, why the evidence supports it and whether any secondary issue also needs attention.
+
+That distinction matters because several faults can coexist. A boost leak might create soot that loads a diesel filter; replacing or cleaning only the filter would leave the cause in place. Evidence-led testing gives the repair a better chance of solving the actual complaint the first time.
+    $body$,
+    $faqs$[
+      {"question":"Why does my car lose power only uphill?","answer":"Hills increase engine load, so marginal fuel pressure, ignition breakdown, boost leaks and exhaust restriction can become more obvious. A controlled road test with live data can separate the possibilities."},
+      {"question":"Can a dirty air filter cause poor acceleration?","answer":"A severely restricted filter can reduce airflow, but many other faults feel similar. Inspect service condition while also checking for codes, leaks and plausible sensor readings."},
+      {"question":"Why do the revs rise but the car does not speed up?","answer":"That pattern can indicate clutch or transmission slip rather than an engine power loss. Avoid hard acceleration because continued slipping creates heat and further wear."},
+      {"question":"Will restarting clear reduced-power mode?","answer":"A restart may temporarily restore output if the fault is intermittent, but the cause and stored evidence remain. Treat it as an opportunity to reach a safe place, not a repair."}
+    ]$faqs$::jsonb,
+    $links$[
+      {"label":"Vehicle diagnostics","href":"/diagnostics/car-diagnostics"},
+      {"label":"Limp mode causes and next steps","href":"/news/car-limp-mode-causes"},
+      {"label":"DPF warning light advice","href":"/news/dpf-warning-light-uk"}
+    ]$links$::jsonb,
+    'Find the reason for lost power',
+    'Arrange focused testing of the engine data and the relevant air, fuel, boost or electrical system before replacing parts.',
+    'Book vehicle diagnostics', '/book', false
+  ),
+  (
+    'car-shaking-vibrating-when-driving',
+    'Car Shaking or Vibrating When Driving: What Could Be Wrong?',
+    'Where and when a vibration appears can distinguish wheel, tyre, brake, suspension, driveline and engine-related causes.',
+    'Repairs & Maintenance',
+    'Car Shaking or Vibrating While Driving | SOB Autofix',
+    'Car shaking when driving? Use speed, braking and steering clues to understand common wheel, tyre, suspension, driveline and engine causes.',
+    $body$
+A car that shakes or vibrates while driving can have a wheel or tyre problem, brake distortion, worn suspension, a driveline fault or an engine that is running unevenly. The safest response depends on severity. Stop if the vibration begins suddenly, the steering becomes difficult, a tyre looks damaged, a wheel appears loose, or the car pulls strongly. A mild repeatable vibration still deserves prompt inspection because small balance or wear issues can develop into safety-critical faults.
+
+## Start with where you feel the vibration
+
+Vibration mainly through the steering wheel often points towards the front wheels, tyres, hubs or steering components. Movement through the seat or floor may come from a rear wheel, driveline or engine mounting. A pulsing brake pedal suggests a braking-system source. These are useful patterns, not guarantees: vibration travels through the body and can make a rear problem feel as though it is at the front.
+
+Record the speed range and whether acceleration, coasting, braking or turning changes it. A wheel-balance issue commonly becomes noticeable over a particular road-speed band. An engine or driveshaft problem may follow engine load or gear selection instead. This basic timeline helps an inspection focus on the right rotating components.
+
+## Wheel and tyre causes
+
+Lost balance weights, wheel damage and uneven tyre wear are common sources of speed-related vibration. A tyre can also suffer internal belt separation or develop a bulge even when tread depth looks reasonable. Incorrect pressure can affect stability and exaggerate other faults. Check pressures only when safe and use the vehicle manufacturer's values, not the maximum printed on the tyre sidewall.
+
+Look from a distance for a visibly soft tyre, sidewall damage or an object in the tread. Do not drive on a bulge, exposed cord or rapidly deflating tyre. A recently fitted wheel should also prompt a check that the correct fixings, seating surfaces and tightening procedure were used. Never crawl beneath a vehicle supported only by its own jack.
+
+## Vibration when braking
+
+If the steering wheel or pedal shakes mainly during braking, variation in the brake disc or hub assembly may be involved. Corrosion between mating surfaces, uneven deposits, excessive run-out and worn suspension joints can all contribute. Calling every case “warped discs” skips the measurements needed to find why the variation developed.
+
+Heat, smell, smoke or a wheel that is much hotter than the others can indicate a binding brake. Stop and allow the vehicle to remain untouched; components may be extremely hot. Arrange recovery if braking is weak, the pedal feels abnormal or the car pulls sharply. Read the guide to a [car pulling while braking](/news/car-pulling-to-one-side) for related warning signs.
+
+## Suspension and steering wear
+
+Worn bushes, ball joints, track-rod ends, bearings and dampers can allow unwanted wheel movement. You may also hear knocking over uneven surfaces, notice vague steering or see irregular tyre wear. The [clunking-over-bumps guide](/news/clunking-noise-over-bumps) covers those clues in more detail.
+
+There is no reliable driveway “shake test” for every joint, and loading changes when a car is lifted. Inspection should use the correct supporting points and assess each component in the conditions that reveal its play. Alignment may need checking after worn parts are repaired, but alignment alone cannot tighten a loose joint.
+
+## Driveshaft and CV-joint vibration
+
+An inner driveshaft joint can produce shudder under acceleration, while an outer CV joint more often clicks on turns. Bent shafts, worn joints and mounting problems can make vibration change sharply as torque is applied or released. On rear-wheel-drive and four-wheel-drive vehicles, prop shafts, couplings and centre bearings add other possibilities.
+
+Split boots allow grease out and contamination in, shortening joint life. A visible torn boot is worth addressing early, but the joint still needs checking for wear. A repetitive click on full lock is discussed in our [CV-joint symptom guide](/news/clicking-noise-when-turning-cv-joint).
+
+## Engine, gearbox and mounting faults
+
+If the car shakes while stationary as engine speed changes, wheels are unlikely to be the source. Misfires, uneven idle, incorrect fuelling and worn engine or gearbox mounts can transmit vibration into the cabin. A mount can be the path through which vibration is felt rather than the original cause, so engine running quality should be assessed too.
+
+A flashing engine warning light with shaking suggests an active misfire and risks exhaust-catalyst damage. Reduce load and stop safely. [Engine warning-light diagnostics](/diagnostics/engine-management-light) can combine stored codes with live misfire data and ignition, fuel or mechanical testing.
+
+## Is it safe to continue?
+
+Stop immediately for sudden severe shaking, steering instability, a suspected loose wheel, visible tyre damage, grinding, smoke, or poor braking. If vibration is mild, stable and there are no visible hazards, avoid high speeds and arrange an inspection promptly. Do not keep accelerating through the vibration to “test” it, especially if it worsens with speed.
+
+After hitting a pothole or kerb, check for obvious damage before moving and remain alert for pressure loss. A wheel can be damaged on its inner edge where it is difficult to see. If in doubt, recovery is safer than risking a wheel or tyre failure.
+
+## What a useful inspection includes
+
+A technician should road-test only if the vehicle is safe, confirm the speed and load pattern, inspect wheels and tyres, measure run-out where indicated and check bearings, steering and suspension. Driveline and engine checks follow when the vibration responds to torque or engine speed. Balancing data can reveal a problem but should not be used to disguise a damaged tyre or wheel.
+
+SOB Autofix can assess the vehicle and coordinate the relevant repair through [repairs and maintenance](/services/repairs-maintenance). Giving the exact conditions—such as “steering shake between 55 and 65 mph while coasting”—is far more useful than simply saying that the car vibrates.
+    $body$,
+    $faqs$[
+      {"question":"Why does my steering wheel shake at motorway speed?","answer":"Wheel balance, tyre condition or wheel run-out are common possibilities, but hub, bearing and suspension faults can feel similar. Reduce speed and have the rotating assembly inspected."},
+      {"question":"Why does the car vibrate only when braking?","answer":"Brake disc or hub variation, deposits, binding components and worn suspension can all contribute. Braking measurements and a mechanical inspection are more reliable than assuming the discs are warped."},
+      {"question":"Can wheel alignment cause vibration?","answer":"Incorrect alignment more commonly causes pulling or uneven wear than a strong vibration. Damaged tyres, imbalance, wheel run-out and looseness should be ruled out first."},
+      {"question":"Is a small vibration safe to ignore?","answer":"No. It may begin with a minor balance issue, but it can also be an early sign of tyre damage or component wear. Prompt inspection is the sensible next step."}
+    ]$faqs$::jsonb,
+    $links$[
+      {"label":"Repairs and maintenance","href":"/services/repairs-maintenance"},
+      {"label":"Clunking noise over bumps","href":"/news/clunking-noise-over-bumps"},
+      {"label":"Clicking noise when turning","href":"/news/clicking-noise-when-turning-cv-joint"}
+    ]$links$::jsonb,
+    'Concerned about a new vibration?',
+    'Describe when and where you feel it, and SOB Autofix can arrange the right safety inspection and diagnostic checks.',
+    'Get your vehicle checked', '/get-a-quote', false
+  ),
+  (
+    'car-limp-mode-causes',
+    'Why Has My Car Gone Into Limp Mode?',
+    'Limp mode limits performance when the car detects a potentially harmful or unreliable condition. Restarting may hide it, but diagnosis is still needed.',
+    'Diagnostics',
+    'Why Cars Enter Limp Mode: Causes | SOB Autofix',
+    'Car in limp mode? Learn why power or gears may be restricted, when to stop driving and how fault codes, live data and testing identify the cause.',
+    $body$
+Limp mode is a protective operating strategy that limits engine power, turbo boost, engine speed or transmission operation after the car detects a serious or unreliable condition. It is not a specific broken part. Common triggers include boost-control faults, implausible sensor readings, overheating, fuel-pressure problems, misfires, emissions-system faults and gearbox errors. A restart may restore normal performance temporarily, but the stored fault and underlying risk remain.
+
+## How limp mode feels
+
+The accelerator may respond slowly, engine speed may be capped, an automatic gearbox may stay in one gear, or turbocharged performance may disappear. A warning light or “reduced power” message often appears. Some faults create a soft restriction that still allows careful movement; others put a transmission into a fixed emergency gear with a noticeable jolt.
+
+Do not assume every sluggish car is in limp mode. A blocked air path, slipping clutch, weak fuel supply or mechanical fault can reduce performance without the control unit commanding a limit. Diagnosis should confirm whether requested torque or gear operation has been restricted and why.
+
+## Why the car protects itself
+
+Modern control modules compare sensor signals and operating models. If boost pressure exceeds a safe target, coolant temperature is excessive or a throttle signal disagrees with another position sensor, the system may choose a conservative value. Restricting output can reduce the chance of engine, exhaust or transmission damage and gives the driver an opportunity to reach safety.
+
+Protection does not mean continued driving is always safe. The strategy cannot compensate for low oil pressure, severe overheating, a loose wheel or failing brakes. Read every warning, consider how the car feels and follow the handbook's stop instructions.
+
+## Common engine-related triggers
+
+- Turbo underboost or overboost caused by leaks, control faults, actuator problems or restricted flow.
+- Airflow, manifold-pressure, throttle or pedal signals that are missing or implausible.
+- Fuel pressure outside the requested range, injector-control trouble or an active misfire.
+- Excessive temperature, cooling-system faults or a sensor reporting an unsafe value.
+- Diesel particulate-filter pressure or regeneration faults and other emissions problems.
+
+Each code describes what the module observed, not necessarily the failed component. An underboost code can come from a split hose, vacuum fault, sensor bias, control solenoid, sticking mechanism or turbo damage. Testing requested and actual values prevents an expensive guess.
+
+## Transmission limp mode
+
+Automatic and automated gearboxes may select a single forward gear to limit clutch slip and hydraulic damage. Causes range from low or degraded fluid and speed-sensor faults to solenoids, wiring, control units or internal wear. A low-voltage event can also create multiple communication and transmission codes.
+
+If engagement is harsh, the gearbox slips, a burning smell appears or drive is lost, stop and arrange recovery. Do not repeatedly select Drive and Reverse in an attempt to force normal operation. Correct fluid-level procedures vary and may depend on temperature, so topping up without the right specification and process can cause further trouble.
+
+## Can you drive in limp mode?
+
+Only move the car as far as needed to reach a safe place when the warning is amber, temperatures and oil pressure are normal, there is no heavy smoke or severe noise, and the vehicle can keep up safely. Avoid motorways, towing, hard acceleration and steep loads. Recovery is the better choice when power is too limited for traffic, a red warning appears, the engine shakes badly or the transmission behaves harshly.
+
+Turning the ignition off and on is not a repair. It can reset a temporary restriction until the fault conditions return, sometimes during overtaking or joining traffic. If a restart restores power, use that information for diagnosis and arrange a check before relying on the vehicle.
+
+## What to record before diagnosis
+
+Photograph the warning message, note the fuel level, engine temperature, speed and weather, and describe what you were doing when the limit began. Mention recent battery trouble, repairs or refuelling. Do not erase codes with an app: freeze-frame data can show pressure, temperature and load at the first failure.
+
+Check oil and coolant only when parked safely and the engine is cold. A visibly detached intake hose may be relevant, but avoid reaching into the engine bay while it is hot or running. Never open a hot cooling system.
+
+## How limp-mode diagnosis works
+
+A full-system scan can reveal which module requested the restriction and whether communication or voltage faults are involved. The technician then uses live data and physical tests suited to the code: pressure or smoke testing for boost leaks, circuit checks for sensor signals, fuel-pressure measurement or cooling-system assessment. Historical codes need to be separated from the active cause.
+
+This process also looks for connected faults. A low supply voltage can make several modules report unrelated errors; a boost leak can increase soot loading; a misfire can trigger catalyst-protection strategies. Our guide to [power loss under acceleration](/news/car-losing-power-when-accelerating) explains these overlaps.
+
+## Preventing a repeat
+
+Once the tested cause is repaired, codes should be cleared and the car verified under the conditions that originally triggered the restriction. That may require a careful road test and confirmation that commanded and measured values agree. Simply clearing the dashboard without verification risks an unexpected return.
+
+SOB Autofix offers [vehicle diagnostics](/diagnostics/car-diagnostics) and [electrical fault finding](/diagnostics/electrical-fault-finding) in Doncaster. The useful outcome is a supported repair plan: what the system detected, which test confirmed the cause and what must be repaired before full performance can be trusted again.
+    $body$,
+    $faqs$[
+      {"question":"Does limp mode mean the engine is ruined?","answer":"No. It means a control system has detected a condition that justifies limiting operation. Causes range from a disconnected hose or low voltage to faults needing substantial repair."},
+      {"question":"Can low battery voltage cause limp mode?","answer":"Yes. Unstable voltage can disrupt sensors and module communication, producing several warnings. The battery and charging system should be tested alongside active fault codes."},
+      {"question":"Why did limp mode disappear after restarting?","answer":"Some modules allow normal operation until the fault is detected again. The restart changes the state, not the cause, so stored codes and freeze-frame data remain important."},
+      {"question":"How is limp mode cleared properly?","answer":"The underlying fault is confirmed and repaired, codes are cleared, and the vehicle is tested under the original conditions. Clearing codes alone is not a lasting solution."}
+    ]$faqs$::jsonb,
+    $links$[
+      {"label":"Vehicle diagnostics","href":"/diagnostics/car-diagnostics"},
+      {"label":"Engine warning light guide","href":"/news/engine-warning-light-what-it-means"},
+      {"label":"Car losing power when accelerating","href":"/news/car-losing-power-when-accelerating"}
+    ]$links$::jsonb,
+    'Get reduced performance diagnosed',
+    'Book a full-system scan and targeted testing to identify why the vehicle restricted power or transmission operation.',
+    'Book vehicle diagnostics', '/book', false
+  )
+)

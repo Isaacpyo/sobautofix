@@ -1,0 +1,389 @@
+-- Editorial source only. This file is intentionally non-executable and is
+-- consumed by the validated draft importer.
+with articles (
+  slug, title, excerpt, category, seo_title, seo_description, body, faqs, links,
+  cta_heading, cta_body, cta_label, cta_href
+) as (
+  values
+  (
+    'car-knocking-noise-causes',
+    'Car Making a Knocking Noise? What Different Knocking Sounds Can Mean',
+    'A knock can come from the engine, suspension, steering, exhaust or driveline. Timing and location are the best first clues.',
+    'Repairs & Maintenance',
+    'Car Knocking Noise: Common Causes | SOB Autofix',
+    'Car making a knocking noise? Match when and where it happens to common engine, suspension, exhaust and driveline causes, plus urgent warning signs.',
+    $body$
+A knocking noise from a car does not identify one faulty part. A deep knock from the engine that follows engine speed is very different from a clunk over bumps, a click on full steering lock or a thud when drive is taken up. Reduce load and work out when the sound occurs. Stop the engine for low oil pressure, severe metallic knocking, overheating or sudden loss of power; stop driving for unstable steering, poor braking or a suspected loose wheel.
+
+## Describe the sound before trying to name it
+
+Note whether the vehicle is stationary or moving, whether the rhythm follows engine speed or road speed, and whether acceleration, braking, turning or bumps trigger it. A recording from inside the cabin can help, but do not hold a phone while driving. Ask a passenger to record only when it is safe.
+
+Words such as knock, tap, clunk and rattle are subjective. The conditions are more valuable: “one clunk when changing from reverse to drive” or “rapid clicking on full left lock” gives a technician a repeatable test. Also mention temperature, recent repairs and whether any warning appeared.
+
+## Knocking that follows engine speed
+
+A tapping from the top of an engine can involve valve-train components, oil supply or an injector, while a deeper lower-engine knock can be more serious. Combustion knock under load may relate to fuel quality, excessive temperature, mixture or control problems. None of these can be confirmed by sound alone because pumps, pulleys, belt tensioners and accessories can transmit noise through the engine.
+
+Check the oil level with the car parked as the handbook directs. If the oil-pressure warning is on, the level is very low, or the knock is heavy and new, switch off and arrange recovery. Adding oil does not prove that pressure is adequate and should not be used to justify continued driving when the warning remains.
+
+## A knock over bumps
+
+Clunks over rough surfaces commonly involve worn bushes, ball joints, anti-roll-bar links, dampers, springs or mountings. Loose undertrays, exhaust shields and items in the boot can imitate suspension noise. The sound may change when only one wheel crosses a bump or when the brakes are lightly applied.
+
+Because suspension supports and guides the wheel, new noise combined with wandering, uneven ride height or steering play needs urgent assessment. Our [clunking noise over bumps guide](/news/clunking-noise-over-bumps) explains the likely inspection path without assuming every knock needs the same part.
+
+## Knocks while turning
+
+A repeated click or knock on full lock is often associated with an outer CV joint, particularly if a boot has split and lost grease. A single clunk can instead come from a top mount, ball joint, steering joint, loose fixing or driveline movement. Avoid holding the steering against full lock longer than needed.
+
+If the steering catches, becomes heavy or the wheel position feels unstable, do not continue. A visual boot inspection may reveal grease, but the vehicle needs safe support and correct joint-loading checks. Read more about [clicking noises when turning](/news/clicking-noise-when-turning-cv-joint).
+
+## A clunk when accelerating or changing gear
+
+Excess movement in engine or gearbox mounts can create a thud as torque changes direction. Driveshaft joints, differential mountings, prop-shaft components and transmission play are other possibilities. Some movement is designed into a driveline, so a part should not be replaced solely because it moves during a casual inspection.
+
+A technician can reproduce the transition carefully, observe mount movement and inspect joints for play or binding. If the engine speed rises without matching acceleration, or gear engagement is harsh, describe that separately because it may indicate a clutch or transmission problem.
+
+## Exhaust and body noises
+
+An exhaust that contacts the body can knock when the engine rocks or the car crosses a bump. Broken hangers, loose shields and internal catalyst or silencer damage can rattle. Exhaust leaks may also produce a chuffing or tapping sound that speeds up with the engine.
+
+Do not inspect a hot exhaust or run the engine in an enclosed space. Fumes entering the cabin, a hanging section or a sudden loud leak needs prompt attention. Headache or dizziness inside the car is a reason to stop, get into fresh air and avoid using the vehicle.
+
+## Is the knocking safe to drive with?
+
+Stop for a heavy engine knock, oil-pressure warning, smoke, overheating, serious power loss, wheel looseness, steering instability or reduced braking. A light trim or shield rattle may be less urgent, but it should still be confirmed because safety-critical noises can sound mild from inside. If the cause is unknown, avoid speed and load until it is inspected.
+
+Do not repeatedly rev the engine or drive over the same pothole to make the noise louder. Reproduction should use the minimum stress required, ideally by a technician who can observe data and components safely.
+
+## What a professional diagnosis involves
+
+The process begins with the timing and location clues, followed by fluid and warning checks. The vehicle may be inspected on a lift, suspension joints loaded correctly, driveline free play assessed and engine data reviewed. An electronic listening tool or chassis microphones can help locate a noise that travels through the structure.
+
+SOB Autofix can investigate the symptom and arrange appropriate [repairs and maintenance](/services/repairs-maintenance). A clear finding should distinguish the sound source from the cause, explain the safety implications and identify any related wear before work is authorised.
+
+## After a noisy component is repaired
+
+The original conditions should be repeated during verification. If several worn components were found, ask which one was proven to create the complaint and which were advisory observations. This keeps the repair decision evidence-based and makes it easier to recognise any separate noise later.
+    $body$,
+    $faqs$[
+      {"question":"Does engine knocking always mean major damage?","answer":"No. Accessories, injectors and exhaust leaks can sound similar, but a new deep knock or oil-pressure warning is urgent. Switch off and have it assessed rather than testing it by revving."},
+      {"question":"Why does my car knock only over small bumps?","answer":"Anti-roll-bar links, bushes, mounts and loose shields are possibilities because short wheel movements load them differently. Correctly loaded inspection is needed to confirm the source."},
+      {"question":"Can low oil cause a knocking sound?","answer":"Low level can reduce oil supply and contribute to serious noise, but topping up does not resolve a pressure loss or existing damage. Stop if the oil-pressure warning appears."},
+      {"question":"Why is there one clunk when I set off?","answer":"Mount movement, driveline joints, brake movement or suspension play can create a single torque-change clunk. The direction and load should be reproduced safely during inspection."}
+    ]$faqs$::jsonb,
+    $links$[
+      {"label":"Repairs and maintenance","href":"/services/repairs-maintenance"},
+      {"label":"Clunking over bumps guide","href":"/news/clunking-noise-over-bumps"},
+      {"label":"Clicking while turning guide","href":"/news/clicking-noise-when-turning-cv-joint"}
+    ]$links$::jsonb,
+    'Need a knock traced accurately?',
+    'Tell us when the noise occurs and SOB Autofix can plan a focused mechanical or diagnostic inspection.',
+    'Get a repair quote', '/get-a-quote'
+  ),
+  (
+    'squeaking-grinding-brakes',
+    'Squeaking or Grinding Brakes: When Do Your Brake Pads Need Replacing?',
+    'Brake squeal can have several causes, but grinding, poor stopping, pulling or an abnormal pedal needs urgent inspection.',
+    'Repairs & Maintenance',
+    'Squeaking or Grinding Brakes Explained | SOB Autofix',
+    'Squeaking or grinding brakes? Learn the signs of worn pads, other causes of brake noise, when to stop driving and what a proper inspection checks.',
+    $body$
+Squeaking brakes do not always mean the pads are worn out, but grinding can mean the friction material is exhausted and metal is contacting the disc. Pad wear indicators, glazing, contamination, corrosion and trapped debris can all create noise. If braking performance has reduced, the pedal feels abnormal, the car pulls strongly, a warning stays on or you hear continuous grinding, stop using the vehicle and arrange a brake inspection.
+
+## What brake-pad wear sounds like
+
+Some pads have a metal acoustic indicator designed to squeal when the material reaches a set thickness. Vehicles with electronic wear sensors may show a dashboard message instead. A rough grinding sound can occur when the pad backing contacts the disc, but stones, shields and severely corroded surfaces can create similar noises.
+
+Sound alone cannot measure remaining material. Inner and outer pads may wear at different rates, and the least visible inner pad can be the thinnest. Inspection should measure all relevant pads and discs and establish whether a sticking slider, piston or hose caused uneven wear.
+
+## Why brakes can squeak with usable pads
+
+High-frequency vibration between the pad, caliper and disc can produce squeal. Surface corrosion after rain or overnight parking may cause brief noise that clears after a few gentle applications. Glazed material, unsuitable compounds, missing hardware, contamination or uneven surfaces can make noise persist.
+
+Do not apply lubricants or sprays to a brake's friction surfaces. Products used on specific contact points must be suitable for the braking system and applied sparingly after dismantling by someone competent. Contaminated pads often require replacement and the source of fluid or grease must be fixed.
+
+## Grinding needs prompt attention
+
+Grinding that occurs whenever the pedal is pressed may indicate exhausted pads, damaged discs or debris. Continued use can reduce braking and increase the repair required. A constant scrape while moving may involve a shield, stone, bearing or binding brake, but it still needs inspection.
+
+If the vehicle struggles to stop, the pedal sinks, a red brake warning remains on, fluid is visible or one wheel smokes, do not drive it. Move to safety only if this can be done without relying on compromised brakes, then arrange recovery.
+
+## Other signs your brake pads may need replacement
+
+- A wear warning or manufacturer-specific service message.
+- Measured pad material at or below the vehicle maker's limit.
+- Longer stopping distance or a change in pedal response.
+- Vibration, pulling or heat caused by a sticking or unevenly working brake.
+- Deep scoring or excessive wear on the disc alongside thin pads.
+
+No universal mileage tells you when pads will wear out. Vehicle weight, traffic, hills, driving style, corrosion and caliper condition all affect life. An inspection and measurement are more useful than comparing your mileage with another car.
+
+## Pulling, vibration and heat
+
+A car that pulls during braking may have unequal brake force, a binding caliper, tyre or suspension issues, or an alignment problem. The guide to a [car pulling to one side](/news/car-pulling-to-one-side) explains how those systems overlap. A pulsing pedal or steering shake can involve disc-thickness variation, run-out, deposits or worn suspension.
+
+A hot smell or one wheel radiating much more heat than the others can signal a binding brake. Do not touch the wheel or pour water on it. Stop and let the system cool naturally, then arrange assistance; driving can overheat the fluid, bearing and nearby components.
+
+## Can you drive with squeaking brakes?
+
+Brief light squeal after wet weather may clear, but persistent or changing noise should be inspected. Drive no farther than necessary when braking remains normal and there are no warnings, pulling, vibration or heat. Grinding, reduced performance or an abnormal pedal makes recovery the responsible choice.
+
+Test braking only at low speed in a safe place if needed to decide whether the vehicle can be moved out of danger. Do not perform repeated hard stops to clean the discs, because this can worsen heat and damage.
+
+## What a brake inspection should include
+
+A proper check considers pad thickness on both sides, disc condition and measurements, caliper movement, pistons, hoses, fluid leaks, wheel bearings and the operation of wear sensors. Rear parking-brake mechanisms may also affect wear. Findings should explain whether parts are below limits, damaged or likely to remain serviceable.
+
+Replacing pads on one side only is not normal practice because braking must remain balanced across an axle. New pads also need suitable disc surfaces and correct installation. Where discs are below thickness or badly damaged, pads alone may not produce safe, durable braking.
+
+## After pads or discs are replaced
+
+The pedal should be made firm before moving the car, fluid level checked and the system verified for leaks and balanced operation. New friction surfaces may need a controlled bedding procedure specified by the parts or vehicle manufacturer. Avoid assuming maximum performance is available immediately.
+
+SOB Autofix provides [brake repair](/services/brake-repair) in Doncaster, starting with an inspection rather than a diagnosis from noise alone. If you are unsure whether the vehicle is safe to bring in, describe the pedal, warning lights, heat and sound when requesting a quote.
+    $body$,
+    $faqs$[
+      {"question":"How long can I drive once brakes start grinding?","answer":"Do not plan further driving. Grinding may indicate metal contact and compromised braking. Stop safely and arrange inspection or recovery before more damage occurs."},
+      {"question":"Can new brake pads squeak?","answer":"Yes. Bedding, pad compound, fitting hardware, contamination and disc condition can cause noise. Persistent squeal should be checked to confirm correct installation and operation."},
+      {"question":"Do brake pads wear evenly?","answer":"Not always. Inner and outer pads can differ, especially when sliders or pistons stick. All pads on the axle should be inspected rather than judging from the easiest one to see."},
+      {"question":"Does a brake warning always mean worn pads?","answer":"No. Depending on the car it can indicate wear, low fluid, parking-brake status, hydraulic trouble or an electronic fault. Consult the handbook and arrange checks promptly."}
+    ]$faqs$::jsonb,
+    $links$[
+      {"label":"Brake repairs","href":"/services/brake-repair"},
+      {"label":"Why a car pulls under braking","href":"/news/car-pulling-to-one-side"},
+      {"label":"Book a vehicle check","href":"/book"}
+    ]$links$::jsonb,
+    'Do your brakes sound or feel different?',
+    'Arrange a brake inspection before worn or binding components affect stopping performance or damage other parts.',
+    'Book a brake inspection', '/book'
+  ),
+  (
+    'clunking-noise-over-bumps',
+    'Clunking Noise When Driving Over Bumps: Common Suspension Problems',
+    'Clunks over bumps commonly involve links, bushes, ball joints, dampers or mounts, but loose exhaust and body parts can sound similar.',
+    'Repairs & Maintenance',
+    'Clunking Noise Over Bumps: Causes | SOB Autofix',
+    'Hear a clunking noise over bumps? Learn the common suspension, steering and mounting causes, danger signs and how technicians locate the worn part.',
+    $body$
+A clunking noise over bumps often comes from suspension joints, bushes, anti-roll-bar links, damper mounts or a damaged spring, but loose exhaust brackets, undertrays and items in the boot can imitate the sound. The noise does not prove one component has failed. If it comes with vague steering, uneven ride height, tyre contact, strong pulling or a wheel that feels unstable, stop driving and arrange recovery.
+
+## Why bumps reveal worn parts
+
+Suspension controls wheel movement while isolating the body from road impacts. As a wheel rises and falls, bushes twist, joints change angle, dampers resist movement and springs support weight. Wear can create clearance that closes suddenly with a clunk. Small sharp bumps may excite different parts from large slow undulations.
+
+Note whether one wheel crossing a bump is worse than both wheels crossing together. Listen during braking and turning too. A front-left sound can travel through a subframe and seem central, so location from the driver's seat is only a starting clue.
+
+## Anti-roll-bar links and bushes
+
+Drop links connect the anti-roll bar to the suspension and change load rapidly over uneven roads. Worn ball joints in a link can create a light repetitive knock, particularly when left and right wheels move differently. Anti-roll-bar mounting bushes can also allow the bar to shift or contact nearby parts.
+
+Play is not always obvious with the suspension hanging freely. The joint may need to be checked at its normal ride position or with controlled load. Replacing links without confirming movement can leave a similar noise from a bush, mount or steering joint unresolved.
+
+## Ball joints and suspension-arm bushes
+
+Ball joints guide the wheel while allowing steering and suspension movement. Bushes locate suspension arms and absorb force. Wear may produce clunks, imprecise steering, braking movement or uneven tyre wear. Severe joint wear can become dangerous because wheel control depends on it.
+
+Cracked rubber does not automatically mean a bush has failed; movement, separation and vehicle-specific limits matter. Conversely, a joint can be unsafe without a dramatic noise. Inspection should check every load direction using appropriate support, never with someone underneath a car held only by a jack.
+
+## Dampers, top mounts and springs
+
+A worn damper mount or bearing can knock as suspension or steering moves. A leaking or internally damaged damper may reduce control and allow repeated bouncing. Broken coil-spring ends sometimes hide in their seats and can alter ride height or contact a tyre.
+
+Look from outside for one corner sitting unusually low, a spring end out of position or fluid coating a damper, but keep hands away from compressed springs. Spring energy is dangerous and dismantling needs suitable equipment. Excessive bouncing, tyre contact or a displaced spring means the vehicle should not be driven.
+
+## Steering components and subframes
+
+Track-rod ends, inner joints, steering racks and column couplings can knock when wheel loads reverse. Loose or degraded subframe mountings may produce a heavier clunk during braking, setting off or crossing bumps. These faults can also affect alignment and steering feel.
+
+Any new free play, delayed response or change in steering effort is more urgent than noise alone. Avoid high speed and arrange inspection. Alignment cannot correct looseness; worn or loose parts must be addressed first.
+
+## Non-suspension noises that sound similar
+
+An exhaust touching the body, a loose heat shield, undertray, battery clamp, spare wheel or tool kit can make convincing clunks. Brake pads or calipers may shift when direction or pedal load changes. Engine mounts can thud as the drivetrain rocks, especially when a bump coincides with acceleration.
+
+Empty loose items from the boot and check that accessible storage panels are secure. Do not tie up an exhaust with improvised materials or crawl beneath the car. A technician can inspect clearances and fixings safely on a lift.
+
+## Is it safe to drive?
+
+A quiet, occasional noise with normal steering and ride may allow a gentle trip for inspection, but avoid speed, potholes and heavy loads. Stop for strong pulling, unstable steering, grinding, sudden ride-height change, visible tyre damage, a loose wheel sensation or any component contacting the road.
+
+The absence of a warning light does not make suspension safe. Most mechanical joints have no electronic monitoring. If the clunk began after a pothole or kerb strike, inspect promptly because a wheel, tyre or arm may have been damaged at the same time.
+
+## How the source is found
+
+Diagnosis combines a controlled road test with a lift inspection. The technician reproduces the noise, checks wheels and tyres, loads joints in relevant directions and looks for witness marks where parts have contacted. Chassis microphones can help when sound travels and several components look worn.
+
+Ask for the evidence behind the recommendation: measurable play, separated rubber, leakage, a broken spring or confirmed contact. The general [car knocking-noise guide](/news/car-knocking-noise-causes) can help if the sound also occurs under acceleration or while turning.
+
+## Repair and verification
+
+Suspension parts are selected for the exact vehicle and fitted with correct tightening procedures, sometimes at normal ride height. Wheel alignment may then be necessary depending on the component disturbed. A follow-up road test should confirm the original clunk is gone and steering remains centred and predictable.
+
+SOB Autofix can assess knocks and arrange appropriate [repairs and maintenance](/services/repairs-maintenance). Describe the side, road surface, steering position and whether braking changes the noise when you enquire.
+    $body$,
+    $faqs$[
+      {"question":"What is the most common cause of clunking over bumps?","answer":"Links and bushes are common, but no single component can be assumed. Mounts, joints, springs, exhaust parts and loose items can produce almost identical sounds."},
+      {"question":"Will wheel alignment stop a suspension clunk?","answer":"No. Alignment changes wheel angles; it does not remove mechanical play. Worn or loose components must be found and repaired before alignment is considered."},
+      {"question":"Can I check suspension by pushing down on the car?","answer":"A bounce check may reveal very poor damping but cannot assess most joints safely or reliably. Correct support and controlled loading are needed for a useful inspection."},
+      {"question":"Why is the clunk worse in cold weather?","answer":"Rubber stiffness, lubricant viscosity and component clearances change with temperature. That clue helps reproduce the noise but does not identify the part by itself."}
+    ]$faqs$::jsonb,
+    $links$[
+      {"label":"Repairs and maintenance","href":"/services/repairs-maintenance"},
+      {"label":"Car knocking noise guide","href":"/news/car-knocking-noise-causes"},
+      {"label":"Car shaking or vibrating guide","href":"/news/car-shaking-vibrating-when-driving"}
+    ]$links$::jsonb,
+    'Have a suspension clunk checked',
+    'A focused road test and mechanical inspection can separate worn suspension parts from loose exhaust, brake or body components.',
+    'Request an inspection quote', '/get-a-quote'
+  ),
+  (
+    'car-pulling-to-one-side',
+    'Car Pulling to One Side While Driving or Braking: What Causes It?',
+    'Pulling can come from tyre pressure, alignment, brakes, suspension or road camber. A strong pull under braking is urgent.',
+    'Repairs & Maintenance',
+    'Car Pulling to One Side: Causes | SOB Autofix',
+    'Car pulling left or right? Learn how tyres, alignment, brakes and suspension cause drift, what is unsafe and which checks identify the real fault.',
+    $body$
+A car can pull to one side because of unequal tyre pressures, tyre damage, alignment, worn suspension or a brake that is binding or working unevenly. Gentle drift on a heavily cambered road is different from a strong pull on a level surface. If the car suddenly changes direction, pulls sharply when braking, has a hot wheel, unstable steering or a damaged tyre, stop and arrange an inspection before driving further.
+
+## Pulling all the time versus only when braking
+
+A steady drift while cruising directs attention towards tyres, wheel alignment, ride height and suspension geometry. A pull that appears only as the brake pedal is pressed suggests unequal braking force or movement in suspension joints, though tyres and road surface still affect it. A pull mainly under acceleration can involve driveline torque effects, mounts or suspension geometry.
+
+Choose a safe, level road only if the car is stable and observe rather than deliberately releasing the steering wheel. Record speed, braking pressure and whether the direction changes on another road. Never conduct hard-braking tests in traffic.
+
+## Start with tyre pressure and condition
+
+Unequal front tyre pressures can make the car drift. Check them cold against the vehicle placard or handbook and inspect for a visibly soft tyre, sidewall bulge or unusual wear. Tyres with different construction, significant wear differences or internal damage can create a pull even at equal pressure.
+
+Do not inflate to the maximum moulded on the sidewall; that is not the normal vehicle setting. A tyre that repeatedly loses pressure needs professional attention. Do not continue on exposed cords, a bulge or rapid pressure loss.
+
+## Wheel alignment and road camber
+
+Alignment describes several wheel angles, not simply whether the steering wheel is centred. Potholes, kerb impacts, worn joints and previous repairs can change geometry. The road itself is normally shaped to drain water, which may create a small leftward tendency in the UK; a pronounced or worsening pull should not be dismissed as camber.
+
+An alignment printout is useful only after tyres, wheel condition and suspension looseness are checked. Adjusting around a worn joint may produce numbers that change as soon as the car moves. The cause of any abnormal angle—damage, ride height or an incorrect component—also matters.
+
+## Binding or unequal brakes
+
+A sticking caliper, seized slider, restricted hose or parking-brake mechanism can leave one wheel braking when the pedal is released. The car may pull away from or towards the affected side depending on the condition. Heat, a burning smell, reduced fuel economy and rapid pad wear are clues.
+
+During braking, contamination, hydraulic faults or worn components can make one side produce less force. A low or sinking pedal, fluid leak, red warning, smoke or severe pull means the car is unsafe. Do not touch a hot wheel or pour water on it. Our [squeaking and grinding brakes guide](/news/squeaking-grinding-brakes) covers associated noises and wear signs.
+
+## Suspension and steering causes
+
+Worn bushes, ball joints, tie rods, springs and dampers can let a wheel move under load. A broken spring or sagging corner changes geometry, while excess joint play makes direction unpredictable. You might also hear a clunk over bumps or notice feathered tyre wear.
+
+Because steering and suspension are safety-critical, a visual glance is insufficient. Components must be supported and loaded correctly. If the steering wheel suddenly sits off-centre after an impact, or the car wanders and needs constant correction, reduce speed and arrange prompt assessment.
+
+## Can wheel or hub problems cause a pull?
+
+A bent wheel, damaged tyre, bearing play or hub issue can affect how the car tracks. These may also produce humming or vibration that changes with speed. A bearing should not be diagnosed from a hum alone because tyre tread can sound similar.
+
+After a wheel has been removed, incorrect seating or tightening can create serious risk. A suspected loose wheel, rhythmic wobble or sudden vibration requires an immediate safe stop and recovery.
+
+## What you can check safely
+
+Compare cold tyre pressures, inspect visible tread and sidewalls, remove unusually heavy loose cargo and note whether the problem follows a pothole, tyre replacement or repair. Look for dashboard brake or stability warnings. After a very short gentle movement, a strong burning smell or obvious heat from one corner is a stop signal; do not put your hand on the wheel.
+
+Avoid swapping wheels or adjusting track rods as a diagnostic shortcut unless you have the competence and correct equipment. Modern driver-assistance systems may also require steering-angle or camera calibration after geometry changes.
+
+## How a technician diagnoses pulling
+
+The inspection starts with tyres and pressures, then wheel condition, bearings, brakes, steering and suspension. Brake temperatures and forces may be compared, and alignment measured only when the mechanical foundation is sound. A road test confirms the complaint and verifies the repair.
+
+The result should explain both the direction and the conditions. For example, a left pull under braking supported by unequal pad wear and a restricted slider is different from a constant left drift supported by tyre conicity. Evidence avoids paying for alignment when the real problem is a brake or tyre.
+
+SOB Autofix offers [brake repair](/services/brake-repair) and broader [repairs and maintenance](/services/repairs-maintenance) in Doncaster. Describe whether the pull is constant, braking-related or acceleration-related so the right checks can be planned.
+    $body$,
+    $faqs$[
+      {"question":"Why does my car pull left on some roads but not others?","answer":"Road camber can create gentle drift, but pressure, tyres and alignment also matter. A strong or increasing pull on level roads should be inspected."},
+      {"question":"Does pulling always mean the alignment is wrong?","answer":"No. Tyres, binding brakes, worn suspension and wheel damage can all cause it. These need checking before alignment adjustment."},
+      {"question":"Why does the car pull only when I brake?","answer":"Unequal brake force or suspension movement under load are key possibilities. Because braking balance is safety-critical, arrange prompt inspection rather than compensating at the steering wheel."},
+      {"question":"Can low tyre pressure make steering pull?","answer":"Yes. Unequal pressure changes rolling resistance and tyre shape. Correct cold pressures, then investigate any tyre that loses pressure again."}
+    ]$faqs$::jsonb,
+    $links$[
+      {"label":"Brake repairs","href":"/services/brake-repair"},
+      {"label":"Squeaking and grinding brakes","href":"/news/squeaking-grinding-brakes"},
+      {"label":"Car vibration causes","href":"/news/car-shaking-vibrating-when-driving"}
+    ]$links$::jsonb,
+    'Does your car pull left or right?',
+    'Arrange tyre, brake, steering and suspension checks before paying for an alignment that may not address the cause.',
+    'Book a vehicle check', '/book'
+  ),
+  (
+    'clicking-noise-when-turning-cv-joint',
+    'Car Making a Clicking Noise When Turning: Is It the CV Joint?',
+    'Repeated clicking on full lock often points to an outer CV joint, but steering, suspension and brake parts can make similar sounds.',
+    'Repairs & Maintenance',
+    'Clicking When Turning: CV Joint Signs | SOB Autofix',
+    'Clicking noise when turning? Learn typical CV-joint symptoms, other possible causes, safe checks and when driveline or steering noise is urgent.',
+    $body$
+A repetitive clicking noise while accelerating on full steering lock is commonly associated with a worn outer CV joint, especially if its rubber boot has split and thrown grease around the wheel area. It is not proof. Wheel bearings, brake hardware, steering joints, suspension mounts, tyre contact and loose fixings can create similar sounds. If steering feels unstable, a wheel appears loose, the noise becomes a heavy knock or drive is interrupted, stop and arrange recovery.
+
+## What a CV joint does
+
+Constant-velocity joints allow a driveshaft to transmit power while suspension and steering angles change. Front-wheel-drive cars usually have an inner and outer joint on each front shaft; other drivetrains use different arrangements. The outer joint operates through a large angle when turning, which is why wear there often becomes loud on full lock.
+
+Each joint is protected by a flexible boot filled with grease. A split boot lets lubricant escape and water or grit enter. Finding a damaged boot early may protect a joint that has not yet developed wear, but once clicking is established, a boot alone may not solve it.
+
+## Typical outer CV-joint symptoms
+
+The classic pattern is a rapid, regular click from one front corner during low-speed acceleration on a tight turn. It may be louder turning one direction, although sound travels and the loaded side is not always obvious from the cabin. The rhythm normally follows wheel speed rather than engine speed.
+
+Noise when coasting straight ahead is less typical. A technician should reproduce both left and right turns carefully, inspect boots and check the shaft and hub area. Do not perform repeated full-throttle circles; that adds load and can worsen a failing joint.
+
+## Inner CV joints feel different
+
+Inner joints work through smaller steering angles but accommodate driveshaft length changes. Wear can cause shudder or vibration under acceleration, clunks as drive is taken up, or movement felt through the floor. Engine mounts, gearbox mounts, wheel problems and other driveline joints can produce the same pattern.
+
+If the main symptom is vibration at speed rather than clicking on turns, start with the [car shaking and vibrating guide](/news/car-shaking-vibrating-when-driving). Load-related diagnosis should compare acceleration, steady throttle and coasting rather than assuming the complete shaft needs replacement.
+
+## Other causes of clicking while turning
+
+A strut top bearing or spring can wind up and release with a click or ping. Ball joints and track-rod ends may knock as load changes. Brake pads or shields can move, and a stone may touch a rotating disc. Tyre tread can contact a liner when steering if the liner is loose or the wheel and tyre size is unsuitable.
+
+A single click as the steering changes direction is different from a rhythmic wheel-speed click. Steering-column joints and electric steering mechanisms add further possibilities. Record whether the car must be moving and whether applying the brakes changes the sound.
+
+## Safe checks you can make
+
+With the car parked, engine off and wheels accessible without crawling underneath, look for a split concertina-style boot or grease thrown onto the inner wheel, suspension or arch liner. Check for a loose liner and visible tyre rub marks. Do not touch hot brake parts or rotate a driven wheel while the vehicle rests on a jack.
+
+Note whether the clicking is louder on left or right lock, only under power, and whether it follows road speed. A short recording by a passenger can help. Avoid adding grease through a damaged boot as an improvised fix; contamination and wear still need assessment.
+
+## Is it safe to drive with a clicking CV joint?
+
+An early, light click may allow a gentle journey for inspection, but joint wear can progress and ultimately interrupt drive or damage surrounding parts. Avoid full-lock acceleration, high loads and long trips. Arrange repair promptly rather than waiting for the sound to become constant.
+
+Stop if clicking changes into heavy knocking, the car vibrates severely, steering or wheel position feels abnormal, or drive is lost. These symptoms may indicate advanced joint wear or another safety-critical fault. Recovery is preferable when the condition is uncertain.
+
+## How the fault is confirmed
+
+The vehicle is road-tested only if safe, then raised using proper equipment. The technician inspects boots, grease loss, joint play, shaft condition, hub fixings, steering and suspension. The joint may need to be articulated and loaded because free play alone does not always correlate with noise.
+
+Diagnosis should also find why a boot failed. Age, accidental damage, incorrect installation or contact with another component may matter. On some vehicles the outer joint is available separately; on others a complete shaft is the practical repair. Part quality and correct axle-nut procedures are important.
+
+## After a driveshaft repair
+
+The hub fixing should be tightened using the specified method, any lost gearbox oil checked, and disturbed brake or suspension items refitted correctly. A road test on both steering locks verifies that the click is gone and no vibration has been introduced. Wheel alignment is considered if geometry-related components were disturbed, not automatically for every shaft change.
+
+SOB Autofix can identify clicking and driveline faults through its [repairs and maintenance](/services/repairs-maintenance) service. Share the steering direction, throttle condition and whether grease is visible when requesting an assessment.
+    $body$,
+    $faqs$[
+      {"question":"Which CV joint clicks when turning?","answer":"The outer joint is commonly responsible for repetitive clicking on a powered tight turn. Sound can travel, so inspection should confirm the side rather than relying only on the driver's impression."},
+      {"question":"Can I replace only the CV boot?","answer":"Possibly if damage is found before contamination and wear occur. A joint that already clicks usually needs closer assessment and may require joint or shaft replacement."},
+      {"question":"How quickly can a clicking CV joint fail?","answer":"There is no reliable distance. Load, contamination and wear differ, so prompt repair and avoiding full-lock acceleration are safer than trying to predict remaining life."},
+      {"question":"Can a wheel bearing click on turns?","answer":"Bearings more often hum or rumble, but damage and hub-area faults can make varied noises. Bearing, brake, suspension and driveline checks should be performed together."}
+    ]$faqs$::jsonb,
+    $links$[
+      {"label":"Repairs and maintenance","href":"/services/repairs-maintenance"},
+      {"label":"Car vibration guide","href":"/news/car-shaking-vibrating-when-driving"},
+      {"label":"Car knocking noise guide","href":"/news/car-knocking-noise-causes"}
+    ]$links$::jsonb,
+    'Get a turning click inspected',
+    'A road test and driveline inspection can confirm whether the CV joint, steering, suspension or brake hardware is responsible.',
+    'Request a repair quote', '/get-a-quote'
+  )
+)
