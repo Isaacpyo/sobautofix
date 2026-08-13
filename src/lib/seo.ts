@@ -31,6 +31,7 @@ export function localBusinessJsonLd() {
     url: siteConfig.siteUrl,
     telephone: siteConfig.phone,
     email: siteConfig.email,
+    sameAs: Object.values(siteConfig.socials).filter((url): url is string => Boolean(url)),
     address: {
       "@type": "PostalAddress",
       streetAddress: `${siteConfig.address.building}, ${siteConfig.address.street}`,

@@ -2,6 +2,7 @@ import { ArrowRight, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import Link from "next/link";
 import { ButtonLink } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
+import { SocialLinks } from "@/components/marketing/social-links";
 import { diagnostics, formatPhone, services, siteConfig } from "@/config/site";
 import { linksForSettings, type SiteSettings } from "@/config/settings";
 import { Logo } from "./logo";
@@ -52,6 +53,10 @@ export function Footer({ settings = siteConfig }: { settings?: SiteSettings }) {
               Professional Diagnostics. Not Guesswork.
             </p>
             <BusinessAddress settings={settings} className="mt-5" />
+            <div className="mt-6">
+              <h2 className="text-sm font-bold text-white">Follow SOB Autofix</h2>
+              <SocialLinks socials={settings.socials} className="mt-3 text-[#C6D2DF]" />
+            </div>
           </div>
 
           <FooterGroup title="Diagnostics" titleHref="/diagnostics" links={diagnosticLinks} />

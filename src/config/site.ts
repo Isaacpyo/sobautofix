@@ -1,5 +1,21 @@
 import type { ServiceDeliveryType } from "@/types/domain";
 
+export type SocialLinksConfig = {
+  facebook: string | null;
+  instagram: string | null;
+  tiktok: string | null;
+  youtube: string | null;
+  x: string | null;
+};
+
+const socialLinks: SocialLinksConfig = {
+  facebook: "https://www.facebook.com/sobautofix",
+  instagram: "https://www.instagram.com/sobautofix/",
+  tiktok: "https://www.tiktok.com/@sobautofix",
+  youtube: null,
+  x: null,
+};
+
 export const siteConfig = {
   name: "SOB Autofix",
   legalName: "SOB Autofix Limited",
@@ -32,6 +48,7 @@ export const siteConfig = {
   accreditations: ["NABTEB", "Automotive Service Management Certificate"],
   googleMapsUrl: process.env.NEXT_PUBLIC_GOOGLE_MAPS_URL ?? "",
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  socials: socialLinks,
 } as const;
 
 export const formatPhone = (phone: string) =>
