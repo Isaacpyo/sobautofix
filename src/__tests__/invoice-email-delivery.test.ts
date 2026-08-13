@@ -9,6 +9,7 @@ import {
 } from "@/lib/email/resend";
 import {
   deliverInvoiceEmail,
+  invoiceEmailPayloadSha256,
   type DeliverInvoiceEmailInput,
   type InvoiceEmailClaimInput,
   type InvoiceEmailClaimResult,
@@ -24,6 +25,11 @@ const revision = "1";
 const timestamp = "2026-08-11T12:00:00.000Z";
 
 describe("invoice email delivery", () => {
+  it("includes authoritative HTML in the payload hash", () => {
+    const base: TransactionalEmail = { to: "customer@example.com", subject: "Invoice", text: "Invoice attached", html: "<p>Version one</p>" };
+    expect(invoiceEmailPayloadSha256(base)).not.toBe(invoiceEmailPayloadSha256({ ...base, html: "<p>Version two</p>" }));
+  });
+
   it.each(["draft", "void"] as const)("rejects a %s invoice before claiming or contacting the provider", async (invoiceStatus) => {
     const dependencies = dependencyHarness();
 
@@ -309,6 +315,7 @@ function deliveryInput(overrides: Partial<DeliverInvoiceEmailInput> = {}): Deliv
     recipient: " Customer@Example.com ",
     subject: "Invoice SOB-2026-000001 from SOB Autofix",
     text: "Please find your invoice attached.",
+    html: "<p>Please find your invoice attached.</p>",
     attachment: { filename: "SOB-Invoice-SOB-2026-000001.pdf", content: Buffer.from("stable-pdf-content") },
     ...overrides,
   };

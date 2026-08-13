@@ -42,6 +42,8 @@ describe("threaded enquiry implementation safeguards", () => {
     expect(repository).toContain('"In-Reply-To"');
     expect(repository).toContain("References");
     expect(repository).toContain("idempotencyKey");
+    expect(repository).toContain("html: rendered.html");
+    expect(repository).toContain("text: rendered.text");
     expect(repository).not.toContain("sender_email: parsed.body");
   });
 

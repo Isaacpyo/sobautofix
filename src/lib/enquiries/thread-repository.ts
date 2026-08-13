@@ -2,6 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 import { getResendConfig, getResendReplyConfig, retrieveReceivedEmail, retrieveSentEmail, sendTransactionalEmail } from "@/lib/email/resend";
+import { renderEnquiryReply } from "@/lib/email/templates/enquiries";
 import { createAdminClient } from "@/lib/supabase/server";
 import {
   buildEnquiryReplyAddress,
@@ -78,10 +79,12 @@ export async function sendEnquiryReply(input: { enquiryId: string; body: string;
 
   try {
     const headers = inReplyTo ? { "In-Reply-To": inReplyTo, References: references.join(" ") } : undefined;
+    const rendered = renderEnquiryReply({ customerName: enquiry.customers.name, body: parsed.body });
     const result = await sendTransactionalEmail({
       to: enquiry.customers.email,
       subject: conversation.subject,
-      text: parsed.body,
+      text: rendered.text,
+      html: rendered.html,
       replyTo,
       headers,
       idempotencyKey: `enquiry-reply/${inserted.id}`,

@@ -69,10 +69,15 @@ describe("enquiry persistence and notification pipeline", () => {
       to: "sobautofix@gmail.com",
       replyTo: "customer@example.com",
       subject: "New general enquiry",
+      html: expect.stringContaining("NEW ENQUIRY"),
+      text: expect.stringContaining("NEW ENQUIRY"),
     }));
     expect(sendTransactionalEmail).toHaveBeenNthCalledWith(2, expect.objectContaining({
       to: "customer@example.com",
       subject: "We received your SOB Autofix request",
+      replyTo: "sobautofix@gmail.com",
+      html: expect.stringContaining("REQUEST RECEIVED"),
+      text: expect.stringContaining("REQUEST RECEIVED"),
     }));
     expect(updates).toContainEqual({ notification_status: "sent" });
   });

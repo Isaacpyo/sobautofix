@@ -57,6 +57,7 @@ export type DeliverInvoiceEmailInput = {
   recipient: string;
   subject: string;
   text: string;
+  html: string;
   attachment: { filename: string; content: Buffer };
 };
 
@@ -77,6 +78,7 @@ export async function deliverInvoiceEmail(
     to: normalized.recipient,
     subject: normalized.subject,
     text: normalized.text,
+    html: normalized.html,
     replyTo: approvedInvoiceReplyTo,
     tags: [{ name: "invoice_send_id", value: normalized.logicalSendId }],
     attachments: [normalized.attachment],
@@ -155,6 +157,7 @@ export function invoiceEmailPayloadSha256(message: TransactionalEmail) {
     message.to,
     message.subject,
     message.text,
+    message.html ?? null,
     message.headers ?? null,
     message.tags ?? null,
     message.attachments?.map((attachment) => attachment.filename) ?? [],
@@ -238,7 +241,7 @@ function normalizeInput(input: DeliverInvoiceEmailInput) {
   const suppliedRevision = String(input.invoiceRevision).trim();
   if (!/^\d+$/.test(suppliedRevision) || BigInt(suppliedRevision) < 1n) throw new Error("INVALID_INVOICE_REVISION");
   const invoiceRevision = BigInt(suppliedRevision).toString();
-  if (!input.subject.trim() || !input.text.trim()) throw new Error("INVALID_INVOICE_EMAIL_CONTENT");
+  if (!input.subject.trim() || !input.text.trim() || !input.html.trim()) throw new Error("INVALID_INVOICE_EMAIL_CONTENT");
   if (!input.attachment.filename.trim() || input.attachment.content.length === 0) throw new Error("INVALID_INVOICE_ATTACHMENT");
   return {
     ...input,

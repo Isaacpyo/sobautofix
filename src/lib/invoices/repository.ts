@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createAdminClient, getAdminUser } from "@/lib/supabase/server";
+import { renderInvoiceEmail } from "@/lib/email/templates/invoice";
 import { deliverInvoiceEmail } from "./email-delivery";
 import { formatPence } from "./money";
 import { renderInvoicePdf } from "./pdf";
@@ -73,6 +74,17 @@ export async function sendInvoiceEmail(id: string, recipient: string, logicalSen
   const invoice = await getInvoiceForAdmin(id);
   if (!invoice || (invoice.status !== "issued" && invoice.status !== "paid")) throw new Error("Only issued or paid invoices can be emailed.");
   const reference = invoice.invoice_number || "Invoice";
+  const rendered = renderInvoiceEmail({
+    status: invoice.status,
+    customerName: invoice.customer_name,
+    invoiceNumber: reference,
+    amount: formatPence(invoice.total_pence),
+    issueDate: invoice.issue_date ? formatLongDate(invoice.issue_date) : "Not available",
+    dueDate: invoice.due_date ? formatLongDate(invoice.due_date) : undefined,
+    vehicle: [invoice.vehicle_registration, invoice.vehicle_make, invoice.vehicle_model].filter(Boolean).join(" · ") || undefined,
+    paymentDate: invoice.paid_at ? formatDateTime(invoice.paid_at) : undefined,
+    paymentMethod: invoice.payment_method ? invoice.payment_method.replaceAll("_", " ") : undefined,
+  });
   return deliverInvoiceEmail({
     logicalSendId,
     invoiceId: id,
@@ -80,7 +92,8 @@ export async function sendInvoiceEmail(id: string, recipient: string, logicalSen
     invoiceStatus: invoice.status,
     recipient,
     subject: `Invoice ${reference} from SOB Autofix`,
-    text: [`Hello ${invoice.customer_name},`, "", `Please find invoice ${reference} from SOB Autofix attached.`, `Amount: ${formatPence(invoice.total_pence)}`, invoice.due_date ? `Due date: ${formatLongDate(invoice.due_date)}` : "", "", "If you have any questions, reply to this email.", "", "SOB Autofix Limited"].filter(Boolean).join("\n"),
+    text: rendered.text,
+    html: rendered.html,
     attachment: { filename: `SOB-Invoice-${reference}.pdf`, content: await renderInvoicePdf(invoice) },
   }, {
     claim: async (claim) => {
@@ -111,4 +124,5 @@ export async function sendInvoiceEmail(id: string, recipient: string, logicalSen
 }
 
 function formatLongDate(value: string) { return new Intl.DateTimeFormat("en-GB", { dateStyle: "long", timeZone: "Europe/London" }).format(new Date(`${value}T12:00:00Z`)); }
+function formatDateTime(value: string) { return new Intl.DateTimeFormat("en-GB", { dateStyle: "long", timeStyle: "short", timeZone: "Europe/London" }).format(new Date(value)); }
 function firstRow(value: unknown) { return Array.isArray(value) ? value[0] ?? null : value; }

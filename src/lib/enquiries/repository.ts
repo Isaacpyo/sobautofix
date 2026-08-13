@@ -2,6 +2,7 @@ import "server-only";
 
 import { randomUUID } from "node:crypto";
 import { getResendConfig, sendTransactionalEmail } from "@/lib/email/resend";
+import { renderBusinessEnquiryNotification, renderEnquiryReceived } from "@/lib/email/templates/enquiries";
 import { createAdminClient } from "@/lib/supabase/server";
 import { createInitialEnquiryMessage } from "./thread-repository";
 import type { EnquiryRequest } from "./schema";
@@ -71,26 +72,32 @@ export async function sendNotifications(enquiryId: string, input: NotificationIn
   const emailConfig = getResendConfig();
   const admin = createAdminClient();
   if (!emailConfig) return "failed" as const;
-  const details = [
-    `Type: ${input.type}`,
-    `Name: ${input.contact.name}`,
-    `Phone: ${input.contact.phone}`,
-    input.contact.email ? `Email: ${input.contact.email}` : "",
-    input.vehicle ? `Vehicle: ${[input.vehicle.make, input.vehicle.model, input.vehicle.registration].filter(Boolean).join(" ")}` : "",
-    input.locationPostcode ? `Location: ${input.locationPostcode}` : "",
-    `Description: ${input.description}`,
-  ].filter(Boolean).join("\n");
+  const templateInput = {
+    enquiryId,
+    type: input.type,
+    customerName: input.contact.name,
+    customerEmail: input.contact.email,
+    phone: input.contact.phone,
+    preferredContact: input.contact.preferredContact,
+    service: input.serviceSlug?.replaceAll("-", " "),
+    vehicle: input.vehicle ? [input.vehicle.make, input.vehicle.model, input.vehicle.registration].filter(Boolean).join(" · ") : undefined,
+    location: input.locationPostcode,
+    description: input.description,
+  };
+  const businessEmail = renderBusinessEnquiryNotification(templateInput);
 
   try {
     const result = await sendTransactionalEmail({
       to: emailConfig.notificationRecipient,
       subject: `New ${input.type.replace("_", " ")} enquiry`,
-      text: details,
+      text: businessEmail.text,
+      html: businessEmail.html,
       replyTo: input.contact.email || emailConfig.replyTo,
     });
     await admin?.from("notification_attempts").insert({ enquiry_id: enquiryId, recipient_type: "business", status: "sent", provider_id: result.data?.id || null });
     if (input.contact.email) {
-      const customerResult = await sendTransactionalEmail({ to: input.contact.email, subject: "We received your SOB Autofix request", text: `Hello ${input.contact.name},\n\nThanks for contacting SOB Autofix. We have received your request and will respond using your preferred contact method.\n\nReference: ${enquiryId}\n\nSOB Autofix Limited` });
+      const customerEmail = renderEnquiryReceived(templateInput);
+      const customerResult = await sendTransactionalEmail({ to: input.contact.email, subject: "We received your SOB Autofix request", text: customerEmail.text, html: customerEmail.html, replyTo: emailConfig.replyTo });
       await admin?.from("notification_attempts").insert({ enquiry_id: enquiryId, recipient_type: "customer", status: "sent", provider_id: customerResult.data?.id || null });
     }
     return "sent" as const;

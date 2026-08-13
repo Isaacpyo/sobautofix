@@ -51,3 +51,12 @@ secure_password_change = false
 max_frequency = "1s"
 otp_length = 6
 otp_expiry = 3600
+
+[auth.email.template.recovery]
+subject = "Reset your SOB Autofix admin password"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.email.notification.password_changed]
+enabled = true
+subject = "Your SOB Autofix admin password was changed"
+content_path = "./supabase/templates/password_changed_notification.html"

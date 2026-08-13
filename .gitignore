@@ -9,6 +9,7 @@ out/
 coverage/
 playwright-report/
 test-results/
+.email-previews/
 .lighthouseci/
 
 # local environment

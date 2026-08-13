@@ -14,6 +14,7 @@ export type TransactionalEmail = {
   to: string;
   subject: string;
   text: string;
+  html?: string;
   replyTo?: string;
   headers?: Record<string, string>;
   tags?: Array<{ name: string; value: string }>;
@@ -95,6 +96,7 @@ async function sendWithConfig(config: ResendConfiguration, message: Transactiona
     to,
     subject: message.subject,
     text: message.text,
+    html: message.html,
     replyTo,
     headers: message.headers,
     tags: message.tags,
