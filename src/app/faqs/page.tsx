@@ -175,45 +175,47 @@ export default function FaqPage() {
       />
 
       <section className="py-14 sm:py-16">
-        <Container className="max-w-5xl">
-          <nav aria-label="FAQ categories" className="mb-12 flex flex-wrap gap-2">
+        <Container className="max-w-6xl lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] lg:items-start lg:gap-10">
+          <nav aria-label="FAQ categories" className="mb-12 flex flex-wrap gap-2 lg:sticky lg:top-28 lg:mb-0 lg:flex-col">
             {faqCategories.map((category) => (
               <a
                 key={category.id}
                 href={`#${category.id}`}
-                className="rounded-full border border-[#D4DEE8] bg-white px-4 py-2 text-sm font-bold text-[#071127] transition hover:border-[#1974E2] hover:text-[#1974E2]"
+                className="rounded-full border border-[#D4DEE8] bg-white px-4 py-2 text-sm font-bold text-[#071127] transition hover:border-[#1974E2] hover:bg-[#F4F8FD] hover:text-[#1974E2] lg:rounded-xl lg:px-5 lg:py-3"
               >
                 {category.title}
               </a>
             ))}
           </nav>
 
-          <div className="space-y-14">
-            {faqCategories.map((category) => (
-              <section key={category.id} id={category.id} className="scroll-mt-28" aria-labelledby={`${category.id}-heading`}>
-                <div className="mb-5 border-l-4 border-[#1974E2] pl-4">
-                  <h2 id={`${category.id}-heading`} className="text-2xl font-extrabold text-[#071127] sm:text-3xl">{category.title}</h2>
-                  <p className="mt-2 max-w-3xl leading-7 text-[#586575]">{category.description}</p>
-                </div>
-                <div className="grid gap-3">
-                  {category.faqs.map((faq) => (
-                    <details key={faq.question} className="group rounded-2xl border border-[#E4EAF0] bg-white p-5 open:border-[#1974E2]/40 open:shadow-lg sm:p-6">
-                      <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-lg font-bold text-[#071127] marker:content-none sm:text-xl">
-                        {faq.question}
-                        <span className="shrink-0 text-[#1974E2] transition group-open:rotate-45" aria-hidden="true">+</span>
-                      </summary>
-                      <p className="mt-3 max-w-3xl pr-8 leading-7 text-[#586575]">{faq.answer}</p>
-                    </details>
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
+          <div>
+            <div className="space-y-14">
+              {faqCategories.map((category) => (
+                <section key={category.id} id={category.id} className="scroll-mt-28" aria-labelledby={`${category.id}-heading`}>
+                  <div className="mb-5 border-l-4 border-[#1974E2] pl-4">
+                    <h2 id={`${category.id}-heading`} className="text-2xl font-extrabold text-[#071127] sm:text-3xl">{category.title}</h2>
+                    <p className="mt-2 max-w-3xl leading-7 text-[#586575]">{category.description}</p>
+                  </div>
+                  <div className="grid gap-3">
+                    {category.faqs.map((faq) => (
+                      <details key={faq.question} className="group rounded-2xl border border-[#E4EAF0] bg-white p-5 open:border-[#1974E2]/40 open:shadow-lg sm:p-6">
+                        <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-lg font-bold text-[#071127] marker:content-none sm:text-xl">
+                          {faq.question}
+                          <span className="shrink-0 text-[#1974E2] transition group-open:rotate-45" aria-hidden="true">+</span>
+                        </summary>
+                        <p className="mt-3 max-w-3xl pr-8 leading-7 text-[#586575]">{faq.answer}</p>
+                      </details>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
 
-          <div className="mt-14 rounded-2xl bg-[#071127] p-8 text-white">
-            <h2 className="text-3xl font-bold">Have a vehicle-specific question?</h2>
-            <p className="mt-3 text-[#C6D2DF]">Send the registration and symptoms for a more useful response.</p>
-            <ButtonLink className="mt-5" href="/get-a-quote">Send the details</ButtonLink>
+            <div className="mt-14 rounded-2xl bg-[#071127] p-8 text-white">
+              <h2 className="text-3xl font-bold">Have a vehicle-specific question?</h2>
+              <p className="mt-3 text-[#C6D2DF]">Send the registration and symptoms for a more useful response.</p>
+              <ButtonLink className="mt-5" href="/get-a-quote">Send the details</ButtonLink>
+            </div>
           </div>
         </Container>
       </section>
