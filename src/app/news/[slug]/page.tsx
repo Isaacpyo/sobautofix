@@ -5,6 +5,40 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { siteConfig } from "@/config/site";
 import { createMetadata } from "@/lib/seo";
 import { getPublishedArticle, getRelatedArticles } from "@/lib/news/repository";
+import type { NewsArticle } from "@/lib/news/article";
+
+export function articleStructuredData(article: NewsArticle) {
+  const url = new URL(`/news/${article.slug}`, siteConfig.siteUrl).toString();
+  const schemas: Array<Record<string, unknown>> = [
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      headline: article.title,
+      description: article.seoDescription,
+      datePublished: article.publishedAt,
+      dateModified: article.updatedAt,
+      author: { "@type": "Organization", name: article.article.author },
+      publisher: { "@type": "Organization", name: siteConfig.legalName, url: siteConfig.siteUrl },
+      image: article.cover?.url,
+      mainEntityOfPage: { "@type": "WebPage", "@id": url },
+    },
+  ];
+  const faqItems = article.sections
+    .filter((section) => section.type === "faqs")
+    .flatMap((section) => section.items);
+  if (faqItems.length) {
+    schemas.push({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: faqItems.map((item) => ({
+        "@type": "Question",
+        name: item.question,
+        acceptedAnswer: { "@type": "Answer", text: item.answer },
+      })),
+    });
+  }
+  return schemas;
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const article = await getPublishedArticle((await params).slug);
@@ -31,33 +65,10 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ sl
   const article = await getPublishedArticle((await params).slug);
   if (!article) notFound();
   const related = await getRelatedArticles(article);
-  const url = new URL(`/news/${article.slug}`, siteConfig.siteUrl).toString();
 
   return (
     <>
-      <JsonLd value={[
-        {
-          "@context": "https://schema.org",
-          "@type": "BlogPosting",
-          headline: article.title,
-          description: article.excerpt,
-          datePublished: article.publishedAt,
-          dateModified: article.updatedAt,
-          author: { "@type": "Organization", name: article.article.author },
-          publisher: { "@type": "Organization", name: siteConfig.legalName, url: siteConfig.siteUrl },
-          image: article.cover?.url,
-          mainEntityOfPage: { "@type": "WebPage", "@id": url },
-        },
-        {
-          "@context": "https://schema.org",
-          "@type": "BreadcrumbList",
-          itemListElement: [
-            { "@type": "ListItem", position: 1, name: "Home", item: siteConfig.siteUrl },
-            { "@type": "ListItem", position: 2, name: "News & Blog", item: new URL("/news", siteConfig.siteUrl).toString() },
-            { "@type": "ListItem", position: 3, name: article.title, item: url },
-          ],
-        },
-      ]} />
+      <JsonLd value={articleStructuredData(article)} />
       <ArticleView article={article} related={related} />
     </>
   );

@@ -5,8 +5,26 @@ import { servicePriceLabel } from "@/lib/pricing/policy";
 describe("SEO and approved pricing", () => {
   it("creates an absolute canonical and matching Open Graph URL", () => {
     const metadata = createMetadata("Vehicle Diagnostics", "A sufficiently detailed diagnostic service description.", "/diagnostics/car-diagnostics");
+    expect(metadata.title).toEqual({ absolute: "Vehicle Diagnostics | SOB Autofix" });
     expect(metadata.alternates?.canonical).toBe("http://localhost:3000/diagnostics/car-diagnostics");
     expect(metadata.openGraph && "url" in metadata.openGraph ? metadata.openGraph.url : undefined).toBe("http://localhost:3000/diagnostics/car-diagnostics");
+  });
+
+  it("owns complete route titles without duplicating the root-layout brand suffix", () => {
+    const titles = [
+      createMetadata("Professional Diagnostics. Not Guesswork.", "Homepage description.").title,
+      createMetadata("Car Diagnostics Doncaster", "Service description.").title,
+      createMetadata("Automotive News, Advice & Guides in Doncaster", "News description.").title,
+      createMetadata("Engine Warning Light: What to Do | SOB Autofix", "Article description.").title,
+    ];
+
+    expect(titles).toEqual([
+      { absolute: "Professional Diagnostics. Not Guesswork. | SOB Autofix" },
+      { absolute: "Car Diagnostics Doncaster | SOB Autofix" },
+      { absolute: "Automotive News, Advice & Guides in Doncaster | SOB Autofix" },
+      { absolute: "Engine Warning Light: What to Do | SOB Autofix" },
+    ]);
+    for (const title of titles) expect((title as { absolute: string }).absolute).not.toContain("SOB Autofix | SOB Autofix");
   });
 
   it("creates Service structured data with a provider and service URL", () => {

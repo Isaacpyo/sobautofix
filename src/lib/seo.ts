@@ -6,7 +6,9 @@ export function createMetadata(title: string, description: string, path = "/"): 
   const fullTitle = title.includes(siteConfig.name) ? title : `${title} | ${siteConfig.name}`;
 
   return {
-    title: fullTitle,
+    // createMetadata already owns the complete title. Mark it absolute so the
+    // root layout template does not append the business name a second time.
+    title: { absolute: fullTitle },
     description,
     alternates: { canonical },
     openGraph: {
