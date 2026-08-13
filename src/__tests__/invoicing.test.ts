@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
+import { getDocument, OPS } from "pdfjs-dist/legacy/build/pdf.mjs";
 import { describe, expect, it } from "vitest";
 import { calculateInvoiceTotals, calculateLineTotalPence, formatPence, poundsToPence } from "@/lib/invoices/money";
 import { invoiceDraftSchema, paymentSchema } from "@/lib/invoices/schema";
@@ -94,6 +94,7 @@ describe("garage invoicing", () => {
     const parsed = await parsePdf(buffer);
     expect(parsed.pages).toBeGreaterThan(1);
     expect(parsed.pageTexts.every((page) => page.includes("UNPAID"))).toBe(true);
+    expect(parsed.pageImageCounts.every((count) => count > 0)).toBe(true);
     expect(parsed.text).toContain("SOB-2026-000001");
     const text = parsed.text;
     expect(text).toContain("UNPAID");
@@ -120,6 +121,38 @@ describe("garage invoicing", () => {
     expect(text).toContain("Company no. 00000001");
   }, 20_000);
 
+  it("embeds the approved optimized official logo without a runtime network request", async () => {
+    const logo = readFileSync(join(root, "public", "email", "sob-autofix-logo-white.png"));
+    expect(logo.subarray(1, 4).toString()).toBe("PNG");
+    expect(logo.readUInt32BE(16)).toBe(340);
+    expect(logo.readUInt32BE(20)).toBe(227);
+    expect(logo.length).toBeLessThan(150_000);
+
+    const parsed = await parsePdf(await renderInvoicePdf(representativeInvoice("issued", 1)));
+    expect(parsed.pageImageCounts).toHaveLength(1);
+    expect(parsed.pageImageCounts[0]).toBeGreaterThan(0);
+  }, 20_000);
+
+  it("renders safely when optional vehicle, notes, due-date and payment values are absent", async () => {
+    const invoice = {
+      ...representativeInvoice("issued", 1),
+      vehicle_registration: null,
+      vehicle_make: null,
+      vehicle_model: null,
+      service_name: null,
+      due_date: null,
+      payment_terms: null,
+      notes: null,
+      payment_method: null,
+      payment_reference: null,
+    };
+    const { pages, text } = await parsePdf(await renderInvoicePdf(invoice));
+    expect(pages).toBe(1);
+    expect(text).toContain("No vehicle or service details recorded.");
+    expect(text).not.toContain("NOTES");
+    expect(text).not.toContain("VAT");
+  }, 20_000);
+
   it("defines visible PDF labels for draft, paid and void records", () => {
     const pdf = read("src", "lib", "invoices", "pdf.tsx");
     expect(pdf).toContain('invoice.status === "draft" ? "DRAFT"');
@@ -136,7 +169,10 @@ describe("garage invoicing", () => {
       ["issued-unpaid-invoice.pdf", representativeInvoice("issued")],
       ["paid-settled-invoice.pdf", representativeInvoice("paid")],
       ["void-invoice.pdf", representativeInvoice("void")],
+      ["one-line-invoice.pdf", representativeInvoice("issued", 1)],
       ["multi-line-invoice.pdf", representativeInvoice("issued", 48)],
+      ["long-customer-details-invoice.pdf", { ...representativeInvoice("issued", 3), customer_name: "A Customer With An Exceptionally Long Automotive Engineering And Fleet Services Trading Name Limited", customer_email: "accounts-payable-and-workshop-authorisations@very-long-customer-domain.example", customer_address: "Unit 128, Long Industrial Estate Approach, North Business Park\nNorton\nDoncaster\nSouth Yorkshire\nDN6 9HF", notes: "Controlled visual QA invoice with deliberately extended notes to verify that customer-facing workshop observations, authorisation context and follow-up guidance wrap naturally without colliding with totals, payment terms or the branded footer." }],
+      ["long-line-items-invoice.pdf", { ...representativeInvoice("issued", 10), invoice_items: representativeInvoice("issued", 10).invoice_items.map((item, index) => ({ ...item, description: `${item.description} - detailed inspection, evidence-led diagnosis, component testing and documented workshop findings for line ${index + 1}` })) }],
     ];
     for (const [name, invoice] of fixtures) writeFileSync(join(output, name), await renderInvoicePdf(invoice));
   }, 30_000);
@@ -145,7 +181,7 @@ describe("garage invoicing", () => {
 function representativeInvoice(status: Invoice["status"], itemCount = 16): Invoice {
   const items = Array.from({ length: itemCount }, (_, position) => ({ id: `item-${position}`, description: position === 0 ? "Electrical fault tracing with a deliberately long diagnostic description that wraps cleanly across the invoice table" : `Workshop service line ${position + 1}`, quantity: "1.000", unit_price_pence: 4500, line_total_pence: 4500, position }));
   const subtotal = itemCount * 4500;
-  return { id: "61b6fbaf-21e8-4eb8-92df-0522f11a9474", invoice_number: status === "draft" ? null : "SOB-2026-000001", invoice_year: status === "draft" ? null : 2026, invoice_sequence: status === "draft" ? null : 1, revision: 1, replaces_invoice_id: null, status, source_type: "manual", booking_id: null, enquiry_id: null, customer_id: null, vehicle_id: null, currency: "GBP", customer_name: "A Customer With A Deliberately Long Trading Name Limited", customer_email: "customer@example.com", customer_phone: "07000 000000", customer_address: "1 Very Long Workshop Approach, Norton, Doncaster, DN6 9HF", vehicle_registration: "AB12CDE", vehicle_make: "BMW", vehicle_model: "320d", service_name: "Electrical fault finding", appointment_start: null, issuer_legal_name: "SOB Autofix Limited", issuer_trading_name: "SOB Autofix", issuer_tagline: "Professional Diagnostics. Not Guesswork.", issuer_address: "Cumbrae\nStation Road\nNorton\nDoncaster\nDN6 9HF\nUnited Kingdom", issuer_email: "sobautofix@gmail.com", issuer_phone: "07469273483", issuer_company_number: "16182532", issue_date: "2026-08-11", due_date: "2026-08-18", subtotal_pence: subtotal, discount_pence: 0, tax_pence: 0, total_pence: subtotal, notes: "Thank you for your business.", payment_terms: "Payment due within 7 days.", issued_at: status === "draft" ? null : "2026-08-11T12:00:00Z", paid_at: status === "paid" ? "2026-08-11T12:00:00Z" : null, payment_method: status === "paid" ? "card" : null, payment_reference: null, voided_at: status === "void" ? "2026-08-11T12:00:00Z" : null, created_by: null, updated_by: null, created_at: "2026-08-11T12:00:00Z", updated_at: "2026-08-11T12:00:00Z", invoice_items: items };
+  return { id: "61b6fbaf-21e8-4eb8-92df-0522f11a9474", invoice_number: status === "draft" ? null : "SOB-2026-000001", invoice_year: status === "draft" ? null : 2026, invoice_sequence: status === "draft" ? null : 1, revision: 1, replaces_invoice_id: null, status, source_type: "manual", booking_id: null, enquiry_id: null, customer_id: null, vehicle_id: null, currency: "GBP", customer_name: "A Customer With A Deliberately Long Trading Name Limited", customer_email: "customer@example.com", customer_phone: "07000 000000", customer_address: "1 Very Long Workshop Approach, Norton, Doncaster, DN6 9HF", vehicle_registration: "AB12CDE", vehicle_make: "BMW", vehicle_model: "320d", service_name: "Electrical fault finding", appointment_start: null, issuer_legal_name: "SOB Autofix Limited", issuer_trading_name: "SOB Autofix", issuer_tagline: "Professional Diagnostics. Not Guesswork.", issuer_address: "Cumbrae\nStation Road\nNorton\nDoncaster\nDN6 9HF\nUnited Kingdom", issuer_email: "sobautofix@gmail.com", issuer_phone: "07469273483", issuer_company_number: "16182532", issue_date: "2026-08-11", due_date: "2026-08-18", subtotal_pence: subtotal, discount_pence: 0, tax_pence: 0, total_pence: subtotal, notes: "Thank you for your business.", payment_terms: "Payment due within 7 days.", issued_at: status === "draft" ? null : "2026-08-11T12:00:00Z", paid_at: status === "paid" ? "2026-08-11T12:00:00Z" : null, payment_method: status === "paid" ? "card" : null, payment_reference: status === "paid" ? "ABC123" : null, voided_at: status === "void" ? "2026-08-11T12:00:00Z" : null, created_by: null, updated_by: null, created_at: "2026-08-11T12:00:00Z", updated_at: "2026-08-11T12:00:00Z", invoice_items: items };
 }
 
 async function parsePdf(buffer: Buffer) {
@@ -153,11 +189,16 @@ async function parsePdf(buffer: Buffer) {
   const loadingTask = getDocument({ data: new Uint8Array(buffer), standardFontDataUrl });
   const document = await loadingTask.promise;
   const pages = await Promise.all(Array.from({ length: document.numPages }, async (_, index) => {
-    const content = await (await document.getPage(index + 1)).getTextContent();
-    return content.items.map((item) => "str" in item ? item.str : "").join(" ");
+    const page = await document.getPage(index + 1);
+    const [content, operators] = await Promise.all([page.getTextContent(), page.getOperatorList()]);
+    const imageOperators = new Set([OPS.paintImageXObject, OPS.paintInlineImageXObject, OPS.paintImageMaskXObject]);
+    return {
+      text: content.items.map((item) => "str" in item ? item.str : "").join(" "),
+      imageCount: operators.fnArray.filter((operator) => imageOperators.has(operator)).length,
+    };
   }));
-  const pageTexts = pages.map((page) => page.replace(/-\s+/g, "").replace(/\s+/g, " "));
-  const result = { pages: document.numPages, pageTexts, text: pageTexts.join(" ") };
+  const pageTexts = pages.map((page) => page.text.replace(/-\s+/g, "").replace(/\s+/g, " "));
+  const result = { pages: document.numPages, pageTexts, pageImageCounts: pages.map((page) => page.imageCount), text: pageTexts.join(" ") };
   await loadingTask.destroy();
   return result;
 }
