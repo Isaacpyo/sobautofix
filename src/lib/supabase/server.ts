@@ -53,5 +53,5 @@ export async function getAdminUser() {
     .eq("user_id", user.id)
     .maybeSingle();
 
-  return profile ? { user, profile } : null;
+  return profile ? { user, profile, client } : null;
 }

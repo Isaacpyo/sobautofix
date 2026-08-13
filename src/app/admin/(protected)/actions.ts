@@ -399,7 +399,7 @@ async function hasValidImageSignature(file: File) {
   return false;
 }
 
-export async function toggleMediaPublication(formData: FormData) { const { auth, client } = await requireAdmin(); const id = z.string().uuid().parse(formData.get("id")); const published = formData.get("published") === "true"; const { data } = await client.from("media_assets").select("alt_text").eq("id", id).single(); if (published && (!data?.alt_text || data.alt_text.trim().length < 5)) throw new Error("Alt text is required"); await client.from("media_assets").update({ published }).eq("id", id); await audit(client, auth.user.id, published ? "publish" : "unpublish", "media", id); revalidatePath("/admin/media"); revalidatePath("/gallery"); }
+export async function toggleMediaPublication(formData: FormData) { const { auth, client } = await requireAdmin(); const id = z.string().uuid().parse(formData.get("id")); const published = formData.get("published") === "true"; const { data } = await client.from("media_assets").select("alt_text").eq("id", id).single(); if (published && (!data?.alt_text || data.alt_text.trim().length < 5)) throw new Error("Alt text is required"); await client.from("media_assets").update({ published }).eq("id", id); await audit(client, auth.user.id, published ? "publish" : "unpublish", "media", id); revalidatePath("/admin/media"); revalidatePath("/gallery"); revalidatePath("/sitemap.xml"); }
 
 export async function syncGoogleReviews() {
   const { auth, client } = await requireAdmin(); const apiKey = process.env.GOOGLE_PLACES_API_KEY; const placeId = process.env.GOOGLE_PLACE_ID; if (!apiKey || !placeId) throw new Error("Google Places is not configured");
@@ -409,7 +409,7 @@ export async function syncGoogleReviews() {
   await audit(client, auth.user.id, "sync", "reviews", placeId); revalidatePath("/admin/reviews");
 }
 
-export async function toggleReview(formData: FormData) { const { auth, client } = await requireAdmin(); const id = z.string().uuid().parse(formData.get("id")); const visible = formData.get("visible") === "true"; const { data } = await client.from("reviews").select("text").eq("id", id).single(); if (visible) assertCustomerFacingContent(data?.text || ""); await client.from("reviews").update({ visible }).eq("id", id); await audit(client, auth.user.id, visible ? "publish" : "unpublish", "review", id); revalidatePath("/admin/reviews"); revalidatePath("/reviews"); }
+export async function toggleReview(formData: FormData) { const { auth, client } = await requireAdmin(); const id = z.string().uuid().parse(formData.get("id")); const visible = formData.get("visible") === "true"; const { data } = await client.from("reviews").select("text").eq("id", id).single(); if (visible) assertCustomerFacingContent(data?.text || ""); await client.from("reviews").update({ visible }).eq("id", id); await audit(client, auth.user.id, visible ? "publish" : "unpublish", "review", id); revalidatePath("/admin/reviews"); revalidatePath("/reviews"); revalidatePath("/sitemap.xml"); }
 
 export async function saveSettings(formData: FormData) {
   const { auth, client } = await requireAdmin();

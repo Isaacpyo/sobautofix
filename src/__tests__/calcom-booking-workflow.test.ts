@@ -395,11 +395,10 @@ describe("Cal.com booking repository workflows", () => {
     expect(harness.provider.createBooking).toHaveBeenCalledTimes(1);
   });
 
-  it("requires every management lookup factor to match the same booking", async () => {
+  it("requires both management lookup factors to match the same booking", async () => {
     const lookup = {
       bookingReference: "SOB-123456",
       registration: "AB12CDE",
-      email: "test@example.com",
     };
 
     await expect(findBooking(lookup)).resolves.toMatchObject({
@@ -407,7 +406,6 @@ describe("Cal.com booking repository workflows", () => {
       booking: { reference: "SOB-123456" },
     });
     await expect(findBooking({ ...lookup, registration: "XY99ZZZ" })).resolves.toBeNull();
-    await expect(findBooking({ ...lookup, email: "wrong@example.com" })).resolves.toBeNull();
   });
 
   it("rechecks a reschedule against the current provider UID and preserves booking history", async () => {

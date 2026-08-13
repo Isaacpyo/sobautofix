@@ -4,6 +4,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { ContentEditor } from "@/components/admin/content-editor";
+import { automotiveAdviceArticleTemplate } from "@/lib/news/templates";
 
 const action = vi.fn(async () => undefined);
 const media = [
@@ -12,6 +13,16 @@ const media = [
 ];
 
 describe("simplified News article editor", () => {
+  it("starts a reusable template as a new draft with automatic URL generation", () => {
+    const { container } = render(<ContentEditor articleMode entry={automotiveAdviceArticleTemplate} action={action} media={media} />);
+    const sections = container.querySelector<HTMLInputElement>('input[name="sections"]');
+    expect(sections).not.toBeNull();
+    expect(JSON.parse(sections!.value).map((section: { type: string }) => section.type)).toEqual(["richText", "richText", "faqs", "relatedLinks", "cta"]);
+    fireEvent.change(screen.getByLabelText("Title"), { target: { value: "How to Look After Your Brakes" } });
+    expect(screen.getByLabelText("Article URL")).toHaveValue("how-to-look-after-your-brakes");
+    expect(screen.getByLabelText("Status")).toHaveValue("draft");
+  });
+
   it("starts with essential fields and no automatic optional blocks", () => {
     render(<ContentEditor articleMode action={action} media={media} />);
     expect(screen.getByLabelText("Title")).toBeVisible();

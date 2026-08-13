@@ -168,7 +168,7 @@ export function ManageBooking() {
           <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[#EAF3FF] text-[#1974E2]"><Search size={23} aria-hidden="true" /></span>
           <div><h2 id="find-booking-heading" className="text-2xl font-extrabold text-[#071127] sm:text-3xl">Find my booking</h2><p className="mt-1 text-sm leading-6 text-[#667586]">Enter your booking details and we&apos;ll find your appointment securely.</p></div>
         </div>
-        <form action={formAction} onSubmit={resetForLookup} className="mt-7 grid items-end gap-4 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_auto]">
+        <form action={formAction} onSubmit={resetForLookup} className="mt-7 grid items-end gap-4 md:grid-cols-[1fr_1fr_auto]">
           <FormField label="Booking reference" htmlFor="booking-reference">
             <input id="booking-reference" name="bookingReference" placeholder="e.g. SOB-123456" required autoComplete="off" className={inputClasses} />
           </FormField>
@@ -178,13 +178,10 @@ export function ManageBooking() {
               <input id="booking-registration" name="registration" value={registration} onChange={(event) => setRegistration(formatRegistration(event.target.value))} placeholder="AB12 CDE" required autoComplete="off" maxLength={9} className="min-w-0 flex-1 border-0 px-3 font-mono text-base font-black tracking-[.12em] text-black uppercase outline-none" />
             </div>
           </FormField>
-          <FormField label="Email address" htmlFor="booking-email">
-            <input id="booking-email" name="email" type="email" required autoComplete="email" maxLength={254} className={inputClasses} />
-          </FormField>
-          <Button type="submit" className="min-h-12 whitespace-nowrap md:col-span-2 xl:col-span-1" disabled={lookupPending}>{lookupPending ? <><LoaderCircle className="animate-spin" size={18} aria-hidden="true" /> Finding booking…</> : <><Search size={18} aria-hidden="true" /> Find my booking</>}</Button>
+          <Button type="submit" className="min-h-12 whitespace-nowrap" disabled={lookupPending}>{lookupPending ? <><LoaderCircle className="animate-spin" size={18} aria-hidden="true" /> Finding booking…</> : <><Search size={18} aria-hidden="true" /> Find my booking</>}</Button>
         </form>
         {state.status === "error" && <p className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-900" role="alert">{state.message}</p>}
-        <p className="mt-5 flex items-start gap-2 text-xs leading-5 text-[#667586]"><ShieldCheck size={15} className="mt-0.5 shrink-0 text-[#1974E2]" aria-hidden="true" /> All three details must match. Your booking information is never placed in the page address.</p>
+        <p className="mt-5 flex items-start gap-2 text-xs leading-5 text-[#667586]"><ShieldCheck size={15} className="mt-0.5 shrink-0 text-[#1974E2]" aria-hidden="true" /> Both details must match. Your booking information is never placed in the page address.</p>
       </section>
 
       {activeBooking && (

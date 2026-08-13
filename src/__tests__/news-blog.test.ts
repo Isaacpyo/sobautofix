@@ -3,10 +3,16 @@ import { describe, expect, it } from "vitest";
 import { contentEntrySchema } from "@/lib/content/schema";
 import { calculateReadingMinutes, parseArticleMetadata } from "@/lib/news/article";
 import { ctaSectionForPreset, defaultArticleSeoDescription, defaultArticleSeoTitle, slugifyArticleTitle } from "@/lib/news/editor";
+import { automotiveAdviceArticleTemplate } from "@/lib/news/templates";
 
 const read = (path: string) => readFileSync(path, "utf8");
 
 describe("News & Blog publishing", () => {
+  it("provides a reusable automotive advice template without a persisted identity", () => {
+    expect(automotiveAdviceArticleTemplate).toMatchObject({ id: "", kind: "article", status: "draft" });
+    expect(automotiveAdviceArticleTemplate.sections.map((section) => section.type)).toEqual(["richText", "richText", "faqs", "relatedLinks", "cta"]);
+  });
+
   it("generates staff-friendly URL and search defaults", () => {
     expect(slugifyArticleTitle("How to Understand Your Engine Management Light")).toBe("how-to-understand-your-engine-management-light");
     expect(slugifyArticleTitle("Battery & Charging: What’s Happening?")).toBe("battery-and-charging-whats-happening");
@@ -57,7 +63,7 @@ describe("News & Blog publishing", () => {
   });
 
   it("uses /news as the canonical route everywhere", () => {
-    expect(read("src/app/sitemap.ts")).toContain('entry.kind === "article" ? "news"');
+    expect(read("src/app/sitemap.ts")).toContain('case "article": return `/news/${entry.slug}`');
     expect(read("src/app/api/cron/publish/route.ts")).toContain('return `/news/${slug}`');
     expect(read("src/app/advice/page.tsx")).toContain('permanentRedirect("/news")');
   });

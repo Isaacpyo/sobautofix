@@ -146,6 +146,10 @@ test("sitemap contains all canonical service category routes", async ({ request 
   const sitemap = await response.text();
   for (const route of ["/diagnostics", "/services/repairs-maintenance", "/services/mobile-specialist"]) expect(sitemap).toContain(route);
   expect(sitemap).not.toContain("/services/diagnostics");
+  const locations = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
+  expect(locations.length).toBeGreaterThan(0);
+  expect(new Set(locations).size).toBe(locations.length);
+  expect(locations.every((location) => location?.startsWith("https://sobautofix.com/"))).toBe(true);
 });
 
 test("homepage has no automatically detectable accessibility violations", async ({ page }) => {

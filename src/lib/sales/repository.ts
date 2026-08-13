@@ -5,7 +5,7 @@ export { isSoldPageExpired } from "@/lib/sales/policy";
 import type { SaleVehicle } from "@/types/domain";
 
 type VehicleRow = {
-  id: string; registration: string | null; slug: string; make: string; model: string; derivative: string | null; year: number; mileage: number; price: number; fuel_type: string; transmission: string; engine_size: string | null; colour: string | null; body_type: string | null; description: string; features: string[]; warranty: { available: boolean; description?: string } | null; finance_available: boolean; status: "draft" | "available" | "reserved" | "sold" | "archived"; sold_at: string | null; created_at: string;
+  id: string; registration: string | null; slug: string; make: string; model: string; derivative: string | null; year: number; mileage: number; price: number; fuel_type: string; transmission: string; engine_size: string | null; colour: string | null; body_type: string | null; description: string; features: string[]; warranty: { available: boolean; description?: string } | null; finance_available: boolean; status: "draft" | "available" | "reserved" | "sold" | "archived"; sold_at: string | null; created_at: string; updated_at: string;
   sale_vehicle_images?: Array<{ id: string; object_path: string; alt_text: string; position: number }>;
 };
 
@@ -16,15 +16,19 @@ function mapVehicle(row: VehicleRow): SaleVehicle {
     year: row.year, mileage: row.mileage, price: row.price, fuelType: row.fuel_type,
     transmission: row.transmission, engineSize: row.engine_size || undefined, colour: row.colour || undefined, bodyType: row.body_type || undefined,
     description: row.description, features: row.features, warranty: row.warranty || undefined,
-    financeAvailable: row.finance_available, status: row.status, soldAt: row.sold_at || undefined, createdAt: row.created_at,
+    financeAvailable: row.finance_available, status: row.status, soldAt: row.sold_at || undefined, createdAt: row.created_at, updatedAt: row.updated_at,
     images: (row.sale_vehicle_images || []).sort((a, b) => a.position - b.position).map((image) => ({ id: image.id, alt: image.alt_text, position: image.position, url: `${base}/storage/v1/object/public/vehicle-sales/${image.object_path}` })),
   };
 }
 
-export async function getPublicSaleVehicles() {
+export async function getPublicSaleVehicles(options: { throwOnError?: boolean } = {}) {
   const client = await createClient();
-  if (!client) return [] as SaleVehicle[];
-  const { data } = await client.from("sale_vehicles").select("*, sale_vehicle_images(*)").in("status", ["available", "reserved"]).order("created_at", { ascending: false });
+  if (!client) {
+    if (options.throwOnError) throw new Error("Sitemap inventory source is not configured");
+    return [] as SaleVehicle[];
+  }
+  const { data, error } = await client.from("sale_vehicles").select("*, sale_vehicle_images(*)").in("status", ["available", "reserved"]).order("created_at", { ascending: false });
+  if (error && options.throwOnError) throw new Error("Sitemap inventory query failed", { cause: error });
   return ((data || []) as VehicleRow[]).map(mapVehicle);
 }
 

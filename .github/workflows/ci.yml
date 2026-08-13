@@ -22,6 +22,46 @@ jobs:
       - run: pnpm test
       - run: pnpm build
 
+  database-tests:
+    runs-on: ubuntu-latest
+    needs: verify
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.12.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.113.0
+      - name: Start isolated local Supabase
+        run: supabase start
+      - name: Rebuild local database from migrations
+        run: supabase db reset --local --no-seed
+      - name: Run PostgreSQL policy and integrity tests
+        run: supabase test db --local supabase/tests/database
+      - name: Export local-only API credentials
+        shell: bash
+        run: |
+          eval "$(supabase status -o env)"
+          echo "INTEGRATION_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
+          echo "INTEGRATION_SUPABASE_PUBLISHABLE_KEY=${PUBLISHABLE_KEY:-$ANON_KEY}" >> "$GITHUB_ENV"
+          echo "INTEGRATION_SUPABASE_SECRET_KEY=${SECRET_KEY:-$SERVICE_ROLE_KEY}" >> "$GITHUB_ENV"
+      - name: Run PostgREST and concurrency tests
+        run: pnpm exec vitest run --config vitest.integration.config.ts
+      - name: Install Chromium for authenticated PDF tests
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Run isolated authenticated PDF access tests
+        run: pnpm test:e2e:local-invoicing
+      - name: Remove isolated local Supabase data
+        if: always()
+        run: supabase stop --no-backup
+
   browser-tests:
     runs-on: ubuntu-latest
     needs: verify

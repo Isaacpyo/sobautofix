@@ -89,6 +89,53 @@ textarea {
   text-wrap: balance;
 }
 
+.vehicle-detail-page > section:nth-of-type(2) > div {
+  display: grid;
+  gap: 3rem;
+}
+
+.vehicle-detail-page > section:nth-of-type(2) > div > div:nth-child(2) {
+  display: contents;
+}
+
+.vehicle-detail-page > section:nth-of-type(2) > div > div:first-child {
+  order: 1;
+}
+
+.vehicle-detail-page > section:nth-of-type(2) > div > div:nth-child(2) > aside {
+  order: 2;
+}
+
+.vehicle-detail-page > section:nth-of-type(2) > div > div:nth-child(2) > div {
+  order: 3;
+}
+
+@media (min-width: 1024px) {
+  .vehicle-detail-page > section:nth-of-type(2) > div {
+    grid-template-columns: minmax(0, 1.35fr) minmax(20rem, 0.65fr);
+    align-items: start;
+  }
+
+  .vehicle-detail-page > section:nth-of-type(2) > div > div:first-child {
+    grid-column: 1;
+    grid-row: 1;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .vehicle-detail-page > section:nth-of-type(2) > div > div:nth-child(2) > aside {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    position: sticky;
+    top: 12rem;
+    align-self: start;
+  }
+
+  .vehicle-detail-page > section:nth-of-type(2) > div > div:nth-child(2) > div {
+    grid-column: 1;
+    grid-row: 2;
+  }
+}
+
 @media (max-width: 767px) {
   /* Keep the first mobile paint independent of optional webfont delivery. */
   body {

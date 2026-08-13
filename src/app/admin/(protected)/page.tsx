@@ -10,6 +10,7 @@ import {
   Inbox,
   Plus,
   Radio,
+  ReceiptText,
   Wrench,
 } from "lucide-react";
 import Link from "next/link";
@@ -51,6 +52,8 @@ type BookingSummary = {
   provider_sync_state: string;
 };
 
+type InvoiceSummary = { id: string; status: string; total_pence: string | number };
+
 const emptyResult = { data: [], count: 0, error: null };
 
 export default async function DashboardPage() {
@@ -58,7 +61,7 @@ export default async function DashboardPage() {
   const admin = await getAdminUser();
   const now = new Date();
 
-  const [newEnquiriesResult, recentEnquiriesResult, stockResult, contentResult, failedEmailsResult, activityResult, bookingsResult, bookingServicesResult] = client
+  const [newEnquiriesResult, recentEnquiriesResult, stockResult, contentResult, failedEmailsResult, activityResult, bookingsResult, bookingServicesResult, invoicesResult] = client
     ? await Promise.all([
         client.from("enquiries").select("id", { count: "exact", head: true }).eq("status", "new"),
         client.from("enquiries").select("id,type,service_slug,status,created_at,customers(name),vehicles(registration,make,model)").order("created_at", { ascending: false }).limit(5),
@@ -68,14 +71,17 @@ export default async function DashboardPage() {
         client.from("admin_audit_log").select("id,actor_id,action,entity_type,entity_id,detail,created_at").order("created_at", { ascending: false }).limit(6),
         client.from("bookings").select("id,status,appointment_start,provider_sync_state").order("appointment_start", { ascending: true }).limit(500),
         client.from("booking_service_types").select("id", { count: "exact", head: true }).eq("online_booking_enabled", true).not("provider_event_type_id", "is", null),
+        client.from("invoices").select("id,status,total_pence").eq("status", "issued"),
       ])
-    : [emptyResult, emptyResult, emptyResult, emptyResult, emptyResult, emptyResult, emptyResult, emptyResult];
+    : [emptyResult, emptyResult, emptyResult, emptyResult, emptyResult, emptyResult, emptyResult, emptyResult, emptyResult];
 
   const recentEnquiries = (recentEnquiriesResult.data || []) as unknown as RecentEnquiry[];
   const stockRows = (stockResult.data || []) as Array<{ status: string }>;
   const contentRows = (contentResult.data || []) as Array<{ status: string; kind: string }>;
   const activity = (activityResult.data || []) as unknown as AuditEntry[];
   const bookingRows = (bookingsResult.data || []) as BookingSummary[];
+  const outstandingInvoices = (invoicesResult.data || []) as InvoiceSummary[];
+  const outstandingValue = outstandingInvoices.reduce((sum, invoice) => sum + BigInt(invoice.total_pence), 0n);
   const stockCounts = countStatuses(stockRows, ["available", "reserved", "sold"]);
   const articleCounts = countStatuses(contentRows.filter((entry) => entry.kind === "article"), ["published", "draft", "scheduled"]);
   const databaseReady = Boolean(client) && ![
@@ -87,6 +93,7 @@ export default async function DashboardPage() {
     activityResult,
     bookingsResult,
     bookingServicesResult,
+    invoicesResult,
   ].some((result) => result.error);
 
   const todayKey = londonDateKey(now);
@@ -124,6 +131,7 @@ export default async function DashboardPage() {
         <div className="hidden flex-wrap gap-2 md:flex" aria-label="Quick actions">
           <QuickAction href="/admin/enquiries" label="View enquiries" icon={Inbox} variant="secondary" />
           <QuickAction href="/admin/inventory/new" label="Add vehicle" icon={CarFront} variant="secondary" />
+          <QuickAction href="/admin/invoices/new" label="Add invoice" icon={ReceiptText} variant="secondary" />
           <QuickAction href="/admin/news/new" label="Add article" icon={Plus} />
         </div>
       </div>
@@ -135,7 +143,15 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      <section className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Key performance indicators">
+      <section className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-5" aria-label="Key performance indicators">
+        <KpiCard
+          label="Outstanding invoices"
+          value={outstandingInvoices.length}
+          support={`${formatDashboardPence(outstandingValue)} unpaid`}
+          href="/admin/invoices?status=issued"
+          icon={ReceiptText}
+          tone={outstandingInvoices.length > 0 ? "warning" : "default"}
+        />
         <KpiCard
           label="New enquiries"
           value={newEnquiriesResult.count ?? 0}
@@ -183,6 +199,10 @@ export default async function DashboardPage() {
       </div>
     </>
   );
+}
+
+function formatDashboardPence(value: bigint) {
+  return `£${value / 100n}.${String(value % 100n).padStart(2, "0")}`;
 }
 
 function KpiCard({

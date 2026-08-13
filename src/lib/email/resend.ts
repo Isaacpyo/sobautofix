@@ -1,7 +1,13 @@
 import "server-only";
 
 import { Resend } from "resend";
-import { isValidEmailAddress, parseEmailAddress, productionEmailSender, resolveReplyTo } from "@/lib/email/identity";
+import {
+  approvedInvoiceReplyTo,
+  isValidEmailAddress,
+  parseEmailAddress,
+  productionEmailSender,
+  resolveReplyTo,
+} from "@/lib/email/identity";
 import { getEnquiryReplyDomain } from "@/lib/enquiries/inbound-config";
 
 export type TransactionalEmail = {
@@ -10,37 +16,79 @@ export type TransactionalEmail = {
   text: string;
   replyTo?: string;
   headers?: Record<string, string>;
+  tags?: Array<{ name: string; value: string }>;
   idempotencyKey?: string;
+  attachments?: Array<{ filename: string; content: Buffer }>;
 };
 
-export function getResendConfig() {
+export type TransactionalEmailFailureKind = "rejected" | "ambiguous";
+
+export class TransactionalEmailDeliveryError extends Error {
+  constructor(
+    readonly kind: TransactionalEmailFailureKind,
+    readonly code: string,
+    readonly retryable: boolean,
+    message = `Email delivery failed: ${code}`,
+  ) {
+    super(message);
+    this.name = "TransactionalEmailDeliveryError";
+  }
+}
+
+type ResendConfiguration = {
+  apiKey: string;
+  from: string;
+  replyTo: string;
+};
+
+function getBaseResendConfig(): ResendConfiguration | null {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.RESEND_FROM_EMAIL;
   const replyTo = process.env.RESEND_REPLY_TO;
+
+  if (!apiKey || from !== productionEmailSender || !replyTo || !isValidEmailAddress(replyTo)) return null;
+  return { apiKey, from, replyTo };
+}
+
+export function getResendConfig() {
+  const base = getBaseResendConfig();
   const notificationRecipient = process.env.ENQUIRY_NOTIFICATION_EMAIL;
 
-  if (
-    !apiKey ||
-    from !== productionEmailSender ||
-    !replyTo ||
-    !notificationRecipient ||
-    !isValidEmailAddress(replyTo) ||
-    !isValidEmailAddress(notificationRecipient)
-  ) return null;
+  if (!base || !notificationRecipient || !isValidEmailAddress(notificationRecipient)) return null;
 
   return {
-    apiKey,
-    from,
-    replyTo,
+    ...base,
     notificationRecipient,
   };
 }
 
+export function getInvoiceResendConfig() {
+  const base = getBaseResendConfig();
+  if (!base || base.replyTo !== approvedInvoiceReplyTo) return null;
+  return { ...base, replyTo: approvedInvoiceReplyTo };
+}
+
 export async function sendTransactionalEmail(message: TransactionalEmail) {
   const config = getResendConfig();
-  if (!config) throw new Error("Transactional email is not configured");
-  const to = parseEmailAddress(message.to);
-  const replyTo = resolveReplyTo(config.replyTo, message.replyTo);
+  if (!config) throw new TransactionalEmailDeliveryError("rejected", "email_not_configured", false, "Transactional email is not configured");
+  return sendWithConfig(config, message);
+}
+
+export async function sendInvoiceTransactionalEmail(message: TransactionalEmail) {
+  const config = getInvoiceResendConfig();
+  if (!config) throw new TransactionalEmailDeliveryError("rejected", "invoice_email_not_configured", false, "Invoice email is not configured");
+  return sendWithConfig(config, { ...message, replyTo: approvedInvoiceReplyTo });
+}
+
+async function sendWithConfig(config: ResendConfiguration, message: TransactionalEmail) {
+  let to: string;
+  let replyTo: string;
+  try {
+    to = parseEmailAddress(message.to);
+    replyTo = resolveReplyTo(config.replyTo, message.replyTo);
+  } catch {
+    throw new TransactionalEmailDeliveryError("rejected", "invalid_recipient", false);
+  }
 
   const result = await new Resend(config.apiKey).emails.send({
     from: config.from,
@@ -49,9 +97,23 @@ export async function sendTransactionalEmail(message: TransactionalEmail) {
     text: message.text,
     replyTo,
     headers: message.headers,
+    tags: message.tags,
+    attachments: message.attachments,
   }, message.idempotencyKey ? { idempotencyKey: message.idempotencyKey } : undefined);
-  if (result.error) throw new Error(`Email delivery failed: ${result.error.name}`);
+  if (result.error) throw classifyTransactionalEmailProviderError(result.error);
   return result;
+}
+
+export function classifyTransactionalEmailProviderError(error: { name: string; statusCode: number | null }) {
+  const code = /^[a-z0-9_]+$/.test(error.name) ? error.name : "provider_error";
+  if (code === "invalid_idempotent_request") {
+    return new TransactionalEmailDeliveryError("ambiguous", code, false);
+  }
+  if (error.statusCode === null || error.statusCode === 408 || error.statusCode >= 500 || code === "concurrent_idempotent_requests") {
+    return new TransactionalEmailDeliveryError("ambiguous", code, true);
+  }
+  const retryable = code === "rate_limit_exceeded";
+  return new TransactionalEmailDeliveryError("rejected", code, retryable);
 }
 
 export function getResendInboundConfig() {

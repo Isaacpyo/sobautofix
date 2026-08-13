@@ -18,9 +18,13 @@ export async function getPublishedContent(kind: ContentKind, slug: string) {
   return data ? mapContentEntry(data as ContentRow) : null;
 }
 
-export async function getPublishedContentByKinds(kinds: ContentKind[]) {
+export async function getPublishedContentByKinds(kinds: ContentKind[], options: { throwOnError?: boolean } = {}) {
   const client = await createClient();
-  if (!client) return [] as ContentEntry[];
-  const { data } = await client.from("content_entries").select("*").in("kind", kinds).eq("status", "published").order("published_at", { ascending: false });
+  if (!client) {
+    if (options.throwOnError) throw new Error("Sitemap content source is not configured");
+    return [] as ContentEntry[];
+  }
+  const { data, error } = await client.from("content_entries").select("*").in("kind", kinds).eq("status", "published").order("published_at", { ascending: false });
+  if (error && options.throwOnError) throw new Error("Sitemap content query failed", { cause: error });
   return ((data || []) as ContentRow[]).map(mapContentEntry);
 }

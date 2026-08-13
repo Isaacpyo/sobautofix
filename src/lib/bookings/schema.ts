@@ -4,7 +4,6 @@ import { registrationSchema } from "@/lib/vehicle/registration";
 export const bookingLookupSchema = z.object({
   bookingReference: z.string().trim().toUpperCase().regex(/^SOB-\d{6}$/),
   registration: registrationSchema,
-  email: z.string().trim().toLowerCase().pipe(z.email().max(254)),
 });
 
 export const bookingAccessSchema = z.object({
@@ -62,7 +61,7 @@ export const bookingLocationSchema = z.object({
 export const createBookingSchema = z.object({
   vehicle: bookingVehicleSchema,
   serviceKey: serviceKeySchema,
-  problemDescription: z.string().trim().min(10).max(2000),
+  problemDescription: z.string().trim().max(2000),
   symptoms: z.array(z.string().trim().min(1).max(80)).max(10).default([]),
   conditionalAnswers: z.object({
     mileage: z.string().trim().max(20).optional(),

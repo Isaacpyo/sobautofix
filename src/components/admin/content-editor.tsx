@@ -116,7 +116,7 @@ function ArticleEditor({ entry, action, media, coverUploadAction }: { entry?: Co
   const [title, setTitle] = useState(entry?.title || "");
   const [excerpt, setExcerpt] = useState(entry?.excerpt || "");
   const [slug, setSlug] = useState(entry?.slug || "");
-  const [slugEdited, setSlugEdited] = useState(Boolean(entry));
+  const [slugEdited, setSlugEdited] = useState(Boolean(entry?.id));
   const [category, setCategory] = useState(initialArticle.category);
   const [author, setAuthor] = useState(initialArticle.author || "SOB Autofix Team");
   const [coverImageId, setCoverImageId] = useState(initialArticle.coverImageId || "");
@@ -224,7 +224,7 @@ function ArticleEditor({ entry, action, media, coverUploadAction }: { entry?: Co
       </section>
 
       <div className="sticky bottom-4 z-10 flex flex-wrap items-center justify-end gap-3 rounded-2xl border border-[#E4EAF0] bg-white/95 p-4 shadow-xl backdrop-blur">
-        {entry && <Link href={`/admin/preview/${entry.id}`} target="_blank" className="min-h-12 rounded-lg border border-[#1974E2]/30 px-5 py-3 text-sm font-bold text-[#1974E2]">Preview</Link>}
+        {entry?.id && <Link href={`/admin/preview/${entry.id}`} target="_blank" className="min-h-12 rounded-lg border border-[#1974E2]/30 px-5 py-3 text-sm font-bold text-[#1974E2]">Preview</Link>}
         {status !== "published" && <Button type="submit" name="articleIntent" value="draft" variant="outline">Save draft</Button>}
         {entry?.status === "published" && <Button type="submit" name="articleIntent" value="archived" variant="outline">Archive</Button>}
         {status === "draft" && <Button type="submit" name="articleIntent" value="published">Publish</Button>}

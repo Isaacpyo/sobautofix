@@ -69,10 +69,9 @@ export async function lookupBookingAction(_previousState: BookingLookupState, fo
   const parsed = bookingLookupSchema.safeParse({
     bookingReference: formData.get("bookingReference"),
     registration: formData.get("registration"),
-    email: formData.get("email"),
   });
   if (!parsed.success) return { status: "error", message: genericLookupFailure };
-  const compoundIdentifier = `${ip}:${parsed.data.bookingReference}:${parsed.data.registration}:${parsed.data.email}`;
+  const compoundIdentifier = `${ip}:${parsed.data.bookingReference}:${parsed.data.registration}`;
   if (!(await consumeRateLimit(compoundIdentifier, "booking_lookup_details", 5, 900))) return { status: "error", message: "Too many attempts. Please wait before trying again." };
   try {
     const result = await findBooking(parsed.data);

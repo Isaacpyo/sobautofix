@@ -24,15 +24,15 @@ describe("provider-neutral booking management", () => {
     delete process.env.BOOKING_MANAGEMENT_SECRET;
   });
 
-  it("requires reference, registration and email for a booking lookup", () => {
-    expect(bookingLookupSchema.safeParse({ bookingReference: "SOB-123456", registration: "AB12 CDE" }).success).toBe(false);
+  it("requires a reference and registration for a booking lookup", () => {
+    expect(bookingLookupSchema.safeParse({ bookingReference: "SOB-123456", registration: "AB12 CDE" }).success).toBe(true);
+    expect(bookingLookupSchema.safeParse({ bookingReference: "SOB-123456" }).success).toBe(false);
   });
 
   it("normalises every secure lookup factor", () => {
-    expect(bookingLookupSchema.parse({ bookingReference: " sob-123456 ", registration: "ab12 cde", email: " TEST@Example.COM " })).toEqual({
+    expect(bookingLookupSchema.parse({ bookingReference: " sob-123456 ", registration: "ab12 cde" })).toEqual({
       bookingReference: "SOB-123456",
       registration: "AB12CDE",
-      email: "test@example.com",
     });
   });
 
@@ -85,7 +85,7 @@ describe("provider-neutral booking management", () => {
     const result = createBookingSchema.safeParse({
       vehicle: { registration: "AB12 CDE", make: "Vauxhall", model: "Astra" },
       serviceKey: "vehicle-diagnostics",
-      problemDescription: "The warning light appears intermittently.",
+      problemDescription: "",
       symptoms: ["warning light"],
       conditionalAnswers: { warningLight: "Engine management" },
       location: { mode: "workshop" },

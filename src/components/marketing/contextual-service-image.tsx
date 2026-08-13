@@ -1,7 +1,6 @@
 import Image, { type StaticImageData } from "next/image";
-import heroImage from "../../../assets/sobautofix-pics (1).png";
+import heroImage from "../../../assets/sobautofix-pics (3).png";
 import diagnosticsImage from "../../../assets/sobautofix-pics (2).png";
-import mobileImage from "../../../assets/sobautofix-pics (3).png";
 import electricalImage from "../../../assets/sobautofix-pics (4).png";
 import serviceImage from "../../../assets/sobautofix-pics (5).png";
 import engineImage from "../../../assets/sobautofix-pics (6).png";
@@ -25,7 +24,7 @@ export type ContextualImageId =
 const images: Record<ContextualImageId, { src: StaticImageData; alt: string }> = {
   hero: { src: heroImage, alt: "SOB Autofix technician testing a vehicle in the workshop" },
   diagnostics: { src: diagnosticsImage, alt: "Technician using diagnostic equipment beside an open engine bay" },
-  mobile: { src: mobileImage, alt: "SOB Autofix technician carrying out a vehicle check at the customer's location" },
+  mobile: { src: heroImage, alt: "SOB Autofix technician carrying out a vehicle check at the customer's location" },
   electrical: { src: electricalImage, alt: "Technician carrying out electrical testing in a vehicle engine bay" },
   service: { src: serviceImage, alt: "Mobile mechanic attending a vehicle at the customer's location" },
   engine: { src: engineImage, alt: "Technician inspecting the underside of a vehicle on a workshop lift" },

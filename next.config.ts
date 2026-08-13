@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  distDir: process.env.PLAYWRIGHT_LOCAL_INVOICING === "true" ? ".next/invoice-tests" : ".next",
   allowedDevOrigins: ["127.0.0.1"],
   poweredByHeader: false,
   reactStrictMode: true,

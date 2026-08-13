@@ -88,6 +88,7 @@ export type SaleVehicle = {
   status: SaleVehicleStatus;
   soldAt?: string;
   createdAt: string;
+  updatedAt: string;
 };
 
 export type ContentKind =

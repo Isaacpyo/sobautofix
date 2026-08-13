@@ -198,7 +198,6 @@ export async function findBooking(input: BookingLookupInput) {
     .select(bookingSelect)
     .eq("booking_reference", input.bookingReference)
     .eq("vehicles.registration", input.registration)
-    .eq("customers.email", input.email)
     .maybeSingle();
   if (error || !data) return null;
   const row = data as unknown as BookingRow;

@@ -1,3 +1,4 @@
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 type FilterOption = { value: string; label: string };
@@ -29,9 +30,9 @@ export function AdminPagination({ path, page, pageSize, totalItems, query, statu
     <nav aria-label="List pagination" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#E4EAF0] bg-white px-4 py-3">
       <p className="text-sm font-semibold text-[#667586]">Showing {start}–{end} of {totalItems}</p>
       <div className="flex items-center gap-2">
-        <PageLink disabled={page <= 1} href={pageHref(path, page - 1, query, status)}>Previous</PageLink>
+        <PageLink disabled={page <= 1} href={pageHref(path, page - 1, query, status)}><ChevronLeft aria-hidden="true" size={16} /> Previous</PageLink>
         <span className="px-2 text-sm font-extrabold text-[#071127]">Page {page} of {totalPages}</span>
-        <PageLink disabled={page >= totalPages} href={pageHref(path, page + 1, query, status)}>Next</PageLink>
+        <PageLink disabled={page >= totalPages} href={pageHref(path, page + 1, query, status)}>Next <ChevronRight aria-hidden="true" size={16} /></PageLink>
       </div>
     </nav>
   );
@@ -39,8 +40,8 @@ export function AdminPagination({ path, page, pageSize, totalItems, query, statu
 
 function PageLink({ href, disabled, children }: { href: string; disabled: boolean; children: React.ReactNode }) {
   return disabled
-    ? <span aria-disabled="true" className="rounded-lg border border-[#E4EAF0] px-3 py-2 text-sm font-bold text-[#A3AFBC]">{children}</span>
-    : <Link href={href} className="rounded-lg border border-[#C9D5E2] px-3 py-2 text-sm font-bold text-[#1446A5] hover:border-[#1974E2] hover:bg-[#F1F7FF]">{children}</Link>;
+    ? <span aria-disabled="true" className="inline-flex items-center gap-1 rounded-lg border border-[#E4EAF0] px-3 py-2 text-sm font-bold text-[#A3AFBC]">{children}</span>
+    : <Link href={href} className="inline-flex items-center gap-1 rounded-lg border border-[#C9D5E2] px-3 py-2 text-sm font-bold text-[#1446A5] hover:border-[#1974E2] hover:bg-[#F1F7FF]">{children}</Link>;
 }
 
 function pageHref(path: string, page: number, query: string, status: string) {

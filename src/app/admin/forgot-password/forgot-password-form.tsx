@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
+import { BackLink } from "@/components/ui/back-link";
 import { requestPasswordReset } from "../login/actions";
 
 export function ForgotPasswordForm() {
@@ -14,7 +14,7 @@ export function ForgotPasswordForm() {
       </label>
       {state.message && <p className="rounded-lg bg-[#F4F7FA] p-3 text-sm leading-6 text-[#586575]" role="status">{state.message}</p>}
       <Button disabled={pending} type="submit">{pending ? "Sending…" : "Send reset link"}</Button>
-      <Link href="/admin/login" className="text-center text-sm font-bold text-[#1974E2] hover:underline">Back to sign in</Link>
+      <BackLink href="/admin/login" className="justify-center">Back to sign in</BackLink>
     </form>
   );
 }

@@ -48,6 +48,10 @@ type BookingConfirmation = {
   status: string;
   appointmentStart: string;
   email: string;
+  vehicle: VehicleDetails;
+  service: BookingService;
+  locationLabel: string;
+  timeZone: string;
 };
 
 type FieldErrors = Partial<Record<
@@ -301,7 +305,6 @@ export function BookingWizard() {
     }
     if (currentStep === 1 && !selectedService) nextErrors.service = "Choose a service to continue.";
     if (currentStep === 2) {
-      if (problemDescription.trim().length < 10) nextErrors.problemDescription = "Tell us a little more about what is happening.";
       if (asksMileage && mileage && (!/^\d+$/.test(mileage) || Number(mileage) > 2_000_000)) nextErrors.mileage = "Enter the mileage using numbers only.";
     }
     if (currentStep === 3) {
@@ -429,8 +432,40 @@ export function BookingWizard() {
         status: result.booking.status ?? "confirmed",
         appointmentStart: result.booking.appointmentStart ?? appointmentStart,
         email: result.booking.email ?? customer.email.trim(),
+        vehicle: activeVehicle,
+        service: selectedService,
+        locationLabel: effectiveLocationMode === "workshop" ? "SOB Autofix workshop" : postcode.trim().toUpperCase(),
+        timeZone: slotTimeZone,
       });
       track("booking_completed", { source: "booking_wizard", selection: selectedService.key });
+      setStep(0);
+      setVehicleView("input");
+      setUseStoredVehicle(true);
+      setVehicle(null);
+      setRegistration("");
+      setManualVehicle({ registration: "", make: "", model: "" });
+      setVehicleLookupMessage("");
+      setServiceKey("");
+      setProblemDescription("");
+      setSymptoms([]);
+      setMileage("");
+      setWarningLight("");
+      setIssueTiming("");
+      setLocationMode("workshop");
+      setAddress("");
+      setPostcode("");
+      setVehicleAccessible(undefined);
+      setCustomer({ name: "", email: "", phone: "" });
+      setAppointmentDate("");
+      setSlots([]);
+      setSlotsState("idle");
+      setSlotTimeZone(defaultTimeZone);
+      setAppointmentStart("");
+      setErrors({});
+      setBookingError("");
+      setSlotConflict(false);
+      idempotencyKeyRef.current = null;
+      clearVehicle();
       setBookingState("idle");
     } catch {
       setBookingError("We couldn't confirm the booking just now. Please try again.");
@@ -440,7 +475,7 @@ export function BookingWizard() {
     }
   }
 
-  if (confirmation && activeVehicle && selectedService) {
+  if (confirmation) {
     const isConfirmed = confirmation.status === "confirmed" || confirmation.status === "rescheduled";
     return (
       <section className="p-5 sm:p-8 lg:p-10" aria-labelledby="booking-confirmed-heading">
@@ -457,14 +492,14 @@ export function BookingWizard() {
               ? <>We&apos;ve sent the details to {confirmation.email}.</>
               : <>We&apos;ll email {confirmation.email} as soon as the appointment is confirmed.</>}
           </p>
-          <div className="mt-7 rounded-2xl bg-[#071127] p-6 text-left text-white sm:p-7">
-            <p className="text-xs font-extrabold tracking-[.15em] text-[#67B9FF] uppercase">Booking reference</p>
-            <strong className="mt-1 block font-mono text-3xl tracking-[.08em]">{confirmation.reference}</strong>
-            <dl className="mt-6 grid gap-4 border-t border-white/10 pt-6 sm:grid-cols-2">
-              <ReviewItem label="Vehicle" value={vehicleLabel(activeVehicle)} support={formatRegistration(activeVehicle.registration)} dark />
-              <ReviewItem label="Service" value={selectedService.name} dark />
-              <ReviewItem label="Appointment" value={formatAppointment(confirmation.appointmentStart, slotTimeZone)} dark />
-              <ReviewItem label="Location" value={effectiveLocationMode === "workshop" ? "SOB Autofix workshop" : postcode.trim().toUpperCase()} dark />
+          <div className="mt-7 rounded-2xl border border-[#DCE5EF] bg-[#F7F9FC] p-6 text-left shadow-[0_12px_35px_rgba(7,17,39,0.06)] sm:p-7">
+            <p className="text-xs font-extrabold tracking-[.15em] text-[#1974E2] uppercase">Booking reference</p>
+            <strong className="mt-1 block font-mono text-3xl tracking-[.08em] text-[#071127]">{confirmation.reference}</strong>
+            <dl className="mt-6 grid gap-4 border-t border-[#DCE5EF] pt-6 sm:grid-cols-2">
+              <ReviewItem label="Vehicle" value={vehicleLabel(confirmation.vehicle)} support={formatRegistration(confirmation.vehicle.registration)} />
+              <ReviewItem label="Service" value={confirmation.service.name} />
+              <ReviewItem label="Appointment" value={formatAppointment(confirmation.appointmentStart, confirmation.timeZone)} />
+              <ReviewItem label="Location" value={confirmation.locationLabel} />
             </dl>
           </div>
           <div className="mt-7 grid gap-3 sm:grid-cols-2">
@@ -712,7 +747,7 @@ function VehicleStep({ activeVehicle, view, registration, setRegistration, manua
           </div>
           <div className="flex flex-col gap-2 sm:items-end">
             {view === "found" && <Button type="button" onClick={onConfirm}>Yes, this is my vehicle <ArrowRight size={18} aria-hidden="true" /></Button>}
-            <button type="button" className="min-h-11 px-2 text-sm font-bold text-[#145CAD] underline" onClick={onSearchAgain}>Search again</button>
+            <button type="button" className="inline-flex min-h-11 items-center gap-2 px-2 text-sm font-bold text-[#145CAD] underline" onClick={onSearchAgain}><ChevronLeft size={17} aria-hidden="true" /> Search again</button>
           </div>
         </div>
       </div>
@@ -753,7 +788,7 @@ function VehicleStep({ activeVehicle, view, registration, setRegistration, manua
         </div>
         <div className="mt-5 flex flex-col gap-3 sm:flex-row">
           <Button type="submit">Continue with these details <ArrowRight size={18} aria-hidden="true" /></Button>
-          <Button type="button" variant="outline" onClick={onRetry}>Back to lookup</Button>
+          <Button type="button" variant="outline" onClick={onRetry}><ChevronLeft size={18} aria-hidden="true" /> Back to lookup</Button>
         </div>
       </form>
     );
@@ -826,8 +861,8 @@ function ProblemStep({ problemDescription, setProblemDescription, symptoms, onTo
 }) {
   return (
     <div className="grid gap-6">
-      <Field label="Tell us what is happening" htmlFor="problem-description" error={errors.problemDescription}>
-        <textarea id="problem-description" value={problemDescription} onChange={(event) => setProblemDescription(event.target.value)} rows={5} maxLength={3000} placeholder="Describe when it happens, what you notice and any recent changes." className={inputClass} aria-invalid={Boolean(errors.problemDescription)} aria-describedby={errors.problemDescription ? "problem-description-error problem-description-help" : "problem-description-help"} />
+      <Field label="Tell us what is happening (optional)" htmlFor="problem-description">
+        <textarea id="problem-description" value={problemDescription} onChange={(event) => setProblemDescription(event.target.value)} rows={5} maxLength={2000} placeholder="Describe when it happens, what you notice and any recent changes." className={inputClass} aria-describedby="problem-description-help" />
       </Field>
       <p id="problem-description-help" className="-mt-4 text-xs text-[#667586]">Please avoid including contact details here.</p>
       <fieldset>
@@ -883,9 +918,7 @@ function LocationStep({ service, mode, setMode, address, setAddress, postcode, s
         </div>
       </fieldset>
       {errors.locationMode && <p role="alert" className="mt-3 text-sm text-red-700">{errors.locationMode}</p>}
-      {mode === "workshop" ? (
-        <div className="mt-5 flex gap-3 rounded-xl bg-[#F4F7FA] p-4 text-sm leading-6 text-[#344256]"><MapPin className="mt-0.5 shrink-0 text-[#1974E2]" size={19} aria-hidden="true" /><p><strong className="block text-[#071127]">Workshop address</strong>{workshopAddress}</p></div>
-      ) : (
+      {mode !== "workshop" && (
         <div className="mt-6 grid gap-5">
           <div className="grid gap-5 sm:grid-cols-2">
             <Field label="Vehicle address" htmlFor="mobile-address" error={errors.address}><input id="mobile-address" value={address} onChange={(event) => setAddress(event.target.value)} autoComplete="street-address" maxLength={180} className={inputClass} aria-invalid={Boolean(errors.address)} aria-describedby={errors.address ? "mobile-address-error" : undefined} /></Field>
@@ -996,7 +1029,7 @@ function ReviewStep({ vehicle, service, problemDescription, symptoms, mileage, w
     <dl className="grid gap-3 sm:grid-cols-2">
       <ReviewCard icon={CarFront} label="Vehicle" value={vehicleLabel(vehicle)} support={formatRegistration(vehicle.registration)} />
       <ReviewCard icon={Wrench} label="Service" value={service.name} />
-      <ReviewCard icon={ClipboardCheck} label="Problem" value={problemDescription} support={[symptomLabels, conditional].filter(Boolean).join(" · ")} wide />
+      <ReviewCard icon={ClipboardCheck} label="Problem" value={problemDescription || "Not provided"} support={[symptomLabels, conditional].filter(Boolean).join(" · ")} wide />
       <ReviewCard icon={MapPin} label="Location" value={locationMode === "workshop" ? "SOB Autofix workshop" : address} support={locationMode === "workshop" ? workshopAddress : `${postcode.toUpperCase()} · ${vehicleAccessible ? "Vehicle safely accessible" : "Access needs checking"}`} />
       <ReviewCard icon={CalendarDays} label="Appointment" value={formatAppointment(appointmentStart, timeZone)} />
       <ReviewCard icon={UserRound} label="Customer" value={customer.name} support={`${customer.email} · ${customer.phone}`} />

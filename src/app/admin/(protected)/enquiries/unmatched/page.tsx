@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
 import { linkUnmatchedInboundAction } from "../../actions";
 
@@ -14,7 +14,7 @@ export default async function UnmatchedInboundPage() {
   const unmatched = (unmatchedResult.data || []) as UnmatchedRow[];
   const enquiries = (enquiriesResult.data || []) as unknown as EnquiryOption[];
   return <>
-    <Link href="/admin/enquiries" className="text-sm font-bold text-[#1974E2]">← Back to enquiries</Link>
+    <BackLink href="/admin/enquiries">Back to enquiries</BackLink>
     <p className="mt-6 text-xs font-extrabold tracking-widest text-[#1974E2] uppercase">Admin attention</p>
     <h1 className="mt-2 text-4xl font-extrabold text-[#071127]">Unmatched inbound email</h1>
     <p className="mt-2 max-w-2xl text-[#586575]">These messages were not linked automatically. Review the content and choose an enquiry only when the relationship is certain.</p>
