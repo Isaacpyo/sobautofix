@@ -5,6 +5,7 @@ import { sendTransactionalEmail } from "@/lib/email/resend";
 import { renderBookingEmail } from "@/lib/email/templates/bookings";
 import { createAdminClient } from "@/lib/supabase/server";
 import { formatRegistration } from "@/lib/vehicle/registration-format";
+import { bookingCalendarDownloadUrl, buildBookingCalendar, buildGoogleCalendarUrl } from "./calendar";
 
 export type BookingNotificationType = "confirmed" | "rescheduled" | "cancelled";
 
@@ -17,15 +18,33 @@ export type BookingNotificationDetails = {
   vehicleName?: string;
   service: string;
   appointmentStart: string;
+  appointmentEnd?: string;
+  timezone: string;
   location: string;
+  previousAppointmentStart?: string;
+  previousAppointmentEnd?: string;
+  calendarSequence: number;
+  calendarTimestamp: string;
 };
 
-function appointmentParts(value: string) {
-  const instant = new Date(value);
+function appointmentParts(startValue: string, endValue?: string) {
+  const start = new Date(startValue);
+  const end = endValue ? new Date(endValue) : null;
+  const time = (instant: Date) => new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Europe/London" }).format(instant);
+  const date = (instant: Date) => new Intl.DateTimeFormat("en-GB", { dateStyle: "full", timeZone: "Europe/London" }).format(instant);
+  const durationMinutes = end ? Math.round((end.getTime() - start.getTime()) / 60_000) : null;
   return {
-    date: new Intl.DateTimeFormat("en-GB", { dateStyle: "full", timeZone: "Europe/London" }).format(instant),
-    time: new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Europe/London" }).format(instant),
+    date: date(start),
+    startTime: time(start),
+    endTime: end ? `${date(end) === date(start) ? "" : `${date(end)} at `}${time(end)}` : undefined,
+    duration: durationMinutes && durationMinutes > 0 ? `${durationMinutes} minutes` : undefined,
   };
+}
+
+function previousAppointmentLabel(startValue?: string, endValue?: string) {
+  if (!startValue) return undefined;
+  const previous = appointmentParts(startValue, endValue);
+  return `${previous.date} at ${previous.startTime}${previous.endTime ? `–${previous.endTime}` : ""}`;
 }
 
 export function bookingNotificationKey(booking: BookingNotificationDetails, type: BookingNotificationType) {
@@ -53,16 +72,38 @@ export async function sendBookingNotification(booking: BookingNotificationDetail
   if (reservationError?.code === "23505") return true;
   if (reservationError) return false;
 
-  const appointment = appointmentParts(booking.appointmentStart);
+  const appointment = appointmentParts(booking.appointmentStart, booking.appointmentEnd);
+  const vehicle = [formatRegistration(booking.registration), booking.vehicleName].filter(Boolean).join(" · ");
+  const calendarDetails = booking.appointmentEnd ? {
+    reference: booking.reference,
+    customerName: booking.customerName,
+    customerEmail: booking.customerEmail,
+    service: booking.service,
+    vehicle,
+    appointmentStart: booking.appointmentStart,
+    appointmentEnd: booking.appointmentEnd,
+    timezone: booking.timezone,
+    location: booking.location,
+    sequence: booking.calendarSequence,
+    status: type,
+    timestamp: booking.calendarTimestamp,
+  } : null;
+  const calendarUrl = type === "cancelled" ? null : bookingCalendarDownloadUrl(booking.reference);
   const rendered = renderBookingEmail({
     type,
     customerName: booking.customerName,
     reference: booking.reference,
     service: booking.service,
-    vehicle: [formatRegistration(booking.registration), booking.vehicleName].filter(Boolean).join(" · "),
+    vehicle,
     date: appointment.date,
-    time: appointment.time,
+    startTime: appointment.startTime,
+    endTime: appointment.endTime,
+    duration: appointment.duration,
+    timezone: `${booking.timezone} (UK time)`,
     location: booking.location,
+    previousAppointment: previousAppointmentLabel(booking.previousAppointmentStart, booking.previousAppointmentEnd),
+    googleCalendarUrl: calendarDetails && type !== "cancelled" ? buildGoogleCalendarUrl(calendarDetails) : undefined,
+    calendarUrl: calendarUrl || undefined,
   });
 
   try {
@@ -72,6 +113,7 @@ export async function sendBookingNotification(booking: BookingNotificationDetail
       text: rendered.text,
       html: rendered.html,
       idempotencyKey: `booking-${createHash("sha256").update(key).digest("hex")}`,
+      attachments: calendarDetails ? [{ filename: `${booking.reference}.ics`, content: Buffer.from(buildBookingCalendar(calendarDetails), "utf8") }] : undefined,
     });
     await admin.from("booking_notification_events").update({ status: "sent", sent_at: new Date().toISOString(), last_error_code: null }).eq("notification_key", key);
     return true;

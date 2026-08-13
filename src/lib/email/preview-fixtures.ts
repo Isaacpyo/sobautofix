@@ -24,8 +24,14 @@ const booking = {
   service: "Vehicle diagnostics and intermittent electrical fault investigation",
   vehicle: "AB12 CDE · Vauxhall Astra Elite Nav Turbo",
   date: "Thursday, 20 August 2026",
-  time: "10:30",
+  startTime: "10:30",
+  endTime: "12:00",
+  duration: "90 minutes",
+  timezone: "Europe/London (UK time)",
   location: "SOB Autofix workshop, Cumbrae, Station Road, Norton, Doncaster, DN6 9HF",
+  previousAppointment: "Tuesday, 18 August 2026 at 09:00–10:30",
+  googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE",
+  calendarUrl: "https://sobautofix.com/api/bookings/calendar/SOB-12345678901234567890?signature=preview",
 };
 
 const invoice = {

@@ -10,7 +10,11 @@ const booking: BookingNotificationDetails = {
   vehicleName: "Vauxhall Astra",
   service: "Vehicle Diagnostics",
   appointmentStart: "2026-08-20T09:30:00.000Z",
+  appointmentEnd: "2026-08-20T10:30:00.000Z",
+  timezone: "Europe/London",
   location: "SOB Autofix workshop",
+  calendarSequence: 0,
+  calendarTimestamp: "2026-08-13T09:00:00.000Z",
 };
 
 describe("booking email notification keys", () => {

@@ -9,7 +9,9 @@ export type BookingHistoryEntry = {
   actor: "customer" | "provider" | "admin" | "system";
   createdAt: string;
   previousAppointmentStart?: string;
+  previousAppointmentEnd?: string;
   appointmentStart?: string;
+  appointmentEnd?: string;
 };
 
 export type PublicBooking = {

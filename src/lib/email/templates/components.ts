@@ -40,6 +40,7 @@ export function emailLayout(input: {
   intro?: string;
   contentHtml: string;
   cta?: { label: string; url: string };
+  secondaryCtas?: Array<{ label: string; url: string }>;
   afterCta?: string;
   compact?: boolean;
 }) {
@@ -51,6 +52,7 @@ export function emailLayout(input: {
   };
   const tone = tones[input.tone ?? "info"];
   const button = input.cta ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:26px 0 18px;"><tr><td align="center"><a href="${escapeHtml(input.cta.url)}" style="display:block;box-sizing:border-box;max-width:320px;min-height:46px;padding:13px 22px;border-radius:11px;background:#1974E2;color:#FFFFFF;font-size:16px;font-weight:700;line-height:20px;text-align:center;text-decoration:none;">${escapeHtml(input.cta.label)}</a></td></tr></table>` : "";
+  const secondaryButtons = input.secondaryCtas?.length ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;"><tr><td align="center">${input.secondaryCtas.map((cta) => `<a href="${escapeHtml(cta.url)}" style="display:inline-block;box-sizing:border-box;min-height:42px;margin:4px;padding:10px 14px;border:1px solid #1974E2;border-radius:9px;color:#0B5DBB;font-size:14px;font-weight:700;line-height:20px;text-decoration:none;">${escapeHtml(cta.label)}</a>`).join("")}</td></tr></table>` : "";
   const intro = input.intro ? `<p style="margin:0 0 24px;color:#586575;font-size:16px;line-height:25px;">${escapeHtml(input.intro)}</p>` : "";
   const afterCta = input.afterCta ? `<p style="margin:0;color:#586575;font-size:14px;line-height:22px;">${escapeHtml(input.afterCta)}</p>` : "";
   return `<!doctype html>
@@ -64,7 +66,7 @@ export function emailLayout(input: {
 <tr><td class="email-body" style="padding:${input.compact ? "30px 34px" : "38px 40px"};color:#071127;">
 <span style="display:inline-block;margin:0 0 18px;padding:7px 10px;border-radius:999px;background:${tone.bg};color:${tone.fg};font-size:12px;font-weight:700;line-height:16px;letter-spacing:.7px;">${escapeHtml(input.status)}</span>
 <h1 style="margin:0 0 14px;color:#071127;font-size:${input.compact ? "26px" : "30px"};line-height:${input.compact ? "32px" : "37px"};font-weight:700;letter-spacing:-.4px;">${escapeHtml(input.title)}</h1>
-${intro}${input.contentHtml}${button}${afterCta}
+${intro}${input.contentHtml}${button}${secondaryButtons}${afterCta}
 </td></tr>
 <tr><td class="email-footer" style="padding:27px 32px;background:#071127;color:#DCE6F2;text-align:center;font-size:12px;line-height:19px;">
 <strong style="color:#FFFFFF;font-size:14px;">${escapeHtml(emailBrand.legalName)}</strong><br>${escapeHtml(emailBrand.tagline)}<br>${escapeHtml(emailBrand.supportingLine)}<br><br>

@@ -582,7 +582,11 @@ describe("Cal.com booking repository workflows", () => {
       vehicleName: "Vauxhall Astra",
       service: "Vehicle Diagnostics",
       appointmentStart: "2026-08-20T09:00:00+01:00",
+      appointmentEnd: "2026-08-20T10:00:00+01:00",
+      timezone: "Europe/London",
       location: "SOB Autofix workshop",
+      calendarSequence: 1,
+      calendarTimestamp: "2026-08-13T09:00:00.000Z",
     };
 
     await sendBookingNotification(details, "rescheduled");
@@ -590,5 +594,11 @@ describe("Cal.com booking repository workflows", () => {
 
     expect(harness.state.notificationEvents).toHaveLength(1);
     expect(harness.sendEmail).toHaveBeenCalledTimes(1);
+    const message = harness.sendEmail.mock.calls[0]?.[0];
+    expect(message.attachments).toHaveLength(1);
+    expect(message.attachments[0].filename).toBe("SOB-123456.ics");
+    expect(message.attachments[0].content.toString("utf8")).toContain("UID:SOB-123456@sobautofix.com");
+    expect(message.html).toContain("Add to Google Calendar");
+    expect(message.html).toContain("Add to Calendar");
   });
 });

@@ -97,7 +97,9 @@ function historyFor(row: BookingRow): BookingHistoryEntry[] {
         actor: entry.actor_type,
         createdAt: entry.created_at,
         previousAppointmentStart: typeof detail.previousAppointmentStart === "string" ? detail.previousAppointmentStart : undefined,
+        previousAppointmentEnd: typeof detail.previousAppointmentEnd === "string" ? detail.previousAppointmentEnd : undefined,
         appointmentStart: typeof detail.appointmentStart === "string" ? detail.appointmentStart : undefined,
+        appointmentEnd: typeof detail.appointmentEnd === "string" ? detail.appointmentEnd : undefined,
       };
     })
     .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
@@ -150,6 +152,10 @@ function notificationDetails(row: BookingRow): BookingNotificationDetails | null
   const customer = relation(row.customers);
   const vehicle = relation(row.vehicles);
   if (!customer?.email) return null;
+  const history = historyFor(row);
+  const previousAppointment = [...history].reverse().find((entry) => entry.action === "rescheduled" && entry.previousAppointmentStart);
+  const calendarSequence = history.filter((entry) => entry.action === "rescheduled" || entry.action === "cancelled").length;
+  const latestCalendarEvent = [...history].reverse().find((entry) => ["confirmed", "rescheduled", "cancelled"].includes(entry.action));
   return {
     id: row.id,
     reference: row.booking_reference,
@@ -159,8 +165,27 @@ function notificationDetails(row: BookingRow): BookingNotificationDetails | null
     vehicleName: [vehicle?.make, vehicle?.model].filter(Boolean).join(" ") || undefined,
     service: row.service_name,
     appointmentStart: row.appointment_start,
+    appointmentEnd: row.appointment_end || undefined,
+    timezone: row.timezone,
     location: row.location || "SOB Autofix workshop",
+    previousAppointmentStart: previousAppointment?.previousAppointmentStart,
+    previousAppointmentEnd: previousAppointment?.previousAppointmentEnd,
+    calendarSequence,
+    calendarTimestamp: latestCalendarEvent?.createdAt || row.provider_event_updated_at || row.appointment_start,
   };
+}
+
+export async function getBookingCalendarNotification(reference: string) {
+  const admin = createAdminClient();
+  if (!admin) return null;
+  const { data, error } = await admin.from("bookings").select(bookingSelect).eq("booking_reference", reference).maybeSingle();
+  if (error || !data) return null;
+  const row = data as unknown as BookingRow;
+  if (!(["confirmed", "rescheduled", "cancelled"] as BookingStatus[]).includes(row.status)) return null;
+  const details = notificationDetails(row);
+  if (!details?.appointmentEnd) return null;
+  const type = row.status === "cancelled" ? "cancelled" as const : row.status === "rescheduled" ? "rescheduled" as const : "confirmed" as const;
+  return { details, type };
 }
 
 function toConfirmation(row: BookingRow): BookingConfirmation {
@@ -402,7 +427,9 @@ export async function rescheduleBooking(bookingId: string, appointmentStart: str
   if (error) throw new Error("The rescheduled appointment needs reconciliation");
   await recordAudit(bookingId, "rescheduled", actor, {
     previousAppointmentStart: row.appointment_start,
+    previousAppointmentEnd: row.appointment_end,
     appointmentStart: updatedProviderBooking.start,
+    appointmentEnd: updatedProviderBooking.end,
     providerResult: "synced",
   });
   const updated = await getBookingById(bookingId);
@@ -541,7 +568,9 @@ export async function processCalComWebhook(event: CalComWebhook, rawBody: string
     if (error) throw new Error("Webhook booking update failed");
     await recordAudit(row.id, action, "provider", {
       previousAppointmentStart: action === "rescheduled" ? row.appointment_start : undefined,
+      previousAppointmentEnd: action === "rescheduled" ? row.appointment_end : undefined,
       appointmentStart: update.appointment_start,
+      appointmentEnd: update.appointment_end,
       providerEvent: event.triggerEvent,
     });
     await admin.from("provider_webhook_events").update({ outcome: "processed" }).eq("event_key", eventKey);

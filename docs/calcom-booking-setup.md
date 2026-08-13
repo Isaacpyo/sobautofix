@@ -46,7 +46,19 @@ Set webhook payload version `2026-07-27` and a webhook secret matching `CALCOM_W
 
 ## Customer notifications
 
-SOB Autofix sends confirmation, reschedule, and cancellation messages through Resend with idempotency keys. Review the Event Type and workflow notification settings so customers do not also receive a competing generic scheduling confirmation. A connected-calendar invitation may still be desirable; test the exact customer experience with an external email account.
+SOB Autofix sends confirmation, reschedule, and cancellation messages through Resend with idempotency keys. Each message owns its customer calendar experience through an SOB Autofix `.ics` attachment and, for active appointments, Google Calendar and signed calendar-download actions.
+
+Cal.com must remain the availability, conflict, webhook, and connected-business-calendar provider, but it must not send attendee-facing lifecycle email. The current production account uses personal Event Types rather than team Event Types. Cal.com API v2 does not expose `emailSettings.disableEmailsToAttendees` on those personal Event Types, so do not attempt a partial API patch or convert Event Types automatically.
+
+Before production rollout, review every mapped Event Type in the Cal.com dashboard:
+
+1. Open the Event Type's advanced notification settings.
+2. Disable default confirmation emails for attendees where the account permits it.
+3. Remove or disable attendee workflows for created, rescheduled, and cancelled events. Do not disable SOB Autofix's webhook.
+4. Confirm whether the connected calendar still sends an attendee invitation independently of Cal.com's email. The customer must receive exactly one calendar event, from SOB Autofix.
+5. Preserve the destination business calendar, availability schedule, buffers, conflict checks, booking window, and provider booking lifecycle.
+
+Cal.com currently documents that personal Event Types may require an attendee workflow before the default confirmation toggle is available. If the account cannot suppress all attendee lifecycle messages without sending a replacement Cal.com workflow email, stop and review either a supported team Event Type with `emailSettings.disableEmailsToAttendees` or Cal.com account-plan support. Do not route customers through a placeholder attendee email address.
 
 ## Production acceptance
 
@@ -58,5 +70,7 @@ After applying the booking migrations and deploying the environment variables:
 4. Reschedule inside SOB Autofix and verify local history, email, and calendar change.
 5. Cancel inside SOB Autofix and verify local status, email, and calendar change.
 6. Confirm there are no third-party booking iframes, scripts, redirects, or browser-side API credentials.
+7. Count lifecycle messages in an external mailbox: one SOB Autofix email and zero Cal.com emails for create, reschedule, and cancel.
+8. Confirm the attached calendar uses the same UID across all three messages, reschedule updates the existing customer event, cancellation cancels that event, and the connected SOB Autofix business calendar still blocks and updates the appointment.
 
 Payments and deposits are deliberately out of scope. Add them only as a separately approved phase.
