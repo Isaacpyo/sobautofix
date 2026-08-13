@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   distDir: process.env.PLAYWRIGHT_LOCAL_INVOICING === "true" ? ".next/invoice-tests" : ".next",
   outputFileTracingIncludes: {
     "/api/admin/invoices/[id]/pdf": ["./assets/sobautofix_logo-white.png"],
+    "/admin/news": ["./content/article-imports/high-intent/*.article-source"],
   },
   allowedDevOrigins: ["127.0.0.1"],
   poweredByHeader: false,

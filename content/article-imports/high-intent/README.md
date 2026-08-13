@@ -25,7 +25,13 @@ Their proposed content is retained here for an editor to compare with the
 published article. The importer never updates either row.
 
 Apply mode calls the transactional `import_article_drafts` RPC and imports
-only `NEW_DRAFT` rows. It requires an authenticated CMS-admin access token in
+only `NEW_DRAFT` rows. The supported production workflow is the protected
+**Admin → News & Blog → High-intent article import** control. It reuses the
+signed-in administrator's cookie session, runs a fresh preview, requires an
+explicit draft-only confirmation, and never exposes or copies the user's JWT.
+
+The command-line apply mode remains available for isolated development or
+recovery testing. It requires an authenticated CMS-admin access token in
 `ARTICLE_IMPORT_ADMIN_ACCESS_TOKEN` and an explicit target environment:
 
 ```powershell
@@ -40,7 +46,7 @@ both:
 ARTICLE_IMPORT_PRODUCTION_APPROVED=IMPORT_REVIEWED_DRAFTS
 ```
 
-Possessing production credentials is not consent to apply. Do not set these
-confirmations until the editorial plan has been reviewed and production draft
-creation has been explicitly authorised. Publication and scheduling remain
-manual Admin → News & Blog actions.
+Possessing production credentials is not consent to apply. The CLI is not the
+normal production operator workflow; do not set these confirmations unless a
+separate recovery operation has been explicitly authorised. Publication and
+scheduling remain manual Admin → News & Blog actions.
