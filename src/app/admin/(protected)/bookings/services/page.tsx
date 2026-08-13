@@ -1,6 +1,6 @@
 import { ArrowLeft, CalendarCog, ShieldCheck } from "lucide-react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminReadClient as createClient } from "@/lib/supabase/server";
 import { ServiceMappingForm } from "./service-mapping-form";
 
 type ServiceMappingRow = {

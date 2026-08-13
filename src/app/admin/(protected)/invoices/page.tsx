@@ -10,7 +10,7 @@ import {
 } from "@/lib/invoices/dashboard";
 import { formatPence } from "@/lib/invoices/money";
 import { sourceLabel } from "@/lib/invoices/types";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminReadClient as createClient } from "@/lib/supabase/server";
 import { formatRegistration } from "@/lib/vehicle/registration-format";
 
 type Row = InvoiceDashboardRow;

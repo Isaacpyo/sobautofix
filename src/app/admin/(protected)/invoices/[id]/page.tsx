@@ -8,7 +8,7 @@ import { BackLink } from "@/components/ui/back-link";
 import { formatPence } from "@/lib/invoices/money";
 import { getInvoiceEmailSendsForAdmin, getInvoiceForAdmin } from "@/lib/invoices/repository";
 import { sourceLabel } from "@/lib/invoices/types";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminReadClient as createClient } from "@/lib/supabase/server";
 import { deleteDraftInvoiceAction, duplicateInvoiceAction, issueInvoiceAction, markInvoicePaidAction, sendInvoiceAction, voidInvoiceAction } from "../actions";
 
 export default async function InvoiceDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ notice?: string; emailSendId?: string }> }) {

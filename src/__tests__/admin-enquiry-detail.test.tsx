@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
   notFound: vi.fn(),
 }));
 
-vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createClient }));
+vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createClient, createAdminReadClient: mocks.createClient }));
 vi.mock("next/navigation", async (importOriginal) => ({
   ...await importOriginal<typeof import("next/navigation")>(),
   notFound: mocks.notFound,

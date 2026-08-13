@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { InvoiceForm, type ExistingSourceInvoice, type InvoiceFormInitial } from "@/components/admin/invoice-form";
 import { BackLink } from "@/components/ui/back-link";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminReadClient as createClient } from "@/lib/supabase/server";
 import { formatRegistration } from "@/lib/vehicle/registration-format";
 
 type Customer = { name: string; email: string | null; phone: string };

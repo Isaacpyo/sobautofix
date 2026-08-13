@@ -4,16 +4,16 @@ import { redirect } from "next/navigation";
 import { HighIntentArticleImportControl } from "@/components/admin/high-intent-article-import-control";
 import { isHighIntentArticleImportComplete } from "@/lib/content/high-intent-article-admin";
 import { parseArticleMetadata } from "@/lib/news/article";
-import { getAdminUser } from "@/lib/supabase/server";
+import { createAdminReadClient } from "@/lib/supabase/server";
 
 const statuses = ["all", "draft", "published", "scheduled", "archived"] as const;
 
 export default async function NewsAdminPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   const requested = (await searchParams).status;
   const status = statuses.includes(requested as typeof statuses[number]) ? requested as typeof statuses[number] : "all";
-  const admin = await getAdminUser();
-  if (!admin) redirect("/admin/login");
-  let query = admin.client.from("content_entries").select("id,slug,title,status,metadata,published_at,updated_at").eq("kind", "article").order("updated_at", { ascending: false });
+  const client = await createAdminReadClient();
+  if (!client) redirect("/admin/login");
+  let query = client.from("content_entries").select("id,slug,title,status,metadata,published_at,updated_at").eq("kind", "article").order("updated_at", { ascending: false });
   if (status !== "all") query = query.eq("status", status);
   const { data } = await query;
   const importCompleted = await isHighIntentArticleImportComplete();

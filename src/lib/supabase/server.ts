@@ -5,6 +5,7 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { isAllowedAdminEmail } from "@/config/admin";
 import { requiresMfaChallenge } from "@/lib/auth/mfa";
+import { findValidTrustedDevice, TRUSTED_DEVICE_COOKIE } from "@/lib/auth/trusted-device";
 
 export function isSupabaseConfigured() {
   return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
@@ -42,7 +43,13 @@ export function createAdminClient() {
   });
 }
 
-export async function getAdminUser(options: { requireMfa?: boolean } = {}) {
+export async function createAdminReadClient() {
+  const admin = await getAdminUser({ allowTrustedDevice: true });
+  if (!admin || (admin.mfaRequired && !admin.mfaVerified && !admin.trustedDevice)) return null;
+  return createAdminClient();
+}
+
+export async function getAdminUser(options: { requireMfa?: boolean; allowTrustedDevice?: boolean } = {}) {
   const requireMfa = options.requireMfa ?? true;
   const client = await createClient();
   if (!client) return null;
@@ -62,6 +69,11 @@ export async function getAdminUser(options: { requireMfa?: boolean } = {}) {
   if (assuranceError || !assurance) return null;
   const mfaRequired = assurance.nextLevel === "aal2";
   const mfaVerified = assurance.currentLevel === "aal2";
-  if (requireMfa && requiresMfaChallenge(assurance)) return null;
-  return { user, profile, client, assurance, mfaRequired, mfaVerified };
+  let trustedDevice = null;
+  if (options.allowTrustedDevice && requiresMfaChallenge(assurance)) {
+    const rawToken = (await cookies()).get(TRUSTED_DEVICE_COOKIE)?.value;
+    trustedDevice = await findValidTrustedDevice(profileClient, user.id, rawToken);
+  }
+  if (requireMfa && requiresMfaChallenge(assurance) && !trustedDevice) return null;
+  return { user, profile, client, assurance, mfaRequired, mfaVerified, trustedDevice };
 }

@@ -1,12 +1,11 @@
 import { redirect } from "next/navigation";
 import { AdminShell } from "@/components/admin/admin-shell";
-import { createClient, getAdminUser } from "@/lib/supabase/server";
+import { createAdminClient, getAdminUser } from "@/lib/supabase/server";
 
 export default async function ProtectedAdminLayout({ children }: { children: React.ReactNode }) {
-  const admin = await getAdminUser({ requireMfa: false });
+  const admin = await getAdminUser({ allowTrustedDevice: true });
   if (!admin) redirect("/admin/login");
-  if (admin.mfaRequired && !admin.mfaVerified) redirect("/admin/mfa");
-  const client = await createClient();
+  const client = createAdminClient();
   const [enquiryAlerts, unreadThreads, unmatchedInbound] = client ? await Promise.all([
     client.from("enquiries").select("id").or("status.eq.new,notification_status.in.(pending,failed)"),
     client.from("enquiry_conversations").select("enquiry_id").gt("unread_count", 0),

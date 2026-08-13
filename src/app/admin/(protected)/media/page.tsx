@@ -1,5 +1,5 @@
 import { toggleMediaPublication, uploadMedia } from "../actions";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminReadClient as createClient } from "@/lib/supabase/server";
 
 export default async function MediaPage() {
   const client = await createClient();

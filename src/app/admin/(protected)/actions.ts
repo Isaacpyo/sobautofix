@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
@@ -13,9 +14,24 @@ import { createAdminClient, getAdminUser } from "@/lib/supabase/server";
 import { diagnostics, services } from "@/config/site";
 import { articleCategories } from "@/lib/news/article";
 import { normalizeRegistration } from "@/lib/vehicle/registration-format";
+import { safeAdminReturnTo } from "@/lib/auth/mfa";
 
 async function requireAdmin() {
-  const auth = await getAdminUser();
+  const auth = await getAdminUser({ requireMfa: false });
+  if (auth?.mfaRequired && !auth.mfaVerified) {
+    const referer = (await headers()).get("referer");
+    let requestedPath = "/admin";
+    try {
+      if (referer) {
+        const url = new URL(referer);
+        requestedPath = `${url.pathname}${url.search}`;
+      }
+    } catch {
+      requestedPath = "/admin";
+    }
+    const returnTo = safeAdminReturnTo(requestedPath);
+    redirect(`/admin/mfa?returnTo=${encodeURIComponent(returnTo)}&stepUp=1`);
+  }
   const client = createAdminClient();
   if (!auth || !client) throw new Error("Unauthorised");
   return { auth, client };

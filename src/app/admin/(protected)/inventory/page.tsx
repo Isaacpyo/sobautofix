@@ -1,7 +1,7 @@
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { AdminListFilters, AdminPagination } from "@/components/admin/admin-list-controls";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminReadClient as createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/lib/utils";
 
 type InventoryRow = { id: string; registration: string | null; slug: string; make: string; model: string; year: number; price: number; status: string; updated_at: string };

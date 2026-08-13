@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { isSixDigitMfaCode, safeAdminReturnTo } from "@/lib/auth/mfa";
+import { trustCurrentDevice } from "@/lib/auth/trusted-device-server";
 import { getAdminUser } from "@/lib/supabase/server";
 
 export type MfaChallengeState = { message: string };
@@ -21,5 +22,6 @@ export async function verifyMfaChallenge(_: MfaChallengeState, formData: FormDat
   if (factorsError || !factor) return { message: "The authenticator could not be verified. Sign in again and retry." };
   const { error } = await admin.client.auth.mfa.challengeAndVerify({ factorId: factor.id, code });
   if (error) return { message: "That verification code is incorrect or has expired." };
+  if (formData.get("trustDevice") === "yes") await trustCurrentDevice(admin.user.id);
   redirect(safeAdminReturnTo(formData.get("returnTo")));
 }

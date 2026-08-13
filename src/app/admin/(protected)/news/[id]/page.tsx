@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { ContentEditor } from "@/components/admin/content-editor";
 import { mapContentEntry } from "@/lib/content/repository";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminReadClient as createClient } from "@/lib/supabase/server";
 import { deleteContent, restoreContentRevision, saveContent, uploadArticleCover } from "../../actions";
 
 export default async function EditArticlePage({ params }: { params: Promise<{ id: string }> }) {

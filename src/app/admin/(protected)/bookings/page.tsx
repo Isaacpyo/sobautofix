@@ -10,7 +10,7 @@ import {
 import Link from "next/link";
 import { AdminListFilters, AdminPagination } from "@/components/admin/admin-list-controls";
 import type { BookingStatus, ProviderSyncState } from "@/lib/bookings/types";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminReadClient as createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import { formatRegistration } from "@/lib/vehicle/registration-format";
 

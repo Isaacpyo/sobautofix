@@ -1,6 +1,6 @@
 import { ContentEditor } from "@/components/admin/content-editor";
 import { automotiveAdviceArticleTemplate } from "@/lib/news/templates";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminReadClient as createClient } from "@/lib/supabase/server";
 import { saveContent, uploadArticleCover } from "../../actions";
 
 export default async function NewArticlePage({ searchParams }: { searchParams: Promise<{ template?: string }> }) {

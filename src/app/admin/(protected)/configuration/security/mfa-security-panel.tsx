@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { CheckCircle2, KeyRound, LoaderCircle, ShieldCheck, Smartphone, X } from "lucide-react";
 import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -8,13 +7,19 @@ import { removeMfaFactor, startMfaEnrollment, verifyMfaEnrollment, type Enrollme
 
 const emptyEnrollment: EnrollmentState = { message: "" };
 
+function Image({ src, alt, width, height }: { src: string; alt: string; width: number; height: number; unoptimized?: boolean }) {
+  // Supabase returns a complete transient data URI, so it must not pass through Next image optimisation.
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={src} alt={alt} width={width} height={height} />;
+}
+
 export function MfaSecurityPanel({ factorId }: { factorId?: string }) {
   const [setup, setupAction, setupPending] = useActionState(startMfaEnrollment, emptyEnrollment);
   const [verification, verifyAction, verifyPending] = useActionState(verifyMfaEnrollment, emptyEnrollment);
   const [removal, removeAction, removePending] = useActionState(removeMfaFactor, { message: "" });
   const [confirmRemoval, setConfirmRemoval] = useState(false);
   const enrollment = setup.enrollment;
-  const qrSrc = enrollment ? `data:image/svg+xml;utf-8,${encodeURIComponent(enrollment.qrCode)}` : "";
+  const qrSrc = enrollment?.qrCode ?? "";
 
   return (
     <section className="rounded-2xl border border-[#E4EAF0] bg-white p-6 sm:p-7" aria-labelledby="authenticator-heading">

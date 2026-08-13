@@ -5,7 +5,7 @@ import { EnquiryReplyComposer } from "@/components/admin/enquiry-reply-composer"
 import { MarkEnquiryRead } from "@/components/admin/mark-enquiry-read";
 import { BackLink } from "@/components/ui/back-link";
 import { getCloudflareInboundConfig } from "@/lib/enquiries/inbound-config";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminReadClient as createClient } from "@/lib/supabase/server";
 import { markEnquiryThreadReadAction, saveInternalNoteAction, sendEnquiryReplyAction, updateEnquiryStatus } from "../../actions";
 
 type MessageRow = {

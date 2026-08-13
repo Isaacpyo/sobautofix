@@ -1,6 +1,6 @@
 import { AlertTriangle, Bell, CheckCircle2, Clock3, MailWarning } from "lucide-react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminReadClient as createClient } from "@/lib/supabase/server";
 
 type AlertRow = {
   id: string;

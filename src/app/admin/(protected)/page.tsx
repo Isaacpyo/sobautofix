@@ -22,7 +22,7 @@ import {
   formatRelativeTime,
   type HealthState,
 } from "@/lib/admin/dashboard";
-import { createClient, getAdminUser } from "@/lib/supabase/server";
+import { createAdminReadClient, getAdminUser } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 
 type RecentEnquiry = {
@@ -57,8 +57,8 @@ type InvoiceSummary = { id: string; status: string; total_pence: string | number
 const emptyResult = { data: [], count: 0, error: null };
 
 export default async function DashboardPage() {
-  const client = await createClient();
-  const admin = await getAdminUser();
+  const client = await createAdminReadClient();
+  const admin = await getAdminUser({ allowTrustedDevice: true });
   const now = new Date();
 
   const [newEnquiriesResult, recentEnquiriesResult, stockResult, contentResult, failedEmailsResult, activityResult, bookingsResult, bookingServicesResult, invoicesResult] = client

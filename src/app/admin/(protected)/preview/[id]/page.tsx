@@ -4,7 +4,7 @@ import { ContentRenderer } from "@/components/content/content-renderer";
 import { ArticleView } from "@/components/news/article-view";
 import { mapContentEntry } from "@/lib/content/repository";
 import { calculateReadingMinutes, parseArticleMetadata, type NewsArticle } from "@/lib/news/article";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminReadClient as createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Content preview", robots: { index: false, follow: false } };
 

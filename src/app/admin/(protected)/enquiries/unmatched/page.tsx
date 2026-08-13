@@ -1,5 +1,5 @@
 import { BackLink } from "@/components/ui/back-link";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminReadClient as createClient } from "@/lib/supabase/server";
 import { linkUnmatchedInboundAction } from "../../actions";
 
 type UnmatchedRow = { id: string; sender_email: string; subject: string; text_body: string; reason: string; created_at: string };

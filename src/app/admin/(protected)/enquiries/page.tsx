@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AdminListFilters, AdminPagination } from "@/components/admin/admin-list-controls";
 import { resendEnquiryNotifications } from "../actions";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminReadClient as createClient } from "@/lib/supabase/server";
 
 type EnquiryRow = {
   id: string; type: string; description: string | null; status: string; notification_status: string; created_at: string;

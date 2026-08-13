@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import { requiresMfaChallenge } from "@/lib/auth/mfa";
+import { findValidTrustedDevice, isSensitiveAdminPath, TRUSTED_DEVICE_COOKIE } from "@/lib/auth/trusted-device";
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -27,6 +29,12 @@ export async function proxy(request: NextRequest) {
   if (user && pathname.startsWith("/admin") && !challengeAllowed && !publicAdminRoute) {
     const { data: assurance } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
     if (assurance && requiresMfaChallenge(assurance)) {
+      const secretKey = process.env.SUPABASE_SECRET_KEY;
+      const trustedClient = secretKey ? createSupabaseClient(url, secretKey, { auth: { autoRefreshToken: false, persistSession: false } }) : null;
+      const trustedDevice = !isSensitiveAdminPath(pathname) && trustedClient
+        ? await findValidTrustedDevice(trustedClient, user.id, request.cookies.get(TRUSTED_DEVICE_COOKIE)?.value)
+        : null;
+      if (trustedDevice) return response;
       const challengeUrl = request.nextUrl.clone();
       challengeUrl.pathname = "/admin/mfa";
       const returnTo = `${pathname}${request.nextUrl.search}`;

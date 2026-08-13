@@ -15,7 +15,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import type { BookingStatus, ProviderSyncState } from "@/lib/bookings/types";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminReadClient as createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import { formatRegistration } from "@/lib/vehicle/registration-format";
 import { AdminBookingControls } from "./booking-controls";

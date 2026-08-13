@@ -3,9 +3,11 @@
 import { revalidatePath } from "next/cache";
 import {
   applyHighIntentArticleImport,
+  articleImportConfirmation,
   previewHighIntentArticleImport,
   type AdminArticleImportPreview,
 } from "@/lib/content/high-intent-article-admin";
+import { requireFreshAdminSession } from "@/lib/auth/trusted-device-server";
 
 export type ArticleImportActionState = {
   status: "idle" | "preview" | "success" | "error";
@@ -19,6 +21,7 @@ export async function previewHighIntentArticleImportAction(
 ): Promise<ArticleImportActionState> {
   void _;
   void _formData;
+  await requireFreshAdminSession("/admin/news");
   try {
     const preview = await previewHighIntentArticleImport();
     return {
@@ -37,8 +40,11 @@ export async function applyHighIntentArticleImportAction(
   _: ArticleImportActionState,
   formData: FormData,
 ): Promise<ArticleImportActionState> {
+  const confirmation = String(formData.get("confirmation") || "");
+  if (confirmation !== articleImportConfirmation) return { status: "error", message: "Explicit draft-import confirmation is required." };
+  await requireFreshAdminSession("/admin/news");
   try {
-    const result = await applyHighIntentArticleImport(String(formData.get("confirmation") || ""));
+    const result = await applyHighIntentArticleImport(confirmation);
     revalidatePath("/admin/news");
     return {
       status: "success",

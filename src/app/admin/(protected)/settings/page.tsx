@@ -3,7 +3,7 @@ import Link from "next/link";
 import { saveSettings } from "../actions";
 import { AdminField } from "@/components/admin/content-editor";
 import { siteConfig } from "@/config/site";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminReadClient as createClient } from "@/lib/supabase/server";
 
 export default async function SettingsPage() {
   const client = await createClient();

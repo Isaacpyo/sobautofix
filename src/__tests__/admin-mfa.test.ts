@@ -41,7 +41,7 @@ describe("admin TOTP MFA", () => {
     expect(securityActions).toContain("challengeAndVerify");
     expect(securityActions).toContain("auth.mfa.unenroll");
     expect(challengeAction).toContain("That verification code is incorrect or has expired.");
-    expect(protectedLayout).toContain('redirect("/admin/mfa")');
+    expect(protectedLayout).toContain("getAdminUser({ allowTrustedDevice: true })");
     expect(proxy).toContain('challengeUrl.pathname = "/admin/mfa"');
     expect(read("src", "lib", "supabase", "server.ts")).toContain("const profileClient = createAdminClient()");
   });

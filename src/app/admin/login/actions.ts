@@ -5,6 +5,7 @@ import { z } from "zod";
 import { isAllowedAdminEmail } from "@/config/admin";
 import { siteConfig } from "@/config/site";
 import { requiresMfaChallenge } from "@/lib/auth/mfa";
+import { getCurrentTrustedDevice, revokeAllTrustedDevices } from "@/lib/auth/trusted-device-server";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 
 export type LoginState = { message: string };
@@ -48,7 +49,8 @@ export async function loginWithPassword(_: LoginState, formData: FormData): Prom
     await client.auth.signOut();
     return { message: "We couldn't verify the account security status. Please try again." };
   }
-  redirect(requiresMfaChallenge(assurance) ? "/admin/mfa" : "/admin");
+  const trustedDevice = requiresMfaChallenge(assurance) ? await getCurrentTrustedDevice(auth.user.id) : null;
+  redirect(requiresMfaChallenge(assurance) && !trustedDevice ? "/admin/mfa" : "/admin");
 }
 
 export async function requestPasswordReset(_: LoginState, formData: FormData): Promise<LoginState> {
@@ -81,6 +83,9 @@ export async function resetAdminPassword(_: LoginState, formData: FormData): Pro
   const { data: profile } = profileClient ? await profileClient.from("admin_profiles").select("user_id").eq("user_id", user.id).maybeSingle() : { data: null };
   if (!profile) return { message: "This account is not authorised for the CMS." };
 
+  if (!(await revokeAllTrustedDevices(user.id, "mfa_trusted_devices_revoked_password_change"))) {
+    return { message: "The password could not be updated securely. Request a new reset link and try again." };
+  }
   const { error } = await client.auth.updateUser({ password: parsed.data.password });
   if (error) return { message: "The password could not be updated. Request a new reset link and try again." };
   await client.auth.signOut();
