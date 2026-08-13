@@ -3,6 +3,18 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const harness = vi.hoisted(() => ({
   user: { id: "admin-id" } as { id: string } | null,
   assurance: { currentLevel: "aal1", nextLevel: "aal1" } as { currentLevel: string; nextLevel: string },
+  trustedRecord: null as Record<string, unknown> | null,
+  policy: null as Record<string, unknown> | null,
+}));
+
+vi.mock("@supabase/supabase-js", () => ({
+  createClient: () => {
+    const queryFor = (table: string) => {
+      const query = { select: () => query, eq: () => query, maybeSingle: async () => ({ data: table === "admin_mfa_policy" ? harness.policy : harness.trustedRecord, error: null }), update: () => query, is: () => query };
+      return query;
+    };
+    return { from: (table: string) => queryFor(table) };
+  },
 }));
 
 vi.mock("@supabase/ssr", () => ({
@@ -21,13 +33,22 @@ describe("admin MFA proxy enforcement", () => {
   beforeEach(() => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://project.supabase.co";
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "test-key";
+    process.env.SUPABASE_SECRET_KEY = "test-secret";
     harness.user = { id: "admin-id" };
     harness.assurance = { currentLevel: "aal1", nextLevel: "aal1" };
+    harness.trustedRecord = null;
+    harness.policy = { mandatory_mfa_enabled: false };
   });
 
   it("allows a direct protected request when no MFA factor is enrolled", async () => {
     const response = await proxy(new NextRequest("http://localhost/admin/enquiries"));
     expect(response.headers.get("location")).toBeNull();
+  });
+
+  it("redirects a no-factor administrator to enrollment after mandatory MFA activation", async () => {
+    harness.policy = { mandatory_mfa_enabled: true };
+    const response = await proxy(new NextRequest("http://localhost/admin/enquiries"));
+    expect(response.headers.get("location")).toBe("http://localhost/admin/mfa/enroll");
   });
 
   it("blocks direct protected access until the enrolled factor is verified", async () => {
@@ -46,5 +67,15 @@ describe("admin MFA proxy enforcement", () => {
     harness.assurance = { currentLevel: "aal1", nextLevel: "aal2" };
     const response = await proxy(new NextRequest("http://localhost/admin/mfa"));
     expect(response.headers.get("location")).toBeNull();
+  });
+
+  it("allows ordinary navigation with a valid trusted-device token but still steps up for Security", async () => {
+    const token = "a".repeat(64);
+    const { hashTrustedDeviceToken, TRUSTED_DEVICE_COOKIE } = await import("@/lib/auth/trusted-device");
+    harness.assurance = { currentLevel: "aal1", nextLevel: "aal2" };
+    harness.trustedRecord = { id: "device-id", user_id: "admin-id", token_hash: await hashTrustedDeviceToken(token), device_label: "Chrome on Windows", user_agent_summary: null, created_at: new Date().toISOString(), last_used_at: new Date().toISOString(), expires_at: new Date(Date.now() + 60_000).toISOString(), revoked_at: null };
+    const headers = { cookie: `${TRUSTED_DEVICE_COOKIE}=${token}` };
+    expect((await proxy(new NextRequest("http://localhost/admin/enquiries", { headers }))).headers.get("location")).toBeNull();
+    expect((await proxy(new NextRequest("http://localhost/admin/configuration/security", { headers }))).headers.get("location")).toContain("/admin/mfa");
   });
 });

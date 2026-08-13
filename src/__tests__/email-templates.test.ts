@@ -32,9 +32,12 @@ describe("transactional email templates", () => {
     expect(fixtures["invoice-paid"].html).toContain("PAID / SETTLED");
   });
 
-  it("keeps the Supabase recovery token under Supabase control", () => {
+  it("uses the Supabase token hash with the server-side recovery callback", () => {
     const recovery = readFileSync(resolve("supabase/templates/recovery.html"), "utf8");
-    expect(recovery).toContain("{{ .ConfirmationURL }}");
+    expect(recovery).toContain(
+      'href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=recovery&amp;next=/admin/reset-password"',
+    );
+    expect(recovery).not.toContain("{{ .ConfirmationURL }}");
     expect(recovery).not.toMatch(/password\s*[:=]/i);
   });
 

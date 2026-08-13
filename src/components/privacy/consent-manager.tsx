@@ -35,12 +35,12 @@ export function ConsentManager() {
   return (
     <>
       {!consent && (
-        <section aria-label="Cookie preferences" className="fixed bottom-20 left-4 right-4 z-[60] mx-auto max-w-2xl rounded-2xl border border-[#1974E2]/30 bg-[#071127] p-5 text-white shadow-2xl md:bottom-5">
+        <section aria-label="Cookie preferences" className="fixed right-4 bottom-20 left-4 z-[60] mx-auto max-w-2xl rounded-2xl border border-[#1974E2]/25 bg-white/90 p-5 text-[#071127] shadow-2xl backdrop-blur-xl md:bottom-5">
           <h2 className="text-xl font-bold">Your privacy choices</h2>
-          <p className="mt-2 text-sm leading-6 text-[#C6D2DF]">We use essential storage to operate the site. With your permission, analytics helps us improve journeys and functional storage enables live chat.</p>
+          <p className="mt-2 text-sm leading-6 text-[#586575]">We use essential storage to operate the site. With your permission, analytics helps us improve journeys and functional storage enables live chat.</p>
           <div className="mt-4 flex flex-wrap gap-3">
             <Button onClick={() => choose({ analytics: true, functional: true })}>Accept optional cookies</Button>
-            <Button onClick={() => choose({ analytics: false, functional: false })} variant="secondary">Essential only</Button>
+            <Button onClick={() => choose({ analytics: false, functional: false })} variant="secondary" className="border-[#1974E2]/35 text-[#1446A5] hover:bg-[#EAF3FF]">Essential only</Button>
             <ButtonLink href="/cookies" variant="ghost">Learn about cookie choices</ButtonLink>
           </div>
         </section>

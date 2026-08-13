@@ -8,6 +8,7 @@ import {
   rescheduleBooking,
 } from "@/lib/bookings/repository";
 import { createAdminClient, getAdminUser } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 
 const uuidSchema = z.string().uuid();
 
@@ -60,12 +61,19 @@ type SafeActionResult = {
   message: string;
 };
 
+async function getVerifiedAdmin() {
+  const admin = await getAdminUser({ requireMfa: false });
+  if (admin?.mfaState === "enrollment_required") redirect("/admin/mfa/enroll");
+  if (admin?.mfaRequired && !admin.mfaVerified) redirect("/admin/mfa?returnTo=/admin/bookings&stepUp=1");
+  return admin;
+}
+
 export async function getAdminBookingSlotsAction(
   bookingId: string,
   start: string,
   end: string,
 ): Promise<SafeActionResult & { slots?: Array<{ start: string; end?: string }> }> {
-  const admin = await getAdminUser();
+  const admin = await getVerifiedAdmin();
   if (!admin) return { success: false, message: "Your admin session has expired. Refresh and sign in again." };
 
   const parsed = dateWindowSchema.safeParse({ bookingId, start, end });
@@ -95,7 +103,7 @@ export async function rescheduleAdminBookingAction(
   bookingId: string,
   appointmentStart: string,
 ): Promise<SafeActionResult> {
-  const admin = await getAdminUser();
+  const admin = await getVerifiedAdmin();
   if (!admin) return { success: false, message: "Your admin session has expired. Refresh and sign in again." };
 
   const parsed = appointmentSchema.safeParse({ bookingId, appointmentStart });
@@ -114,7 +122,7 @@ export async function rescheduleAdminBookingAction(
 }
 
 export async function cancelAdminBookingAction(bookingId: string): Promise<SafeActionResult> {
-  const admin = await getAdminUser();
+  const admin = await getVerifiedAdmin();
   if (!admin) return { success: false, message: "Your admin session has expired. Refresh and sign in again." };
 
   const parsed = uuidSchema.safeParse(bookingId);
@@ -135,7 +143,7 @@ export async function saveBookingServiceMappingAction(
   _previousState: SafeActionResult,
   formData: FormData,
 ): Promise<SafeActionResult> {
-  const admin = await getAdminUser();
+  const admin = await getVerifiedAdmin();
   if (!admin) return { success: false, message: "Your admin session has expired. Refresh and sign in again." };
 
   const parsed = serviceMappingSchema.safeParse({

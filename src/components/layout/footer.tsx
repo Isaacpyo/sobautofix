@@ -1,4 +1,4 @@
-import { ArrowRight, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
+import { ArrowRight, ChevronDown, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import Link from "next/link";
 import { ButtonLink } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
@@ -39,7 +39,7 @@ export function Footer({ settings = siteConfig }: { settings?: SiteSettings }) {
   const directionsHref = settings.googleMapsUrl || "/contact";
 
   return (
-    <footer className="border-t border-[#1974E2]/20 bg-[#030712] pb-24 pt-14 text-[#C6D2DF] md:pb-8 lg:pt-16">
+    <footer className="footer-premium relative overflow-hidden border-t border-[#1974E2]/20 bg-[#030712] pb-24 pt-14 text-[#C6D2DF] md:pb-8 lg:pt-16">
       <Container>
         <div className="grid gap-x-8 gap-y-12 md:grid-cols-2 xl:grid-cols-[1.35fr_.95fr_.95fr_.9fr_1.1fr]">
           <div>
@@ -140,22 +140,30 @@ function FooterGroup({
   action?: FooterLink;
 }) {
   return (
-    <nav aria-label={`${title} footer links`}>
-      <h2 className="text-lg font-bold text-white">{titleHref ? <Link href={titleHref} className="inline-flex items-center gap-2 hover:text-[#67B9FF]">{title}<ArrowRight size={15} /></Link> : title}</h2>
-      <div className="mt-4 grid gap-2.5 text-sm">
-        {links.map((item) => (
-          <Link className="leading-5 hover:text-[#67B9FF]" key={item.href} href={item.href}>
-            {item.label}
-          </Link>
-        ))}
-        {action && (
-          <Link className="mt-2 inline-flex items-center gap-2 font-bold text-white hover:text-[#67B9FF]" href={action.href}>
-            {action.label} <ArrowRight size={15} />
-          </Link>
-        )}
-      </div>
-    </nav>
+    <div>
+      <details className="group border-b border-white/10 md:hidden">
+        <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 text-lg font-bold text-white marker:content-none">
+          {title}
+          <ChevronDown size={18} className="shrink-0 text-[#67B9FF] transition-transform group-open:rotate-180" aria-hidden="true" />
+        </summary>
+        <nav aria-label={`${title} footer links`} className="grid gap-3 pb-5 pl-2 text-sm">
+          {titleHref && !action && <Link className="font-bold text-white hover:text-[#67B9FF]" href={titleHref}>View all {title.toLowerCase()} <ArrowRight size={14} className="ml-1 inline" /></Link>}
+          <FooterLinks links={links} action={action} />
+        </nav>
+      </details>
+      <nav aria-label={`${title} footer links`} className="hidden md:block">
+        <h2 className="text-lg font-bold text-white">{titleHref ? <Link href={titleHref} className="inline-flex items-center gap-2 hover:text-[#67B9FF]">{title}<ArrowRight size={15} /></Link> : title}</h2>
+        <div className="mt-4 grid gap-2.5 text-sm"><FooterLinks links={links} action={action} /></div>
+      </nav>
+    </div>
   );
+}
+
+function FooterLinks({ links, action }: { links: FooterLink[]; action?: FooterLink }) {
+  return <>
+    {links.map((item) => <Link className="leading-5 hover:text-[#67B9FF]" key={item.href} href={item.href}>{item.label}</Link>)}
+    {action && <Link className="mt-2 inline-flex items-center gap-2 font-bold text-white hover:text-[#67B9FF]" href={action.href}>{action.label} <ArrowRight size={15} /></Link>}
+  </>;
 }
 
 function BusinessAddress({

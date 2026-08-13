@@ -1,6 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import { requiresMfaChallenge } from "@/lib/auth/mfa";
+import { isMandatoryAdminMfaEnabled } from "@/lib/auth/mfa-policy";
+import { findValidTrustedDevice, isSensitiveAdminPath, TRUSTED_DEVICE_COOKIE } from "@/lib/auth/trusted-device";
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -10,6 +13,7 @@ export async function proxy(request: NextRequest) {
   if (!url || !key) return response;
 
   const supabase = createServerClient(url, key, {
+    cookieOptions: { sameSite: "lax", secure: process.env.NODE_ENV === "production" },
     cookies: {
       getAll: () => request.cookies.getAll(),
       setAll(cookiesToSet) {
@@ -26,13 +30,27 @@ export async function proxy(request: NextRequest) {
   const publicAdminRoute = pathname === "/admin/login" || pathname.startsWith("/admin/forgot-password") || pathname.startsWith("/admin/reset-password");
   if (user && pathname.startsWith("/admin") && !challengeAllowed && !publicAdminRoute) {
     const { data: assurance } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    const secretKey = process.env.SUPABASE_SECRET_KEY;
+    const trustedClient = secretKey ? createSupabaseClient(url, secretKey, { auth: { autoRefreshToken: false, persistSession: false } }) : null;
     if (assurance && requiresMfaChallenge(assurance)) {
+      const trustedDevice = !isSensitiveAdminPath(pathname) && trustedClient
+        ? await findValidTrustedDevice(trustedClient, user.id, request.cookies.get(TRUSTED_DEVICE_COOKIE)?.value)
+        : null;
+      if (trustedDevice) return response;
       const challengeUrl = request.nextUrl.clone();
       challengeUrl.pathname = "/admin/mfa";
       const returnTo = `${pathname}${request.nextUrl.search}`;
       challengeUrl.search = "";
       challengeUrl.searchParams.set("returnTo", returnTo);
       const redirectResponse = NextResponse.redirect(challengeUrl);
+      response.cookies.getAll().forEach((cookie) => redirectResponse.cookies.set(cookie));
+      return redirectResponse;
+    }
+    if (assurance?.currentLevel === "aal1" && assurance.nextLevel === "aal1" && await isMandatoryAdminMfaEnabled(trustedClient)) {
+      const enrollmentUrl = request.nextUrl.clone();
+      enrollmentUrl.pathname = "/admin/mfa/enroll";
+      enrollmentUrl.search = "";
+      const redirectResponse = NextResponse.redirect(enrollmentUrl);
       response.cookies.getAll().forEach((cookie) => redirectResponse.cookies.set(cookie));
       return redirectResponse;
     }

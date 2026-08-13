@@ -8,7 +8,7 @@ import { registrationSchema } from "@/lib/vehicle/registration";
 export async function POST(request: NextRequest) {
   const auth = await getAdminUser();
   const client = createAdminClient();
-  if (!auth || !client) return NextResponse.json({ success: false, error: { code: "unauthorised", message: "Your admin session has expired." } }, { status: 401 });
+  if (!auth || !client) return failure("unauthorised", "Your admin session has expired.", 401);
   if (!(await consumeRateLimit(auth.user.id, "admin_vehicle_lookup", 20, 60))) return failure("rate_limited", "Too many lookups. Please wait a minute and try again.", 429);
 
   const body = await request.json().catch(() => null) as { registration?: unknown } | null;

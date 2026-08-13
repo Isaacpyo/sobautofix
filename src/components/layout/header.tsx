@@ -107,7 +107,7 @@ export function Header({ settings = siteConfig }: HeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#030712]/96 text-white shadow-[0_10px_35px_rgba(3,7,18,0.18)] backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-[#67B9FF]/35 bg-[#0A284A]/98 text-white shadow-[0_10px_35px_rgba(3,7,18,0.32)] backdrop-blur-xl">
         <Container className="flex h-[4.5rem] items-center gap-2 sm:gap-3 xl:h-20 xl:gap-5">
         <button
           ref={menuButton}
@@ -121,11 +121,15 @@ export function Header({ settings = siteConfig }: HeaderProps) {
           {mobileOpen ? <X size={21} /> : <Menu size={21} />}
         </button>
 
+        <div className="mr-auto flex min-w-0 items-center xl:hidden">
+          <Logo inverse compact />
+        </div>
+
         <div className="mr-auto hidden w-[7.5rem] shrink-0 xl:block">
           <Logo inverse />
         </div>
 
-        <nav className="hidden items-stretch self-stretch xl:flex" aria-label="Primary navigation">
+        <nav className="hidden items-stretch self-stretch xl:flex [&>*+*]:before:absolute [&>*+*]:before:top-1/2 [&>*+*]:before:left-0 [&>*+*]:before:h-4 [&>*+*]:before:w-px [&>*+*]:before:-translate-y-1/2 [&>*+*]:before:bg-white/12" aria-label="Primary navigation">
           <DesktopDropdown
             name="who"
             label="Who we are"
@@ -236,9 +240,7 @@ export function Header({ settings = siteConfig }: HeaderProps) {
           )}
         >
           <div className="px-5 py-7 sm:px-7">
-            <p className="mb-4 text-[0.68rem] font-extrabold tracking-[0.18em] text-[#67B9FF] uppercase">
-              Menu
-            </p>
+            <div className="mb-5 border-b border-white/10 pb-5"><Logo inverse compact /></div>
             <nav className="grid" aria-label="Mobile navigation">
               <MobileAccordion
                 id="mobile-who-we-are"

@@ -1,8 +1,8 @@
 import { toggleMediaPublication, uploadMedia } from "../actions";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminReadClient } from "@/lib/supabase/server";
 
 export default async function MediaPage() {
-  const client = await createClient();
+  const client = await createAdminReadClient();
   const { data } = client ? await client.from("media_assets").select("id,object_path,alt_text,category,published,created_at").order("created_at", { ascending: false }) : { data: [] };
   return <>
     <p className="text-xs font-extrabold tracking-widest text-[#1974E2] uppercase">Real media only</p><h1 className="mt-2 text-4xl font-extrabold text-[#071127]">Media library</h1>

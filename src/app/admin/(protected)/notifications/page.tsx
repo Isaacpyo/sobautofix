@@ -1,6 +1,8 @@
 import { AlertTriangle, Bell, CheckCircle2, Clock3, MailWarning } from "lucide-react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { AdminPagination } from "@/components/admin/admin-list-controls";
+import { ADMIN_LIST_PAGE_SIZE, positiveAdminPage } from "@/lib/admin/pagination";
+import { createAdminReadClient } from "@/lib/supabase/server";
 
 type AlertRow = {
   id: string;
@@ -20,8 +22,9 @@ type AttemptRow = {
   attempted_at: string;
 };
 
-export default async function NotificationsPage() {
-  const client = await createClient();
+export default async function NotificationsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
+  const requestedPage = positiveAdminPage((await searchParams).page);
+  const client = await createAdminReadClient();
   const [alertsResult, attemptsResult, unreadResult, unmatchedResult] = client
     ? await Promise.all([
         client.from("enquiries").select("id,type,status,notification_status,created_at,customers(name,email,phone)").or("status.eq.new,notification_status.in.(pending,failed)").order("created_at", { ascending: false }).limit(100),
@@ -43,6 +46,9 @@ export default async function NotificationsPage() {
   }
   const attentionCount = new Set([...alerts.map((item) => item.id), ...unreadIds]).size + (unmatchedResult.count || 0);
   const loadFailed = Boolean(alertsResult.error || attemptsResult.error);
+  const totalPages = Math.max(1, Math.ceil(alerts.length / ADMIN_LIST_PAGE_SIZE));
+  const page = Math.min(requestedPage, totalPages);
+  const visibleAlerts = alerts.slice((page - 1) * ADMIN_LIST_PAGE_SIZE, page * ADMIN_LIST_PAGE_SIZE);
 
   return (
     <>
@@ -73,7 +79,7 @@ export default async function NotificationsPage() {
               <tr><th className="px-5 py-3">Enquiry</th><th className="px-5 py-3">Customer</th><th className="px-5 py-3">Reason</th><th className="px-5 py-3">Status</th><th className="px-5 py-3 text-right">Action</th></tr>
             </thead>
             <tbody>
-          {alerts.map((alert) => (
+          {visibleAlerts.map((alert) => (
             <tr key={alert.id} className="border-t border-[#E4EAF0] hover:bg-[#FAFCFE]">
               <td className="px-5 py-4"><p className="font-bold capitalize text-[#071127]">{formatType(alert.type)}</p><p className="mt-1 text-xs text-[#667586]">{formatDate(alert.created_at)}</p></td>
               <td className="px-5 py-4 font-bold text-[#071127]">{alert.customers?.name || "Customer enquiry"}</td>
@@ -90,6 +96,7 @@ export default async function NotificationsPage() {
           </table>
           {!loadFailed && alerts.length === 0 && <p className="p-8 text-center text-[#667586]">Nothing needs attention.</p>}
         </div>
+        <AdminPagination path="/admin/notifications" page={page} pageSize={ADMIN_LIST_PAGE_SIZE} totalItems={alerts.length} query="" status="" />
       </section>
 
       <section className="mt-10" aria-labelledby="delivery-heading">

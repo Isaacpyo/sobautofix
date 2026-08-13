@@ -2,9 +2,9 @@ import { ArrowRight, CircuitBoard, MapPin, Wrench } from "lucide-react";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { PageHero } from "@/components/marketing/page-hero";
+import { PremiumCta, SectionIntro } from "@/components/marketing/experience";
 import { ServiceCategoryNavigation } from "@/components/services/category-hub";
 import { JsonLd } from "@/components/seo/json-ld";
-import { ButtonLink } from "@/components/ui/button";
 import { Container, Eyebrow } from "@/components/ui/container";
 import { VehicleJourney } from "@/components/vehicle/vehicle-journey";
 import { createMetadata, serviceJsonLd } from "@/lib/seo";
@@ -38,12 +38,13 @@ export default function ServicesPage() {
 
       <section className="py-20 sm:py-24">
         <Container>
-          <div className="max-w-4xl"><Eyebrow>Three ways to find the right service</Eyebrow><h2 className="text-balance text-4xl font-extrabold text-[#071127] sm:text-5xl">Choose a category, not a guessed component.</h2><p className="mt-5 text-lg leading-8 text-[#586575]">Each hub explains the type of work, the individual services within it and when another category may be a better fit. Dedicated service pages remain focused on the specific assessment or work.</p></div>
+          <SectionIntro eyebrow="Three ways to find the right service" title="Choose a category, not a guessed component." body="Each hub explains the type of work, the individual services within it and when another category may be a better fit. Dedicated service pages remain focused on the specific assessment or work." />
 
           <div className="mt-12 grid gap-6 lg:grid-cols-12">
             <CategoryPanel
               className="diagnostic-panel text-white lg:col-span-7"
               icon={CircuitBoard}
+              number="01"
               eyebrow="7 diagnostic services"
               title="Diagnostics"
               body="Warning lights, electrical faults, control modules and starting or charging concerns need more than a fault-code printout. Explore systematic testing that starts with the symptoms."
@@ -55,6 +56,7 @@ export default function ServicesPage() {
             <CategoryPanel
               className="border border-[#E4EAF0] bg-[#F4F7FA] lg:col-span-5"
               icon={Wrench}
+              number="02"
               eyebrow="3 published core services"
               title="Repairs & Maintenance"
               body="Routine servicing and fault-led engine or brake repairs, with other verified capabilities reviewed through the quote journey."
@@ -65,6 +67,7 @@ export default function ServicesPage() {
             <CategoryPanel
               className="border border-[#1974E2]/25 bg-white lg:col-span-12"
               icon={MapPin}
+              number="03"
               eyebrow="4 support routes"
               title="Mobile & Specialist"
               body="Mobile mechanic appointments, vehicle recovery requests, pre-purchase inspections and fleet support—plus clear guidance when workshop equipment or a specialist route is more appropriate."
@@ -86,16 +89,11 @@ export default function ServicesPage() {
         </Container>
       </section>
 
-      <section className="bg-[#071127] py-16 text-white sm:py-20">
-        <Container className="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
-          <div><Eyebrow className="text-[#67B9FF]">Tell us about the vehicle</Eyebrow><h2 className="max-w-3xl text-4xl font-extrabold sm:text-5xl">Start with useful context, then plan the appointment.</h2></div>
-          <div className="flex flex-wrap gap-3"><ButtonLink href="/get-a-quote">Get a Quote</ButtonLink><ButtonLink href="/book" variant="secondary">Book Appointment</ButtonLink></div>
-        </Container>
-      </section>
+      <PremiumCta eyebrow="Tell us about the vehicle" title="Start with useful context, then plan the appointment." primaryHref="/get-a-quote" primaryLabel="Get a Quote" secondaryHref="/book" secondaryLabel="Book Appointment" />
     </>
   );
 }
 
-function CategoryPanel({ className, icon: Icon, eyebrow, title, body, href, action, links, dark = false, horizontal = false }: { className: string; icon: typeof Wrench; eyebrow: string; title: string; body: string; href: string; action: string; links: string[]; dark?: boolean; horizontal?: boolean }) {
-  return <article className={`rounded-3xl p-7 sm:p-9 ${className} ${horizontal ? "lg:grid lg:grid-cols-[1fr_.85fr] lg:gap-12" : ""}`}><div><Icon className={dark ? "text-[#67B9FF]" : "text-[#1974E2]"} size={28} /><p className={`mt-7 text-xs font-extrabold tracking-[0.16em] uppercase ${dark ? "text-[#67B9FF]" : "text-[#145CAD]"}`}>{eyebrow}</p><h3 className="mt-2 text-4xl font-extrabold">{title}</h3><p className={`mt-4 leading-7 ${dark ? "text-[#B7C5D7]" : "text-[#586575]"}`}>{body}</p></div><div className={horizontal ? "mt-8 lg:mt-0 lg:self-end" : "mt-8"}><ul className={`grid gap-2 text-sm font-semibold ${dark ? "text-[#DCE6F2]" : "text-[#071127]"}`}>{links.map((item) => <li key={item}>— {item}</li>)}</ul><Link href={href} className={`mt-7 inline-flex min-h-11 items-center gap-2 font-bold ${dark ? "text-[#67B9FF] hover:text-white" : "text-[#1974E2] hover:text-[#1446A5]"}`}>{action}<ArrowRight size={16} /></Link></div></article>;
+function CategoryPanel({ className, icon: Icon, number, eyebrow, title, body, href, action, links, dark = false, horizontal = false }: { className: string; icon: typeof Wrench; number: string; eyebrow: string; title: string; body: string; href: string; action: string; links: string[]; dark?: boolean; horizontal?: boolean }) {
+  return <article className={`premium-card relative overflow-hidden rounded-[2rem_.4rem_2rem_.4rem] p-7 transition duration-300 hover:-translate-y-1 sm:p-9 ${className} ${horizontal ? "lg:grid lg:grid-cols-[1fr_.85fr] lg:gap-12" : ""}`} data-reveal><span className={`absolute top-5 right-7 font-[family-name:var(--font-barlow)] text-7xl font-black ${dark ? "text-white/5" : "text-[#1974E2]/8"}`} aria-hidden="true">{number}</span><div className="relative"><Icon className={dark ? "text-[#67B9FF]" : "text-[#1974E2]"} size={28} /><p className={`mt-7 text-xs font-extrabold tracking-[0.16em] uppercase ${dark ? "text-[#67B9FF]" : "text-[#145CAD]"}`}>{number} / {eyebrow}</p><h3 className="mt-2 text-4xl font-extrabold">{title}</h3><p className={`mt-4 leading-7 ${dark ? "text-[#B7C5D7]" : "text-[#586575]"}`}>{body}</p></div><div className={horizontal ? "relative mt-8 lg:mt-0 lg:self-end" : "relative mt-8"}><ul className={`grid gap-2 text-sm font-semibold ${dark ? "text-[#DCE6F2]" : "text-[#071127]"}`}>{links.map((item) => <li key={item}>— {item}</li>)}</ul><Link href={href} className={`mt-7 inline-flex min-h-11 items-center gap-2 font-bold ${dark ? "text-[#67B9FF] hover:text-white" : "text-[#1974E2] hover:text-[#1446A5]"}`}>{action}<ArrowRight size={16} /></Link></div></article>;
 }

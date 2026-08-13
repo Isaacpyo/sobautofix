@@ -15,7 +15,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import type { BookingStatus, ProviderSyncState } from "@/lib/bookings/types";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminReadClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import { formatRegistration } from "@/lib/vehicle/registration-format";
 import { AdminBookingControls } from "./booking-controls";
@@ -72,7 +72,7 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
   const { id } = await params;
   if (!z.string().uuid().safeParse(id).success) notFound();
 
-  const client = await createClient();
+  const client = await createAdminReadClient();
   if (!client) notFound();
   const { data, error } = await client
     .from("bookings")

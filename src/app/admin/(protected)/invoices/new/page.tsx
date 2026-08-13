@@ -2,24 +2,27 @@ import { CalendarClock, ChevronRight, FilePlus2, Inbox, ReceiptText } from "luci
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { InvoiceForm, type ExistingSourceInvoice, type InvoiceFormInitial } from "@/components/admin/invoice-form";
+import { InvoiceDraftsWorkspace, type InvoiceDraftSummary } from "@/components/admin/invoice-drafts-workspace";
 import { BackLink } from "@/components/ui/back-link";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminReadClient } from "@/lib/supabase/server";
 import { formatRegistration } from "@/lib/vehicle/registration-format";
 
 type Customer = { name: string; email: string | null; phone: string };
 type Vehicle = { registration: string | null; make: string | null; model: string | null };
 type Booking = { id: string; booking_reference: string; status: string; service_name: string; appointment_start: string; customer_id: string; vehicle_id: string; customers: Customer | Customer[] | null; vehicles: Vehicle | Vehicle[] | null };
 type Enquiry = { id: string; type: string; service_slug: string | null; description: string | null; created_at: string; customer_id: string; vehicle_id: string | null; customers: Customer | Customer[] | null; vehicles: Vehicle | Vehicle[] | null };
+type InvoiceDraft = { id: string; customer_name: string; service_name: string | null; vehicle_registration: string | null; vehicle_make: string | null; vehicle_model: string | null; updated_at: string };
 
 export default async function NewInvoicePage({ searchParams }: { searchParams: Promise<{ source?: string; bookingId?: string; enquiryId?: string; q?: string }> }) {
   const params = await searchParams;
-  const client = await createClient();
+  const client = await createAdminReadClient();
   const source = params.source;
   let selected: InvoiceFormInitial | null = source === "manual" ? emptyInvoice("manual") : null;
   let bookingRows: Booking[] = [];
   let enquiryRows: Enquiry[] = [];
   let existingSourceIds = new Set<string>();
   let existingSourceInvoices: ExistingSourceInvoice[] = [];
+  let invoiceDrafts: InvoiceDraftSummary[] = [];
 
   if (client && source === "booking") {
     if (params.bookingId) {
@@ -32,13 +35,21 @@ export default async function NewInvoicePage({ searchParams }: { searchParams: P
       selected = fromBooking(booking as unknown as Booking);
       existingSourceInvoices = (existing || []).map((invoice) => ({ id: invoice.id, reference: invoice.invoice_number || "Draft invoice", status: invoice.status }));
     } else {
-      const [{ data, error: bookingError }, { data: existing, error: existingError }] = await Promise.all([
+      const [{ data, error: bookingError }, { data: existing, error: existingError }, { data: drafts, error: draftsError }] = await Promise.all([
         client.from("bookings").select("id,booking_reference,status,service_name,appointment_start,customer_id,vehicle_id,customers(name,email,phone),vehicles(registration,make,model)").neq("status", "cancelled").order("appointment_start", { ascending: false }).limit(250),
         client.from("invoices").select("booking_id").not("booking_id", "is", null),
+        client.from("invoices").select("id,customer_name,service_name,vehicle_registration,vehicle_make,vehicle_model,updated_at").eq("status", "draft").order("updated_at", { ascending: false }),
       ]);
-      if (bookingError || existingError) throw new Error("Invoice source history could not be loaded safely.");
+      if (bookingError || existingError || draftsError) throw new Error("Invoice source history could not be loaded safely.");
       bookingRows = (data || []) as unknown as Booking[];
       existingSourceIds = new Set((existing || []).map((row) => row.booking_id).filter(Boolean) as string[]);
+      invoiceDrafts = ((drafts || []) as InvoiceDraft[]).map((draft) => ({
+        id: draft.id,
+        customerName: draft.customer_name || "Unnamed customer",
+        serviceName: draft.service_name || "Service not specified",
+        vehicleLabel: [draft.vehicle_make, draft.vehicle_model, draft.vehicle_registration ? formatRegistration(draft.vehicle_registration) : null].filter(Boolean).join(" · ") || "No vehicle",
+        updatedLabel: formatDateTime(draft.updated_at),
+      }));
     }
   }
 
@@ -65,8 +76,8 @@ export default async function NewInvoicePage({ searchParams }: { searchParams: P
 
   if (selected) return <><Back /><Header title={source === "manual" ? "Manual invoice" : source === "booking" ? "Invoice from booking" : "Invoice from enquiry"} description="Confirm the snapshot details, add prices and save a draft. No invoice number is consumed until issue." /><InvoiceForm initial={selected} existingSourceInvoices={existingSourceInvoices} /></>;
 
-  if (source === "booking") return <><Back /><Header title="Choose a booking" description="Select a locally persisted appointment. Creating an invoice remains a deliberate admin action." /><SourceSearch source="booking" query={params.q || ""} />
-    <div className="mt-6 grid gap-4">{filterBookings(bookingRows, params.q).map((booking) => { const customer = relation(booking.customers); const vehicle = relation(booking.vehicles); return <article key={booking.id} className="rounded-2xl border border-[#E4EAF0] bg-white p-5"><div className="flex flex-wrap items-start justify-between gap-5"><div><p className="font-mono text-sm font-black text-[#1974E2]">{booking.booking_reference}</p><h2 className="mt-2 text-xl font-extrabold text-[#071127]">{customer?.name || "Customer"}</h2><p className="mt-2 font-semibold text-[#586575]">{booking.service_name}</p><p className="mt-1 text-sm text-[#667586]">{formatDateTime(booking.appointment_start)} · {vehicleLabel(vehicle)} · {customer?.email || customer?.phone || "No contact"}</p>{existingSourceIds.has(booking.id) && <p className="mt-3 text-sm font-bold text-amber-800">An invoice already exists for this booking. Continuing will deliberately create another draft.</p>}</div><Link href={`/admin/invoices/new?source=booking&bookingId=${booking.id}`} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#1974E2] px-4 text-sm font-extrabold text-white">Create invoice <ChevronRight size={17} /></Link></div></article>; })}{!bookingRows.length && <Empty text="No eligible persisted bookings are available. Manual invoicing is still available." />}</div></>;
+  if (source === "booking") return <><Back /><InvoiceDraftsWorkspace drafts={invoiceDrafts} header={<Header title="Choose a booking" description="Select a locally persisted appointment. Creating an invoice remains a deliberate admin action." />}><SourceSearch source="booking" query={params.q || ""} />
+    <div className="mt-6 grid gap-4">{filterBookings(bookingRows, params.q).map((booking) => { const customer = relation(booking.customers); const vehicle = relation(booking.vehicles); return <article key={booking.id} className="rounded-2xl border border-[#E4EAF0] bg-white p-5"><div className="flex flex-wrap items-start justify-between gap-5"><div><p className="font-mono text-sm font-black text-[#1974E2]">{booking.booking_reference}</p><h2 className="mt-2 text-xl font-extrabold text-[#071127]">{customer?.name || "Customer"}</h2><p className="mt-2 font-semibold text-[#586575]">{booking.service_name}</p><p className="mt-1 text-sm text-[#667586]">{formatDateTime(booking.appointment_start)} · {vehicleLabel(vehicle)} · {customer?.email || customer?.phone || "No contact"}</p>{existingSourceIds.has(booking.id) && <p className="mt-3 text-sm font-bold text-amber-800">An invoice already exists for this booking. Continuing will deliberately create another draft.</p>}</div><Link href={`/admin/invoices/new?source=booking&bookingId=${booking.id}`} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#1974E2] px-4 text-sm font-extrabold text-white">Create invoice <ChevronRight size={17} /></Link></div></article>; })}{!bookingRows.length && <Empty text="No eligible persisted bookings are available. Manual invoicing is still available." />}</div></InvoiceDraftsWorkspace></>;
 
   if (source === "enquiry") return <><Back /><Header title="Choose an enquiry" description="Use an existing customer request to prefill a draft invoice." /><SourceSearch source="enquiry" query={params.q || ""} />
     <div className="mt-6 grid gap-4">{filterEnquiries(enquiryRows, params.q).map((enquiry) => { const customer = relation(enquiry.customers); const vehicle = relation(enquiry.vehicles); return <article key={enquiry.id} className="rounded-2xl border border-[#E4EAF0] bg-white p-5"><div className="flex flex-wrap items-start justify-between gap-5"><div><p className="text-xs font-extrabold tracking-wide text-[#1974E2] uppercase">{enquiry.type.replaceAll("_", " ")}</p><h2 className="mt-2 text-xl font-extrabold text-[#071127]">{customer?.name || "Customer"}</h2><p className="mt-1 text-sm text-[#667586]">{vehicleLabel(vehicle)} · {formatDate(enquiry.created_at)}</p>{enquiry.description && <p className="mt-3 line-clamp-2 max-w-3xl text-sm text-[#586575]">{enquiry.description}</p>}{existingSourceIds.has(enquiry.id) && <p className="mt-3 text-sm font-bold text-amber-800">An invoice already exists for this enquiry. Continuing will deliberately create another draft.</p>}</div><Link href={`/admin/invoices/new?source=enquiry&enquiryId=${enquiry.id}`} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#1974E2] px-4 text-sm font-extrabold text-white">Create invoice <ChevronRight size={17} /></Link></div></article>; })}</div></>;

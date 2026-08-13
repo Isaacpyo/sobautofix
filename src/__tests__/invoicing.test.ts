@@ -112,6 +112,16 @@ describe("garage invoicing", () => {
     expect(text).toContain(expected);
   }, 20_000);
 
+  it("keeps a normal three-line paid invoice and its summary on one A4 page", async () => {
+    const parsed = await parsePdf(await renderInvoicePdf(retainedProductionInvoiceFixture()));
+    expect(parsed.pages).toBe(1);
+    expect(parsed.pageTexts[0]).toContain("Subtotal");
+    expect(parsed.pageTexts[0]).toContain("TOTAL GBP");
+    expect(parsed.pageTexts[0]).toContain("Controlled verification");
+    expect(parsed.pageTexts[0]).toContain("Controlled internal test invoice retained as production verification evidence.");
+    expect(parsed.pageTexts[0]).toContain("Page 1 of 1");
+  }, 20_000);
+
   it("renders the immutable issuer snapshot instead of deploy-time business settings", async () => {
     const invoice = { ...representativeInvoice("issued"), issuer_legal_name: "Historical Workshop Limited", issuer_address: "1 Archived Address\nDoncaster\nDN1 1AA", issuer_email: "historic@example.test", issuer_company_number: "00000001" };
     const { text } = await parsePdf(await renderInvoicePdf(invoice));
@@ -168,6 +178,7 @@ describe("garage invoicing", () => {
       ["draft-invoice.pdf", representativeInvoice("draft")],
       ["issued-unpaid-invoice.pdf", representativeInvoice("issued")],
       ["paid-settled-invoice.pdf", representativeInvoice("paid")],
+      ["three-line-paid-invoice.pdf", retainedProductionInvoiceFixture()],
       ["void-invoice.pdf", representativeInvoice("void")],
       ["one-line-invoice.pdf", representativeInvoice("issued", 1)],
       ["multi-line-invoice.pdf", representativeInvoice("issued", 48)],
@@ -182,6 +193,32 @@ function representativeInvoice(status: Invoice["status"], itemCount = 16): Invoi
   const items = Array.from({ length: itemCount }, (_, position) => ({ id: `item-${position}`, description: position === 0 ? "Electrical fault tracing with a deliberately long diagnostic description that wraps cleanly across the invoice table" : `Workshop service line ${position + 1}`, quantity: "1.000", unit_price_pence: 4500, line_total_pence: 4500, position }));
   const subtotal = itemCount * 4500;
   return { id: "61b6fbaf-21e8-4eb8-92df-0522f11a9474", invoice_number: status === "draft" ? null : "SOB-2026-000001", invoice_year: status === "draft" ? null : 2026, invoice_sequence: status === "draft" ? null : 1, revision: 1, replaces_invoice_id: null, status, source_type: "manual", booking_id: null, enquiry_id: null, customer_id: null, vehicle_id: null, currency: "GBP", customer_name: "A Customer With A Deliberately Long Trading Name Limited", customer_email: "customer@example.com", customer_phone: "07000 000000", customer_address: "1 Very Long Workshop Approach, Norton, Doncaster, DN6 9HF", vehicle_registration: "AB12CDE", vehicle_make: "BMW", vehicle_model: "320d", service_name: "Electrical fault finding", appointment_start: null, issuer_legal_name: "SOB Autofix Limited", issuer_trading_name: "SOB Autofix", issuer_tagline: "Professional Diagnostics. Not Guesswork.", issuer_address: "Cumbrae\nStation Road\nNorton\nDoncaster\nDN6 9HF\nUnited Kingdom", issuer_email: "sobautofix@gmail.com", issuer_phone: "07469273483", issuer_company_number: "16182532", issue_date: "2026-08-11", due_date: "2026-08-18", subtotal_pence: subtotal, discount_pence: 0, tax_pence: 0, total_pence: subtotal, notes: "Thank you for your business.", payment_terms: "Payment due within 7 days.", issued_at: status === "draft" ? null : "2026-08-11T12:00:00Z", paid_at: status === "paid" ? "2026-08-11T12:00:00Z" : null, payment_method: status === "paid" ? "card" : null, payment_reference: status === "paid" ? "ABC123" : null, voided_at: status === "void" ? "2026-08-11T12:00:00Z" : null, created_by: null, updated_by: null, created_at: "2026-08-11T12:00:00Z", updated_at: "2026-08-11T12:00:00Z", invoice_items: items };
+}
+
+function retainedProductionInvoiceFixture(): Invoice {
+  return {
+    ...representativeInvoice("paid", 3),
+    issue_date: "2026-08-13",
+    due_date: "2026-08-20",
+    paid_at: "2026-08-13T12:00:00Z",
+    customer_name: "SOB Autofix Production Verification 2026-08-13",
+    customer_email: "sobautofix@gmail.com",
+    customer_phone: null,
+    customer_address: "Controlled internal production test",
+    vehicle_registration: "TEST2026",
+    vehicle_make: "Controlled",
+    vehicle_model: "Verification",
+    service_name: "Production invoicing verification",
+    subtotal_pence: 300,
+    total_pence: 300,
+    payment_reference: "Controlled verification",
+    notes: "Controlled internal test invoice retained as production verification evidence.",
+    invoice_items: [
+      { id: "item-0", description: "Controlled diagnostic verification", quantity: "1.000", unit_price_pence: 100, line_total_pence: 100, position: 0 },
+      { id: "item-1", description: "Controlled labour verification", quantity: "0.500", unit_price_pence: 200, line_total_pence: 100, position: 1 },
+      { id: "item-2", description: "Controlled materials verification", quantity: "2.000", unit_price_pence: 50, line_total_pence: 100, position: 2 },
+    ],
+  };
 }
 
 async function parsePdf(buffer: Buffer) {

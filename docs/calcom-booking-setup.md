@@ -44,6 +44,8 @@ BOOKING_CANCELLED
 
 Set webhook payload version `2026-07-27` and a webhook secret matching `CALCOM_WEBHOOK_SECRET`. The payload version is separate from endpoint API-version headers. The application verifies `X-Cal-Signature-256` against the exact raw request body before parsing. Validate a sample for each lifecycle event before launch.
 
+For `BOOKING_RESCHEDULED`, Cal.com keeps the previous appointment in `startTime`/`endTime` and supplies the replacement appointment in `rescheduleStartTime`/`rescheduleEndTime`. Reconciliation must prefer the replacement fields so the local booking and customer calendar update do not revert to the old slot.
+
 ## Customer notifications
 
 SOB Autofix sends confirmation, reschedule, and cancellation messages through Resend with idempotency keys. Each message owns its customer calendar experience through an SOB Autofix `.ics` attachment and, for active appointments, Google Calendar and signed calendar-download actions.

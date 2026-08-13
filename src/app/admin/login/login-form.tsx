@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import { AdminLoadingModal } from "@/components/admin/admin-loading-modal";
 import { Button } from "@/components/ui/button";
 import { loginWithPassword } from "./actions";
 
@@ -38,6 +39,7 @@ export function LoginForm({ resetComplete = false }: { resetComplete?: boolean }
       <Button disabled={pending} type="submit">
         {pending ? "Signing in…" : "Sign in"}
       </Button>
+      {pending && <AdminLoadingModal title="Signing in" description="Please wait while your secure admin dashboard loads." />}
     </form>
   );
 }

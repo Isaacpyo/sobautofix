@@ -4,12 +4,17 @@ import { signOut } from "@/app/admin/login/actions";
 import { safeAdminReturnTo } from "@/lib/auth/mfa";
 import { getAdminUser } from "@/lib/supabase/server";
 import { MfaChallengeForm } from "./mfa-challenge-form";
+import { getCurrentTrustedDevice } from "@/lib/auth/trusted-device-server";
+import { isSensitiveAdminPath } from "@/lib/auth/trusted-device";
 
-export default async function MfaPage({ searchParams }: { searchParams: Promise<{ returnTo?: string }> }) {
-  const returnTo = safeAdminReturnTo((await searchParams).returnTo);
+export default async function MfaPage({ searchParams }: { searchParams: Promise<{ returnTo?: string; stepUp?: string }> }) {
+  const query = await searchParams;
+  const returnTo = safeAdminReturnTo(query.returnTo);
   const admin = await getAdminUser({ requireMfa: false });
   if (!admin) redirect("/admin/login");
+  if (admin.mfaState === "enrollment_required") redirect("/admin/mfa/enroll");
   if (!admin.mfaRequired || admin.mfaVerified) redirect(returnTo);
+  if (query.stepUp !== "1" && !isSensitiveAdminPath(new URL(returnTo, "http://localhost").pathname) && await getCurrentTrustedDevice(admin.user.id)) redirect(returnTo);
   const { data, error } = await admin.client.auth.mfa.listFactors();
   const factor = data?.totp[0];
   if (error || !factor) return <section className="hero-grid grid min-h-screen place-items-center p-5"><div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl"><Logo /><h1 className="mt-8 text-3xl font-extrabold text-[#071127]">Authenticator unavailable</h1><p className="mt-3 text-sm leading-6 text-[#586575]">A supported TOTP authenticator could not be found for this account. Use another account or contact the Supabase project owner.</p><form action={signOut} className="mt-6"><button className="min-h-12 w-full rounded-lg bg-[#1974E2] px-5 text-sm font-bold text-white">Use another account</button></form></div></section>;

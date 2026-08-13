@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -7,7 +8,7 @@ const mocks = vi.hoisted(() => ({
   notFound: vi.fn(),
 }));
 
-vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createClient }));
+vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createClient, createAdminReadClient: mocks.createClient }));
 vi.mock("next/navigation", async (importOriginal) => ({
   ...await importOriginal<typeof import("next/navigation")>(),
   notFound: mocks.notFound,
@@ -42,6 +43,7 @@ function queryHarness(options: {
   enquiryData?: typeof enquiry | null;
   enquiryError?: { message: string } | null;
   messagesError?: { message: string } | null;
+  messagesData?: Array<{ id: string; direction: "inbound" | "outbound"; message_type: "email"; sender_name: string | null; text_body: string; delivery_status: string; created_at: string }>;
 } = {}) {
   const enquiryEq = vi.fn(() => ({
     maybeSingle: async () => ({ data: options.enquiryData === undefined ? enquiry : options.enquiryData, error: options.enquiryError || null }),
@@ -50,7 +52,7 @@ function queryHarness(options: {
     void columns;
     return { eq: enquiryEq };
   });
-  const secondOrder = vi.fn(async () => ({ data: [], error: options.messagesError || null }));
+  const secondOrder = vi.fn(async () => ({ data: options.messagesData || [], error: options.messagesError || null }));
   const firstOrder = vi.fn(() => ({ order: secondOrder }));
   const messageEq = vi.fn(() => ({ order: firstOrder }));
   const messageSelect = vi.fn((columns: string) => {
@@ -99,6 +101,18 @@ describe("admin enquiry detail routing", () => {
     const inbox = readFileSync(join(process.cwd(), "src/app/admin/(protected)/enquiries/page.tsx"), "utf8");
     expect(inbox).toContain('href={`/admin/enquiries/${enquiry.id}`}');
     expect(inbox).not.toContain('href={`/admin/enquiries/${conversation.id}`}');
+  });
+
+  it("renders conversation messages in stable newest-to-oldest order", async () => {
+    const harness = queryHarness({ messagesData: [
+      { id: "b", direction: "outbound", message_type: "email", sender_name: "SOB Autofix", text_body: "Second message", delivery_status: "sent", created_at: "2026-08-11T18:00:00.000Z" },
+      { id: "a", direction: "inbound", message_type: "email", sender_name: "Customer", text_body: "First message", delivery_status: "received", created_at: "2026-08-11T17:00:00.000Z" },
+    ] });
+    mocks.createClient.mockResolvedValue(harness.client);
+
+    const markup = renderToStaticMarkup(await EnquiryConversationPage({ params: Promise.resolve({ id: enquiryId }) }));
+
+    expect(markup.indexOf("Second message")).toBeLessThan(markup.indexOf("First message"));
   });
 
   it("returns not found only when the enquiry genuinely does not exist", async () => {

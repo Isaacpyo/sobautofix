@@ -21,6 +21,8 @@
     "test:mot": "vitest run src/__tests__/content-guard.test.ts",
     "email:preview": "node scripts/render-email-previews.mjs",
     "deploy:email-worker": "wrangler deploy --config workers/enquiry-email/wrangler.jsonc",
+    "deploy:keepalive-worker": "wrangler deploy --config workers/keepalive/wrangler.jsonc",
+    "test:keepalive-worker": "vitest run src/__tests__/cloudflare-keepalive-worker.test.ts",
     "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "dependencies": {
@@ -63,6 +65,6 @@
     "typescript": "^5.9.3",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.2.4",
-    "wrangler": "4.120.1"
+    "wrangler": "4.122.0"
   }
 }

@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { isValidEmailAddress, productionEmailSender, resolveReplyTo } from "@/lib/email/identity";
+import { approvedBookingReplyTo, approvedEnquiryFallbackReplyTo, isValidEmailAddress, productionEmailSender, resolveReplyTo } from "@/lib/email/identity";
 
 describe("transactional email identity", () => {
   it("uses the approved production sender", () => {
     expect(productionEmailSender).toBe("SOB Autofix <notifications@sobautofix.com>");
+    expect(approvedBookingReplyTo).toBe("info@sobautofix.com");
+    expect(approvedEnquiryFallbackReplyTo).toBe("info@sobautofix.com");
   });
 
   it("defaults customer replies to the business address", () => {

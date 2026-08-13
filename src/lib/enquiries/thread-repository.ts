@@ -41,6 +41,13 @@ export async function createInitialEnquiryMessage(enquiryId: string, input: { ty
   await admin.from("enquiry_conversations").update({ unread_count: 1, last_activity_at: input.createdAt || new Date().toISOString() }).eq("enquiry_id", enquiryId);
 }
 
+export async function getEnquiryReplyAddress(enquiryId: string, enquiryType: string) {
+  const admin = requireServiceClient();
+  const conversation = await ensureConversation(admin, enquiryId, enquiryType);
+  const replyConfig = getResendReplyConfig();
+  return replyConfig ? buildEnquiryReplyAddress(conversation.reply_token, replyConfig.inboundDomain) : null;
+}
+
 export async function sendEnquiryReply(input: { enquiryId: string; body: string; clientRequestId: string; actorId: string; actorName: string }) {
   const parsed = z.object({ enquiryId: z.string().uuid(), body: z.string().trim().min(1).max(20000), clientRequestId: z.string().uuid(), actorId: z.string().uuid(), actorName: z.string().trim().min(1).max(100) }).parse(input);
   const admin = requireServiceClient();
@@ -165,6 +172,28 @@ export async function linkUnmatchedInboundEmail(input: { unmatchedId: string; en
   await admin.rpc("increment_enquiry_unread", { target_enquiry_id: enquiry.id, activity_at: unmatched.created_at });
   await auditThread(admin, parsed.actorId, "enquiry.thread_linked", enquiry.id, message.id, { unmatchedInboundId: unmatched.id });
   return enquiry.id;
+}
+
+export async function ignoreUnmatchedInboundEmail(input: { unmatchedId: string; actorId: string }) {
+  const parsed = z.object({ unmatchedId: z.string().uuid(), actorId: z.string().uuid() }).parse(input);
+  const admin = requireServiceClient();
+  const { data, error } = await admin
+    .from("unmatched_inbound_emails")
+    .update({ ignored_at: new Date().toISOString(), ignored_by: parsed.actorId })
+    .eq("id", parsed.unmatchedId)
+    .is("linked_enquiry_id", null)
+    .is("ignored_at", null)
+    .select("id,reason")
+    .maybeSingle();
+  if (error || !data) throw new Error("This inbound email is no longer available to ignore");
+  const { error: auditError } = await admin.from("admin_audit_log").insert({
+    actor_id: parsed.actorId,
+    action: "enquiry.inbound_ignored",
+    entity_type: "unmatched_inbound_email",
+    entity_id: parsed.unmatchedId,
+    detail: { reason: data.reason },
+  });
+  if (auditError) throw new Error("The message was ignored, but its required audit entry could not be recorded");
 }
 
 export async function beginWebhookEvent(svixId: string, eventType: string, providerEmailId?: string) {

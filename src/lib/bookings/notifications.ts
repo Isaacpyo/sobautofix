@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
+import { approvedBookingReplyTo } from "@/lib/email/identity";
 import { sendTransactionalEmail } from "@/lib/email/resend";
 import { renderBookingEmail } from "@/lib/email/templates/bookings";
 import { createAdminClient } from "@/lib/supabase/server";
@@ -112,6 +113,7 @@ export async function sendBookingNotification(booking: BookingNotificationDetail
       subject: subjectFor(type, booking.reference),
       text: rendered.text,
       html: rendered.html,
+      replyTo: approvedBookingReplyTo,
       idempotencyKey: `booking-${createHash("sha256").update(key).digest("hex")}`,
       attachments: calendarDetails ? [{ filename: `${booking.reference}.ics`, content: Buffer.from(buildBookingCalendar(calendarDetails), "utf8") }] : undefined,
     });

@@ -3,10 +3,11 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ArticleCard } from "@/components/news/article-card";
+import { ArticleShare } from "@/components/news/article-share";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { ButtonLink } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
-import { diagnostics, services } from "@/config/site";
+import { diagnostics, services, siteConfig } from "@/config/site";
 import { formatArticleDate, type NewsArticle } from "@/lib/news/article";
 import { getPublishedMedia } from "@/lib/media/repository";
 import type { ContentSection } from "@/types/domain";
@@ -40,8 +41,16 @@ export async function ArticleView({ article, related = [], preview = false }: { 
         </Container>
       )}
 
-      <div className={article.cover ? "pb-16" : "py-12 sm:py-16"}>
-        {await Promise.all(article.sections.map((section, index) => renderArticleSection(section, index)))}
+      <div className={`relative ${article.cover ? "pb-16" : "py-12 sm:py-16"}`}>
+        {!preview && (
+          <ArticleShare
+            title={article.title}
+            url={new URL(`/news/${article.slug}`, siteConfig.siteUrl).toString()}
+          />
+        )}
+        <div>
+          {await Promise.all(article.sections.map((section, index) => renderArticleSection(section, index)))}
+        </div>
       </div>
 
       {related.length > 0 && (

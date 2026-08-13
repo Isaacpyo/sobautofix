@@ -25,7 +25,7 @@ export function EnquiryReplyComposer({
   const pending = mode === "reply" ? replyPending : notePending;
 
   return (
-    <section aria-labelledby="composer-heading" className="sticky bottom-4 mt-8 rounded-2xl border border-[#D7E0E9] bg-white p-4 shadow-[0_18px_50px_rgba(7,17,39,0.14)] sm:p-6">
+    <section aria-labelledby="composer-heading" className="rounded-2xl border border-[#D7E0E9] bg-white p-4 shadow-[0_18px_50px_rgba(7,17,39,0.14)] sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 id="composer-heading" className="text-xl font-extrabold text-[#071127]">Write a message</h2>
         <div className="inline-flex rounded-xl bg-[#F1F5F9] p-1" aria-label="Message type">

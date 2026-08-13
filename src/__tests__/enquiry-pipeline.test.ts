@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getResendConfig, sendTransactionalEmail } from "@/lib/email/resend";
 import { createEnquiry } from "@/lib/enquiries/repository";
 import { createAdminClient } from "@/lib/supabase/server";
-import { createInitialEnquiryMessage } from "@/lib/enquiries/thread-repository";
+import { createInitialEnquiryMessage, getEnquiryReplyAddress } from "@/lib/enquiries/thread-repository";
 
 vi.mock("@/lib/email/resend", () => ({
   getResendConfig: vi.fn(),
@@ -15,6 +15,7 @@ vi.mock("@/lib/supabase/server", () => ({
 
 vi.mock("@/lib/enquiries/thread-repository", () => ({
   createInitialEnquiryMessage: vi.fn(),
+  getEnquiryReplyAddress: vi.fn(),
 }));
 
 describe("enquiry persistence and notification pipeline", () => {
@@ -44,6 +45,7 @@ describe("enquiry persistence and notification pipeline", () => {
 
     vi.mocked(createAdminClient).mockReturnValue(adminClient as never);
     vi.mocked(createInitialEnquiryMessage).mockResolvedValue(undefined);
+    vi.mocked(getEnquiryReplyAddress).mockResolvedValue("enquiry+9f99f1f0-2252-4b5e-9000-9bc913650f15@reply.sobautofix.com");
     vi.mocked(getResendConfig).mockReturnValue({
       apiKey: "test-key",
       from: "SOB Autofix <notifications@sobautofix.com>",
@@ -75,7 +77,7 @@ describe("enquiry persistence and notification pipeline", () => {
     expect(sendTransactionalEmail).toHaveBeenNthCalledWith(2, expect.objectContaining({
       to: "customer@example.com",
       subject: "We received your SOB Autofix request",
-      replyTo: "sobautofix@gmail.com",
+      replyTo: "enquiry+9f99f1f0-2252-4b5e-9000-9bc913650f15@reply.sobautofix.com",
       html: expect.stringContaining("REQUEST RECEIVED"),
       text: expect.stringContaining("REQUEST RECEIVED"),
     }));

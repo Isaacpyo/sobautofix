@@ -14,10 +14,12 @@ describe("public contact email separation", () => {
 
   it("updates production public settings conditionally and preserves invoice history", () => {
     const migration = readFileSync("supabase/migrations/202608130006_public_contact_email.sql", "utf8");
+    expect(migration).toContain("begin;");
     expect(migration).toContain("value->>'email' = 'sobautofix@gmail.com'");
     expect(migration).toContain("alter column issuer_email set default 'info@sobautofix.com'");
     expect(migration).not.toMatch(/update\s+public\.invoices/i);
     expect(migration).not.toMatch(/delete|truncate|drop\s+(?:table|column)/i);
+    expect(migration).toContain("commit;");
   });
 
   it("keeps routing, sender and masked-reply configuration unchanged", () => {

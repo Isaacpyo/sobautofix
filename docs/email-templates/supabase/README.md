@@ -15,7 +15,7 @@ The local Supabase stack uses [recovery.html](../../../supabase/templates/recove
 1. Open the production Supabase project.
 2. Go to **Authentication → Email Templates → Reset password**.
 3. Set the subject to `Reset your SOB Autofix admin password`.
-4. Paste the complete contents of `supabase/templates/recovery.html` and save it. Do not replace `{{ .ConfirmationURL }}`.
+4. Paste the complete contents of `supabase/templates/recovery.html` and save it. Keep the SSR-compatible `{{ .TokenHash }}` callback intact; `{{ .ConfirmationURL }}` returns session credentials in a URL fragment that `/auth/confirm` cannot read server-side.
 5. Go to **Authentication → Email Templates → Security notifications → Password changed**.
 6. Enable the notification, set the subject to `Your SOB Autofix admin password was changed`, paste `supabase/templates/password_changed_notification.html`, and save it.
 7. In **Authentication → Email**, confirm custom SMTP sends from an approved `sobautofix.com` identity. No SMTP credentials belong in this repository.

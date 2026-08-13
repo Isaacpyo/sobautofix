@@ -9,7 +9,7 @@ import { track } from "@/lib/analytics/events";
 export function StickyMobileCta() {
   const pathname = usePathname();
   const conversionRoutes = ["/book", "/get-a-quote", "/vehicle-check", "/contact", "/mobile-mechanic", "/vehicle-inspections", "/vehicle-recovery", "/fleet"];
-  if (conversionRoutes.includes(pathname)) return null;
+  if (pathname === "/" || conversionRoutes.includes(pathname)) return null;
   return (
     <nav aria-label="Quick actions" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-[#1974E2]/25 bg-[#030712]/98 text-white shadow-[0_-12px_40px_rgba(0,0,0,.3)] md:hidden">
       <Action href={contactLinks.phone} label="Call" icon={<Phone size={18} />} onClick={() => track("phone_clicked")} />

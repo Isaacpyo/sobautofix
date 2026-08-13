@@ -1,5 +1,6 @@
 import { Banknote, ChevronLeft, ChevronRight, CircleCheckBig, Clock3, FilePenLine, Plus, ReceiptText } from "lucide-react";
 import Link from "next/link";
+import { InvoiceLoadingLink } from "@/components/admin/invoice-loading-link";
 import { InvoiceStatusBadge } from "@/components/admin/invoice-status-badge";
 import {
   emptyInvoiceDashboard,
@@ -10,7 +11,7 @@ import {
 } from "@/lib/invoices/dashboard";
 import { formatPence } from "@/lib/invoices/money";
 import { sourceLabel } from "@/lib/invoices/types";
-import { createClient } from "@/lib/supabase/server";
+import { getAdminUser } from "@/lib/supabase/server";
 import { formatRegistration } from "@/lib/vehicle/registration-format";
 
 type Row = InvoiceDashboardRow;
@@ -19,15 +20,15 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
   const params = await searchParams;
   const filters = normalizeInvoiceDashboardFilters(params);
   const { query, status, date } = filters;
-  const client = await createClient();
-  const result = client
-    ? await loadInvoiceDashboard(client, filters)
-    : { ...emptyInvoiceDashboard, error: new Error("Supabase is not configured") };
+  const admin = await getAdminUser({ allowTrustedDevice: true });
+  const result = admin
+    ? await loadInvoiceDashboard(admin.client, filters)
+    : { ...emptyInvoiceDashboard, error: new Error("Admin session is unavailable") };
   const { invoices, matchingCount, page, pages } = result;
   const metrics = [{ label: "Draft invoices", value: result.draftCount, icon: FilePenLine, tone: "bg-[#EEF1F7] text-[#586575]" }, { label: "Outstanding invoices", value: result.outstandingCount, icon: Clock3, tone: "bg-amber-100 text-amber-900" }, { label: "Paid / Settled", value: result.paidCount, icon: CircleCheckBig, tone: "bg-green-100 text-green-800" }, { label: "Outstanding amount", value: formatPence(result.outstandingTotalPence), icon: Banknote, tone: "bg-[#EAF3FF] text-[#1974E2]" }];
   return <>
     <header className="flex flex-wrap items-start justify-between gap-5"><div className="flex items-start gap-4"><span className="grid size-12 place-items-center rounded-2xl bg-[#EAF3FF] text-[#1974E2]"><ReceiptText size={23} /></span><div><p className="text-xs font-extrabold tracking-widest text-[#1974E2] uppercase">Garage operations</p><h1 className="mt-1 text-4xl font-extrabold text-[#071127]">Invoices</h1><p className="mt-2 text-[#667586]">Create, issue, send and settle private customer invoices.</p></div></div><Link href="/admin/invoices/new" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#1974E2] px-5 text-sm font-extrabold text-white"><Plus size={18} /> Add invoice</Link></header>
-    {params.notice === "deleted" && <p role="status" className="mt-5 rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-bold text-green-800">Draft invoice deleted.</p>}{result.error && <p role="alert" className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-900">Invoice data is unavailable. Apply the invoicing migration, then refresh.</p>}
+    {params.notice === "deleted" && <p role="status" className="mt-5 rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-bold text-green-800">Draft invoice deleted.</p>}{result.error && <p role="alert" className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-900">Invoice data could not be loaded. Refresh and try again.</p>}
     <section className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Invoice summary">{metrics.map(({ label, value, icon: Icon, tone }) => <article key={label} className="rounded-2xl border border-[#E4EAF0] bg-white p-4 sm:p-5"><span className={`grid size-9 place-items-center rounded-xl ${tone}`}><Icon size={18} /></span><p className="mt-4 text-2xl font-extrabold text-[#071127] sm:text-3xl">{value}</p><p className="mt-1 text-xs font-bold text-[#667586] sm:text-sm">{label}</p></article>)}</section>
     <form method="get" className="mt-5 grid gap-3 rounded-2xl border border-[#E4EAF0] bg-white p-4 sm:grid-cols-[1fr_12rem_12rem_auto_auto] sm:items-end"><Filter title="Search"><input name="q" maxLength={200} defaultValue={query} placeholder="Number, customer or registration…" className={filterInput} /></Filter><Filter title="Status"><select name="status" defaultValue={status} className={filterInput}><option value="">All</option><option value="draft">Draft</option><option value="issued">Unpaid</option><option value="paid">Paid / Settled</option><option value="void">Void</option></select></Filter><Filter title="Date"><input type="date" name="date" defaultValue={date} className={filterInput} /></Filter><button className="min-h-11 rounded-xl bg-[#071127] px-5 text-sm font-extrabold text-white">Apply</button>{(query || status || date) && <Link href="/admin/invoices" className="grid min-h-11 place-items-center rounded-xl border border-[#D7E0E9] px-4 text-sm font-bold text-[#586575]">Clear</Link>}</form>
     <section className="mt-8"><div className="flex justify-between gap-4"><div><h2 className="text-2xl font-extrabold text-[#071127]">Invoice list</h2><p className="mt-1 text-sm text-[#667586]">Newest records appear first.</p></div><p className="text-sm font-bold text-[#667586]">{matchingCount} matching</p></div>
@@ -41,7 +42,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
 
 const filterInput = "mt-2 block min-h-11 w-full rounded-xl border border-[#D7E0E9] bg-white px-3 text-sm font-semibold text-[#071127]";
 function Filter({ title, children }: { title: string; children: React.ReactNode }) { return <label className="text-xs font-extrabold tracking-wide text-[#667586] uppercase">{title}{children}</label>; }
-function Actions({ invoice }: { invoice: Row }) { return <div className="flex flex-wrap gap-2"><Action href={`/admin/invoices/${invoice.id}`} text="View" /><Action href={invoice.status === "draft" ? `/admin/invoices/${invoice.id}/edit` : `/api/admin/invoices/${invoice.id}/pdf`} text={invoice.status === "draft" ? "Edit" : "PDF"} />{invoice.status === "issued" && <Action href={`/admin/invoices/${invoice.id}#payment`} text="Mark paid" />}</div>; }
+function Actions({ invoice }: { invoice: Row }) { return <div className="flex flex-wrap gap-2"><InvoiceLoadingLink href={`/admin/invoices/${invoice.id}`}>View</InvoiceLoadingLink>{invoice.status === "draft" ? <InvoiceLoadingLink href={`/admin/invoices/${invoice.id}/edit`}>Edit</InvoiceLoadingLink> : <InvoiceLoadingLink href={`/api/admin/invoices/${invoice.id}/pdf`} transient loadingTitle="Preparing PDF" loadingDescription="Please wait while the invoice PDF is prepared.">PDF</InvoiceLoadingLink>}{invoice.status === "issued" && <Action href={`/admin/invoices/${invoice.id}#payment`} text="Mark paid" />}</div>; }
 function Action({ href, text }: { href: string; text: string }) { return <Link href={href} className="rounded-lg border border-[#C9D5E2] px-3 py-2 text-xs font-extrabold text-[#1446A5]">{text}</Link>; }
 function vehicle(row: Row) { return [row.vehicle_make, row.vehicle_model, row.vehicle_registration ? formatRegistration(row.vehicle_registration) : null].filter(Boolean).join(" · ") || "No vehicle"; }
 function formatDate(value: string | null) { if (!value) return "—"; return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Europe/London" }).format(new Date(value.length === 10 ? `${value}T12:00:00Z` : value)); }

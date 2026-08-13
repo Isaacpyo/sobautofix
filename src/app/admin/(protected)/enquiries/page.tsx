@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { AdminLoadingLink } from "@/components/admin/admin-loading-link";
 import { AdminListFilters, AdminPagination } from "@/components/admin/admin-list-controls";
+import { ADMIN_LIST_PAGE_SIZE, positiveAdminPage } from "@/lib/admin/pagination";
 import { resendEnquiryNotifications } from "../actions";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminReadClient } from "@/lib/supabase/server";
 
 type EnquiryRow = {
   id: string; type: string; description: string | null; status: string; notification_status: string; created_at: string;
@@ -10,14 +12,14 @@ type EnquiryRow = {
 };
 type ConversationRow = { enquiry_id: string; unread_count: number; last_activity_at: string };
 type MessageRow = { enquiry_id: string; text_body: string; direction: string; created_at: string };
-const pageSize = 20;
+const pageSize = ADMIN_LIST_PAGE_SIZE;
 
 export default async function EnquiriesPage({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; page?: string }> }) {
   const params = await searchParams;
   const query = (params.q || "").trim();
   const status = params.status || "";
-  const requestedPage = positivePage(params.page);
-  const client = await createClient();
+  const requestedPage = positiveAdminPage(params.page);
+  const client = await createAdminReadClient();
   const [enquiriesResult, conversationsResult, messagesResult] = client ? await Promise.all([
     client.from("enquiries").select("id,type,description,status,notification_status,created_at,customers(name,email,phone),vehicles(registration,make,model)").order("created_at", { ascending: false }).limit(250),
     client.from("enquiry_conversations").select("enquiry_id,unread_count,last_activity_at").order("last_activity_at", { ascending: false }).limit(250),
@@ -53,11 +55,11 @@ export default async function EnquiriesPage({ searchParams }: { searchParams: Pr
           <tbody>{visibleEnquiries.map((enquiry) => {
             const conversation = conversations.get(enquiry.id); const latest = latestMessages.get(enquiry.id);
             return <tr key={enquiry.id} className={`border-t border-[#E4EAF0] ${conversation?.unread_count ? "bg-[#F1F7FF]" : ""}`}>
-              <td className="px-5 py-4"><Link href={`/admin/enquiries/${enquiry.id}`} className="font-extrabold text-[#071127] hover:text-[#1974E2]">{conversation?.unread_count ? <span className="mr-2 text-[#1974E2]" aria-label="New customer reply">●</span> : null}{enquiry.customers?.name || "Customer enquiry"}</Link><p className="mt-1 truncate text-xs text-[#667586]">{enquiry.customers?.email || enquiry.customers?.phone}</p></td>
+              <td className="px-5 py-4"><EnquiryOpenLink href={`/admin/enquiries/${enquiry.id}`} className="font-extrabold text-[#071127] hover:text-[#1974E2]">{conversation?.unread_count ? <span className="mr-2 text-[#1974E2]" aria-label="New customer reply">●</span> : null}{enquiry.customers?.name || "Customer enquiry"}</EnquiryOpenLink><p className="mt-1 truncate text-xs text-[#667586]">{enquiry.customers?.email || enquiry.customers?.phone}</p></td>
               <td className="px-5 py-4"><p className="font-bold capitalize text-[#071127]">{enquiry.type.replaceAll("_", " ")}</p><p className="mt-1 truncate text-sm text-[#667586]">{latest?.text_body || enquiry.description || "No message preview"}</p>{enquiry.vehicles && <p className="mt-1 truncate text-xs font-semibold text-[#586575]">{[enquiry.vehicles.make, enquiry.vehicles.model, enquiry.vehicles.registration].filter(Boolean).join(" · ")}</p>}</td>
               <td className="px-5 py-4"><Status status={enquiry.status} />{enquiry.notification_status === "failed" && <p className="mt-2 text-xs font-bold text-red-700">Notification failed</p>}</td>
               <td className="px-5 py-4 text-sm text-[#586575]">{formatDate(conversation?.last_activity_at || enquiry.created_at)}{conversation?.unread_count ? <p className="mt-1 text-xs font-bold text-[#1974E2]">New reply</p> : null}</td>
-              <td className="px-5 py-4"><Link href={`/admin/enquiries/${enquiry.id}`} aria-label={`Open enquiry from ${enquiry.customers?.name || "customer"}`} className="font-extrabold text-[#1974E2]">Open</Link></td>
+              <td className="px-5 py-4"><EnquiryOpenLink href={`/admin/enquiries/${enquiry.id}`} className="font-extrabold text-[#1974E2]">Open<span className="sr-only"> enquiry from {enquiry.customers?.name || "customer"}</span></EnquiryOpenLink></td>
             </tr>;
           })}</tbody>
         </table>
@@ -66,11 +68,11 @@ export default async function EnquiriesPage({ searchParams }: { searchParams: Pr
       <div className="mt-5 grid max-h-[65vh] gap-4 overflow-y-auto pr-1 md:hidden">{visibleEnquiries.map((enquiry) => {
         const conversation = conversations.get(enquiry.id); const latest = latestMessages.get(enquiry.id);
         return <article key={enquiry.id} className={`rounded-2xl border p-5 ${conversation?.unread_count ? "border-[#8EBEF5] bg-[#F1F7FF]" : "border-[#E4EAF0] bg-white"}`}>
-          <Link href={`/admin/enquiries/${enquiry.id}`} className="block">
+          <EnquiryOpenLink href={`/admin/enquiries/${enquiry.id}`} className="block">
             <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-extrabold tracking-widest text-[#1974E2] uppercase">{enquiry.type.replaceAll("_", " ")}</p><h2 className="mt-2 text-xl font-extrabold text-[#071127]">{enquiry.customers?.name || "Customer enquiry"}</h2></div>{conversation?.unread_count ? <span className="rounded-full bg-[#1974E2] px-2.5 py-1 text-xs font-bold text-white">New reply</span> : <Status status={enquiry.status} />}</div>
             <p className="mt-3 line-clamp-2 text-sm leading-6 text-[#586575]">{latest?.text_body || enquiry.description || "No message preview"}</p>
             <p className="mt-3 text-xs text-[#667586]">{formatDate(conversation?.last_activity_at || enquiry.created_at)}</p>
-          </Link>
+          </EnquiryOpenLink>
           {enquiry.notification_status === "failed" && <form action={resendEnquiryNotifications} className="mt-4"><input type="hidden" name="id" value={enquiry.id} /><button className="min-h-10 rounded-lg border border-red-200 px-3 text-xs font-bold text-red-800">Retry notification email</button></form>}
         </article>;
       })}</div>
@@ -81,5 +83,5 @@ export default async function EnquiriesPage({ searchParams }: { searchParams: Pr
 }
 
 function Status({ status }: { status: string }) { return <span className="inline-flex rounded-full bg-[#EAF3FF] px-3 py-1 text-xs font-bold capitalize text-[#1446A5]">{status}</span>; }
+function EnquiryOpenLink({ href, className, children }: { href: string; className: string; children: React.ReactNode }) { return <AdminLoadingLink href={href} className={className} loadingTitle="Opening enquiry" loadingDescription="Please wait while the enquiry conversation opens.">{children}</AdminLoadingLink>; }
 function formatDate(value: string) { return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/London" }).format(new Date(value)); }
-function positivePage(value?: string) { const parsed = Number.parseInt(value || "1", 10); return Number.isFinite(parsed) && parsed > 0 ? parsed : 1; }

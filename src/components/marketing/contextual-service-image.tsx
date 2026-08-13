@@ -38,8 +38,8 @@ export function ContextualServiceImage({ id, priority = false, className = "" }:
   const image = images[id];
 
   return (
-    <figure className={`relative min-h-72 overflow-hidden rounded-3xl bg-[#071127] shadow-2xl ${className}`}>
-      <Image src={image.src} alt={image.alt} fill priority={priority} sizes="(min-width: 1024px) 45vw, 100vw" className="object-cover" />
+    <figure className={`media-frame relative min-h-72 overflow-hidden bg-[#071127] shadow-2xl ${className}`} data-reveal>
+      <Image src={image.src} alt={image.alt} fill priority={priority} sizes="(min-width: 1024px) 45vw, 100vw" className="object-cover transition-transform duration-700 hover:scale-[1.02]" />
       <span aria-hidden="true" className="absolute inset-0 ring-1 ring-inset ring-white/10" />
     </figure>
   );

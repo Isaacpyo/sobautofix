@@ -4,12 +4,12 @@ import { ContentRenderer } from "@/components/content/content-renderer";
 import { ArticleView } from "@/components/news/article-view";
 import { mapContentEntry } from "@/lib/content/repository";
 import { calculateReadingMinutes, parseArticleMetadata, type NewsArticle } from "@/lib/news/article";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminReadClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Content preview", robots: { index: false, follow: false } };
 
 export default async function AdminPreviewPage({ params }: { params: Promise<{ id: string }> }) {
-  const client = await createClient();
+  const client = await createAdminReadClient();
   if (!client) notFound();
   const { data } = await client.from("content_entries").select("*").eq("id", (await params).id).maybeSingle();
   if (!data) notFound();

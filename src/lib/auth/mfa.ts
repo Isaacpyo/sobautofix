@@ -16,3 +16,12 @@ export function isSixDigitMfaCode(value: string) {
 export function requiresMfaChallenge(assurance: { currentLevel: string | null; nextLevel: string | null }) {
   return assurance.currentLevel === "aal1" && assurance.nextLevel === "aal2";
 }
+
+export function canChangeAdminPassword(assurance: {
+  currentLevel: string | null;
+  currentAuthenticationMethods?: Array<string | { method: string }>;
+}) {
+  return assurance.currentLevel === "aal2"
+    || assurance.currentAuthenticationMethods?.some((entry) =>
+      (typeof entry === "string" ? entry : entry.method) === "recovery") === true;
+}

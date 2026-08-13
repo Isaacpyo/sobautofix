@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { isSixDigitMfaCode, requiresMfaChallenge, safeAdminReturnTo } from "@/lib/auth/mfa";
+import { canChangeAdminPassword, isSixDigitMfaCode, requiresMfaChallenge, safeAdminReturnTo } from "@/lib/auth/mfa";
 
 const read = (...parts: string[]) => readFileSync(join(process.cwd(), ...parts), "utf8");
 
@@ -18,6 +18,12 @@ describe("admin TOTP MFA", () => {
     expect(requiresMfaChallenge({ currentLevel: "aal2", nextLevel: "aal2" })).toBe(false);
   });
 
+  it("requires recovery proof or AAL2 for a password change", () => {
+    expect(canChangeAdminPassword({ currentLevel: "aal1", currentAuthenticationMethods: [{ method: "password" }] })).toBe(false);
+    expect(canChangeAdminPassword({ currentLevel: "aal1", currentAuthenticationMethods: [{ method: "recovery" }] })).toBe(true);
+    expect(canChangeAdminPassword({ currentLevel: "aal2", currentAuthenticationMethods: [{ method: "password" }, { method: "totp" }] })).toBe(true);
+  });
+
   it("accepts only six numeric digits", () => {
     expect(isSixDigitMfaCode("123456")).toBe(true);
     expect(isSixDigitMfaCode(" 123456 ")).toBe(true);
@@ -29,6 +35,10 @@ describe("admin TOTP MFA", () => {
     expect(safeAdminReturnTo("/admin/enquiries?status=new")).toBe("/admin/enquiries?status=new");
     expect(safeAdminReturnTo("https://evil.example/admin")).toBe("/admin");
     expect(safeAdminReturnTo("//evil.example/admin")).toBe("/admin");
+    expect(safeAdminReturnTo("javascript:alert(1)")).toBe("/admin");
+    expect(safeAdminReturnTo("/%2f%2fevil.example/admin")).toBe("/admin");
+    expect(safeAdminReturnTo("http://[%zz")).toBe("/admin");
+    expect(safeAdminReturnTo("/admin?returnTo=https%3A%2F%2Fevil.example")).toBe("/admin?returnTo=https%3A%2F%2Fevil.example");
     expect(safeAdminReturnTo("/admin/mfa")).toBe("/admin");
   });
 
@@ -41,7 +51,9 @@ describe("admin TOTP MFA", () => {
     expect(securityActions).toContain("challengeAndVerify");
     expect(securityActions).toContain("auth.mfa.unenroll");
     expect(challengeAction).toContain("That verification code is incorrect or has expired.");
-    expect(protectedLayout).toContain('redirect("/admin/mfa")');
+    expect(protectedLayout).toContain("getAdminUser({ requireMfa: false, allowTrustedDevice: true })");
+    expect(protectedLayout).toContain('admin.mfaState === "enrollment_required"');
+    expect(protectedLayout).toContain('admin.mfaState === "challenge_required"');
     expect(proxy).toContain('challengeUrl.pathname = "/admin/mfa"');
     expect(read("src", "lib", "supabase", "server.ts")).toContain("const profileClient = createAdminClient()");
   });
@@ -51,6 +63,17 @@ describe("admin TOTP MFA", () => {
     expect(securityActions).not.toContain('from("mfa');
     expect(securityActions).not.toContain('from("site_settings").insert');
     expect(securityActions).not.toContain("console.");
+  });
+
+  it("marks Supabase auth cookies Secure in production", () => {
+    for (const file of [
+      read("src", "lib", "supabase", "server.ts"),
+      read("src", "lib", "supabase", "client.ts"),
+      read("src", "proxy.ts"),
+    ]) {
+      expect(file).toContain('sameSite: "lax"');
+      expect(file).toContain('secure: process.env.NODE_ENV === "production"');
+    }
   });
 
   it("enforces AAL2 in database authorization after MFA enrollment", () => {

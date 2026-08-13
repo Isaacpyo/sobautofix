@@ -16,7 +16,7 @@ export type LandingContent = {
 export const topLevelContent: Record<string, LandingContent> = {
   about: {
     eyebrow: "About SOB Autofix",
-    title: "Diagnosis-led automotive care in Doncaster.",
+    title: "Diagnosis-led automotive care",
     body: "SOB Autofix Limited combines professional vehicle diagnostics, electrical fault finding and practical repair work for Doncaster and South Yorkshire.",
     introHeading: "Diagnose first. Repair second.",
     paragraphs: ["Replacing parts without identifying the cause can become expensive quickly. Our approach starts with the symptoms, scans the relevant systems and follows the evidence with targeted tests.", "Customers receive an explanation of what has been found and the sensible next step before repair work proceeds. Mobile appointments, workshop work, inspections, recovery coordination and used vehicle sales are handled with the same direct, professional approach."],
@@ -92,7 +92,7 @@ export const legalContent: Record<string, { title: string; description: string; 
       { heading: "Information we collect", body: ["When you submit an enquiry, we collect the contact, vehicle, location and problem information needed to respond. Optional photographs are stored privately.", "Anonymous vehicle lookups are not permanently stored. A confirmed vehicle is retained in tab-scoped session storage until the tab is closed or you remove it."] },
       { heading: "How information is used", body: ["Information is used to assess your request, contact you, arrange work, maintain enquiry records and protect the service from misuse. Registrations and free-text problem descriptions are excluded from analytics."] },
       { heading: "Retention and service providers", body: ["Closed ordinary enquiries and their private attachments are scheduled for deletion or anonymisation after 12 months unless information must be retained separately as a customer record for a justified purpose.", "The website uses contracted infrastructure, email, scheduling, analytics, security and communication providers. Optional analytics and live chat load only after the relevant consent."] },
-      { heading: "Your choices", body: ["You may ask what personal information is held, request correction, or ask for deletion where applicable by emailing sobautofix@gmail.com. This operational notice must be reviewed with the business’s final legal requirements before production launch."] },
+      { heading: "Your choices", body: ["You may ask what personal information is held, request correction, or ask for deletion where applicable by emailing info@sobautofix.com. This operational notice must be reviewed with the business’s final legal requirements before production launch."] },
     ],
   },
   cookies: {

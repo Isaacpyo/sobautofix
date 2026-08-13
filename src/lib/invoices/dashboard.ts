@@ -1,7 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { ADMIN_LIST_PAGE_SIZE } from "@/lib/admin/pagination";
 import type { InvoiceSourceType, InvoiceStatus } from "./types";
 
-export const invoiceDashboardPageSize = 25;
+export const invoiceDashboardPageSize = ADMIN_LIST_PAGE_SIZE;
 
 export type InvoiceDashboardSearchParams = {
   q?: string;

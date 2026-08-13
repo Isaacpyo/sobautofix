@@ -596,6 +596,7 @@ describe("Cal.com booking repository workflows", () => {
     expect(harness.sendEmail).toHaveBeenCalledTimes(1);
     const message = harness.sendEmail.mock.calls[0]?.[0];
     expect(message.attachments).toHaveLength(1);
+    expect(message.replyTo).toBe("info@sobautofix.com");
     expect(message.attachments[0].filename).toBe("SOB-123456.ics");
     expect(message.attachments[0].content.toString("utf8")).toContain("UID:SOB-123456@sobautofix.com");
     expect(message.html).toContain("Add to Google Calendar");

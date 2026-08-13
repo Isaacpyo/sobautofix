@@ -1,6 +1,7 @@
 import { PageHero } from "@/components/marketing/page-hero";
+import { SectionIntro } from "@/components/marketing/experience";
 import { InventoryGrid } from "@/components/sales/inventory-grid";
-import { Container, Eyebrow } from "@/components/ui/container";
+import { Container } from "@/components/ui/container";
 import { getPublicSaleVehicles } from "@/lib/sales/repository";
 import { createMetadata } from "@/lib/seo";
 
@@ -14,10 +15,7 @@ export default async function CarsForSalePage() {
       <PageHero title="Used cars for sale in Doncaster." cta={false} compact showTrustFacts={false} />
       <section className="py-8 sm:py-10 lg:py-12">
         <Container>
-          <div className="mb-6 sm:mb-8">
-            <Eyebrow>Current stock</Eyebrow>
-            <h2 className="text-4xl font-extrabold text-[#071127]">Available vehicles</h2>
-          </div>
+          <SectionIntro className="mb-8" eyebrow="Current stock" title="Available vehicles" body="Every listing is based on the approved vehicle record and published photography." />
           <InventoryGrid vehicles={vehicles} />
         </Container>
       </section>

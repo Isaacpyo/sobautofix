@@ -2,11 +2,12 @@ import { Bell, Building2, Clock3, Contact, HeartPulse, ImageIcon, MapPin, Shield
 import Link from "next/link";
 import { saveSettings } from "../actions";
 import { AdminField } from "@/components/admin/content-editor";
+import { OpeningHoursEditor } from "@/components/admin/opening-hours-editor";
 import { siteConfig } from "@/config/site";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminReadClient } from "@/lib/supabase/server";
 
 export default async function SettingsPage() {
-  const client = await createClient();
+  const client = await createAdminReadClient();
   const { data } = client
     ? await client.from("site_settings").select("value").eq("id", true).maybeSingle()
     : { data: null };
@@ -70,11 +71,7 @@ export default async function SettingsPage() {
             </SettingsSection>
 
             <SettingsSection id="opening-hours" icon={<Clock3 />} title="Opening hours" description="Leave an entry blank when the hours are not confirmed; blank hours are not published.">
-              {Object.entries(current.openingHours).map(([day, hours]) => (
-                <AdminField key={day} label={day === "bankHolidays" ? "Bank holidays" : day.charAt(0).toUpperCase() + day.slice(1)}>
-                  <input name={day} defaultValue={hours} />
-                </AdminField>
-              ))}
+              <OpeningHoursEditor initialHours={current.openingHours} />
             </SettingsSection>
 
             <div className="sticky bottom-4 z-10 flex justify-end rounded-2xl border border-[#D7E0E9] bg-white/95 p-4 shadow-[0_12px_35px_rgba(7,17,39,0.12)] backdrop-blur">

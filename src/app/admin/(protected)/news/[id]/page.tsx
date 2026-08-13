@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
 import { ContentEditor } from "@/components/admin/content-editor";
 import { mapContentEntry } from "@/lib/content/repository";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminReadClient } from "@/lib/supabase/server";
 import { deleteContent, restoreContentRevision, saveContent, uploadArticleCover } from "../../actions";
 
 export default async function EditArticlePage({ params }: { params: Promise<{ id: string }> }) {
-  const client = await createClient();
+  const client = await createAdminReadClient();
   if (!client) notFound();
   const id = (await params).id;
   const [{ data }, { data: revisions }, { data: mediaRows }] = await Promise.all([

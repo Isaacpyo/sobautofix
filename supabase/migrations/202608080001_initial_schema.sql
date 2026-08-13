@@ -385,7 +385,7 @@ values (true, jsonb_build_object(
   'companyNumber', '16182532',
   'phone', '07469273483',
   'whatsapp', '07469273483',
-  'email', 'sobautofix@gmail.com',
+  'email', 'info@sobautofix.com',
   'address', jsonb_build_object('building', 'Cumbrae', 'street', 'Station Road', 'town', 'Norton', 'city', 'Doncaster', 'postcode', 'DN6 9HF', 'country', 'United Kingdom', 'countryCode', 'GB'),
   'openingHours', '{}'::jsonb
 )) on conflict (id) do nothing;

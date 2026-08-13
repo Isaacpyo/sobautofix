@@ -1,6 +1,6 @@
 import { ArrowLeft, CalendarCog, ShieldCheck } from "lucide-react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminReadClient } from "@/lib/supabase/server";
 import { ServiceMappingForm } from "./service-mapping-form";
 
 type ServiceMappingRow = {
@@ -15,7 +15,7 @@ type ServiceMappingRow = {
 };
 
 export default async function BookingServicesPage() {
-  const client = await createClient();
+  const client = await createAdminReadClient();
   const { data } = client
     ? await client
       .from("booking_service_types")

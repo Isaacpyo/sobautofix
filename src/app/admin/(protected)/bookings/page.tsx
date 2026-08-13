@@ -8,9 +8,11 @@ import {
   Settings2,
 } from "lucide-react";
 import Link from "next/link";
+import { AdminLoadingLink } from "@/components/admin/admin-loading-link";
 import { AdminListFilters, AdminPagination } from "@/components/admin/admin-list-controls";
+import { ADMIN_LIST_PAGE_SIZE, positiveAdminPage } from "@/lib/admin/pagination";
 import type { BookingStatus, ProviderSyncState } from "@/lib/bookings/types";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminReadClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import { formatRegistration } from "@/lib/vehicle/registration-format";
 
@@ -28,14 +30,14 @@ type AdminBookingListRow = {
 };
 
 const activeStatuses: BookingStatus[] = ["pending", "confirmed", "rescheduled"];
-const pageSize = 20;
+const pageSize = ADMIN_LIST_PAGE_SIZE;
 
 export default async function AdminBookingsPage({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; page?: string }> }) {
   const params = await searchParams;
   const query = (params.q || "").trim();
   const status = params.status || "";
-  const requestedPage = positivePage(params.page);
-  const client = await createClient();
+  const requestedPage = positiveAdminPage(params.page);
+  const client = await createAdminReadClient();
   const now = new Date();
   const today = dateKeyInLondon(now);
   const tomorrow = addUtcDays(today, 1);
@@ -55,14 +57,7 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
     client.from("bookings").select("id", { count: "exact", head: true }).eq("status", "cancelled"),
   ]) : null;
 
-  const allBookings = ((results?.[0].data || []) as unknown as AdminBookingListRow[]).sort((left, right) => {
-    const leftUpcoming = activeStatuses.includes(left.status) && Date.parse(left.appointment_start) >= now.getTime();
-    const rightUpcoming = activeStatuses.includes(right.status) && Date.parse(right.appointment_start) >= now.getTime();
-    if (leftUpcoming !== rightUpcoming) return leftUpcoming ? -1 : 1;
-    return leftUpcoming
-      ? left.appointment_start.localeCompare(right.appointment_start)
-      : right.appointment_start.localeCompare(left.appointment_start);
-  });
+  const allBookings = (results?.[0].data || []) as unknown as AdminBookingListRow[];
   const filteredBookings = allBookings.filter((booking) => {
     const customer = relation(booking.customers);
     const vehicle = relation(booking.vehicles);
@@ -125,7 +120,7 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
         <div className="flex items-end justify-between gap-4">
           <div>
             <h2 id="booking-list-heading" className="text-2xl font-extrabold text-[#071127]">Appointment list</h2>
-            <p className="mt-1 text-sm text-[#667586]">Upcoming appointments appear first, followed by the most recent records.</p>
+            <p className="mt-1 text-sm text-[#667586]">Appointments are ordered from newest to oldest.</p>
           </div>
           <p className="text-sm font-bold text-[#667586]">{filteredBookings.length} matching</p>
         </div>
@@ -134,14 +129,13 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
           <table className="w-full min-w-[1120px] table-fixed text-left">
             <thead className="sticky top-0 z-10 bg-[#F4F7FA] text-xs font-extrabold tracking-wide text-[#586575] uppercase shadow-[0_1px_0_#E4EAF0]">
               <tr>
-                <th className="w-[12%] px-4 py-4">Time</th>
-                <th className="w-[12%] px-4 py-4">Booking ref</th>
-                <th className="w-[15%] px-4 py-4">Customer</th>
-                <th className="w-[15%] px-4 py-4">Vehicle</th>
-                <th className="w-[15%] px-4 py-4">Service</th>
-                <th className="w-[10%] px-4 py-4">Status</th>
-                <th className="w-[12%] px-4 py-4">Location</th>
-                <th className="w-[9%] px-4 py-4">Calendar sync</th>
+                <th className="w-[11%] py-4 pl-4 pr-2">Booking ref</th>
+                <th className="w-[21%] py-4 pl-2 pr-4">Customer</th>
+                <th className="w-[18%] px-4 py-4">Vehicle</th>
+                <th className="w-[18%] px-4 py-4">Service</th>
+                <th className="w-[12%] px-4 py-4">Status</th>
+                <th className="w-[15%] px-4 py-4">Location</th>
+                <th className="w-[5%] px-4 py-4"><span className="sr-only">Action</span></th>
               </tr>
             </thead>
             <tbody>
@@ -150,14 +144,13 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
                 const vehicle = relation(booking.vehicles);
                 return (
                   <tr key={booking.id} className={cn("border-t border-[#E4EAF0] align-top transition hover:bg-[#F8FAFC]", booking.provider_sync_state === "failed" && "bg-amber-50/60")}>
-                    <td className="px-4 py-4 text-sm font-bold text-[#071127]">{formatCompactDate(booking.appointment_start)}</td>
-                    <td className="px-4 py-4"><Link href={`/admin/bookings/${booking.id}`} className="font-mono text-sm font-black text-[#1974E2] hover:underline">{booking.booking_reference}</Link></td>
-                    <td className="px-4 py-4"><p className="truncate text-sm font-extrabold text-[#071127]">{customer?.name || "Customer"}</p><p className="mt-1 truncate text-xs text-[#667586]">{customer?.email || "No email"}</p></td>
+                    <td className="py-4 pl-4 pr-2 font-mono text-sm font-black text-[#1974E2]">{booking.booking_reference}</td>
+                    <td className="py-4 pl-2 pr-4"><p className="truncate text-sm font-extrabold text-[#071127]">{customer?.name || "Customer"}</p><p className="mt-1 truncate text-xs text-[#667586]">{customer?.email || "No email"}</p></td>
                     <td className="px-4 py-4 text-sm text-[#586575]">{vehicleLabel(vehicle)}</td>
                     <td className="px-4 py-4 text-sm font-semibold text-[#071127]">{booking.service_name}</td>
                     <td className="px-4 py-4"><BookingStatusBadge status={booking.status} /></td>
                     <td className="px-4 py-4"><p className="text-sm font-bold text-[#071127]">{locationModeLabel(booking.location_mode)}</p>{booking.location && <p className="mt-1 line-clamp-2 text-xs text-[#667586]">{booking.location}</p>}</td>
-                    <td className="px-4 py-4"><SyncStateBadge state={booking.provider_sync_state} /></td>
+                    <td className="px-4 py-4"><BookingOpenLink href={`/admin/bookings/${booking.id}`} className="inline-flex min-h-10 items-center rounded-lg border border-[#BCD6F6] px-3 text-xs font-extrabold text-[#1446A5] hover:bg-[#F1F7FF]">View</BookingOpenLink></td>
                   </tr>
                 );
               })}
@@ -171,7 +164,7 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
             const vehicle = relation(booking.vehicles);
             return (
               <article key={booking.id} className={cn("rounded-2xl border bg-white p-5", booking.provider_sync_state === "failed" ? "border-amber-300" : "border-[#E4EAF0]")}>
-                <Link href={`/admin/bookings/${booking.id}`} className="block rounded-lg outline-none focus-visible:ring-4 focus-visible:ring-[#1974E2]/20" aria-label={`Open booking ${booking.booking_reference}`}>
+                <BookingOpenLink href={`/admin/bookings/${booking.id}`} className="block rounded-lg outline-none focus-visible:ring-4 focus-visible:ring-[#1974E2]/20">
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
                       <p className="font-mono text-sm font-black tracking-wide text-[#1974E2]">{booking.booking_reference}</p>
@@ -187,7 +180,8 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
                     <div><dt className="text-xs font-extrabold tracking-wide text-[#667586] uppercase">Status</dt><dd className="mt-2"><BookingStatusBadge status={booking.status} /></dd></div>
                   </dl>
                   <div className="mt-5 border-t border-[#E4EAF0] pt-4"><SyncStateBadge state={booking.provider_sync_state} /></div>
-                </Link>
+                  <span className="sr-only">Open booking {booking.booking_reference}</span>
+                </BookingOpenLink>
               </article>
             );
           })}
@@ -208,6 +202,10 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
 
 function ListDetail({ label, value }: { label: string; value: string }) {
   return <div className="min-w-0"><dt className="text-xs font-extrabold tracking-wide text-[#667586] uppercase">{label}</dt><dd className="mt-1 line-clamp-2 font-bold text-[#071127]">{value}</dd></div>;
+}
+
+function BookingOpenLink({ href, className, children }: { href: string; className: string; children: React.ReactNode }) {
+  return <AdminLoadingLink href={href} className={className} loadingTitle="Opening booking" loadingDescription="Please wait while the booking details open.">{children}</AdminLoadingLink>;
 }
 
 function BookingStatusBadge({ status }: { status: BookingStatus }) {
@@ -242,10 +240,6 @@ function locationModeLabel(value: AdminBookingListRow["location_mode"]) {
   if (value === "mobile") return "Mobile";
   if (value === "workshop") return "Workshop";
   return "Location recorded";
-}
-
-function formatCompactDate(value: string) {
-  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Europe/London" }).format(new Date(value));
 }
 
 function formatFullDate(value: string) {
@@ -285,5 +279,3 @@ function addUtcDays(value: string, days: number) {
   date.setUTCDate(date.getUTCDate() + days);
   return date.toISOString().slice(0, 10);
 }
-
-function positivePage(value?: string) { const parsed = Number.parseInt(value || "1", 10); return Number.isFinite(parsed) && parsed > 0 ? parsed : 1; }

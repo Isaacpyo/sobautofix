@@ -1,11 +1,16 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { z } from "zod";
 import { isAllowedAdminEmail } from "@/config/admin";
 import { siteConfig } from "@/config/site";
-import { requiresMfaChallenge } from "@/lib/auth/mfa";
-import { createAdminClient, createClient } from "@/lib/supabase/server";
+import { canChangeAdminPassword, requiresMfaChallenge } from "@/lib/auth/mfa";
+import { isMandatoryAdminMfaEnabled } from "@/lib/auth/mfa-policy";
+import { getRecoveryErrorMessage } from "@/lib/auth/recovery-errors";
+import { getCurrentTrustedDevice, revokeAllTrustedDevices } from "@/lib/auth/trusted-device-server";
+import { consumeRateLimit } from "@/lib/rate-limit";
+import { createAdminClient, createClient, getAdminUser } from "@/lib/supabase/server";
 
 export type LoginState = { message: string };
 
@@ -19,11 +24,18 @@ export async function loginWithPassword(_: LoginState, formData: FormData): Prom
   });
   if (!parsed.success) return { message: "Enter your email address and password." };
   if (!isAllowedAdminEmail(parsed.data.email)) return { message: "Sign-in failed. Check your details and try again." };
+  const requestHeaders = await headers();
+  const source = (requestHeaders.get("x-forwarded-for")?.split(",")[0] || requestHeaders.get("x-real-ip") || "unknown").trim().slice(0, 64);
+  const email = parsed.data.email.trim().toLowerCase();
+  if (!(await consumeRateLimit(`${email}:${source}`, "admin_login_source", 8, 300))
+    || !(await consumeRateLimit(email, "admin_login_account", 30, 900))) {
+    return { message: "Sign-in failed. Check your details and try again." };
+  }
   const client = await createClient();
   if (!client) return { message: "Supabase authentication is not configured." };
 
   const { data: auth, error } = await client.auth.signInWithPassword({
-    email: parsed.data.email.trim().toLowerCase(),
+    email,
     password: parsed.data.password,
   });
   if (error || !auth.user) return { message: "Sign-in failed. Check your password and try again." };
@@ -48,7 +60,11 @@ export async function loginWithPassword(_: LoginState, formData: FormData): Prom
     await client.auth.signOut();
     return { message: "We couldn't verify the account security status. Please try again." };
   }
-  redirect(requiresMfaChallenge(assurance) ? "/admin/mfa" : "/admin");
+  const trustedDevice = requiresMfaChallenge(assurance) ? await getCurrentTrustedDevice(auth.user.id) : null;
+  if (assurance.currentLevel === "aal1" && assurance.nextLevel === "aal1" && await isMandatoryAdminMfaEnabled(profileClient)) {
+    redirect("/admin/mfa/enroll");
+  }
+  redirect(requiresMfaChallenge(assurance) && !trustedDevice ? "/admin/mfa" : "/admin");
 }
 
 export async function requestPasswordReset(_: LoginState, formData: FormData): Promise<LoginState> {
@@ -60,7 +76,7 @@ export async function requestPasswordReset(_: LoginState, formData: FormData): P
   if (!client) return { message: "Password recovery is not configured." };
   const redirectTo = new URL("/auth/confirm?next=/admin/reset-password", siteConfig.siteUrl).toString();
   const { error } = await client.auth.resetPasswordForEmail(parsed.data.email.trim().toLowerCase(), { redirectTo });
-  return { message: error ? "We couldn't send the reset email. Please try again shortly." : genericMessage };
+  return { message: error ? getRecoveryErrorMessage(error) : genericMessage };
 }
 
 export async function resetAdminPassword(_: LoginState, formData: FormData): Promise<LoginState> {
@@ -73,17 +89,22 @@ export async function resetAdminPassword(_: LoginState, formData: FormData): Pro
   });
   if (!parsed.success) return { message: parsed.error.issues[0]?.message || "Check the new password and try again." };
 
-  const client = await createClient();
-  if (!client) return { message: "Password recovery is not configured." };
-  const { data: { user } } = await client.auth.getUser();
-  if (!user?.email || !isAllowedAdminEmail(user.email)) return { message: "This reset link is invalid or has expired. Request a new link." };
-  const profileClient = createAdminClient();
-  const { data: profile } = profileClient ? await profileClient.from("admin_profiles").select("user_id").eq("user_id", user.id).maybeSingle() : { data: null };
-  if (!profile) return { message: "This account is not authorised for the CMS." };
+  const admin = await getAdminUser({ requireMfa: false });
+  if (!admin || !canChangeAdminPassword(admin.assurance)) {
+    return { message: "This reset link is invalid or has expired. Request a new link." };
+  }
 
-  const { error } = await client.auth.updateUser({ password: parsed.data.password });
+  if (!(await revokeAllTrustedDevices(admin.user.id, "mfa_trusted_devices_revoked_password_change"))) {
+    return { message: "The password could not be updated securely. Request a new reset link and try again." };
+  }
+  const { error } = await admin.client.auth.updateUser({ password: parsed.data.password });
   if (error) return { message: "The password could not be updated. Request a new reset link and try again." };
-  await client.auth.signOut();
+  const auditClient = createAdminClient();
+  await auditClient?.from("admin_audit_log").insert([
+    { actor_id: admin.user.id, action: "password_changed", entity_type: "admin_security", entity_id: admin.user.id, detail: {} },
+    { actor_id: admin.user.id, action: "global_sign_out", entity_type: "admin_security", entity_id: admin.user.id, detail: { reason: "password_changed" } },
+  ]);
+  await admin.client.auth.signOut({ scope: "global" });
   redirect("/admin/login?reset=success");
 }
 

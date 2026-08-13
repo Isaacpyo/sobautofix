@@ -1,14 +1,15 @@
-import { Activity, Binary, Cable, CheckCircle2, ScanLine, SearchCheck } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { ContextualServiceImage } from "@/components/marketing/contextual-service-image";
 import { PageHero } from "@/components/marketing/page-hero";
+import { PremiumCta, ProcessFlow, SectionIntro } from "@/components/marketing/experience";
 import { ServiceCard } from "@/components/marketing/service-card";
 import { CategoryFaqs, ServiceCategoryNavigation, type CategoryFaq } from "@/components/services/category-hub";
 import { JsonLd } from "@/components/seo/json-ld";
 import { ButtonLink } from "@/components/ui/button";
 import { Container, Eyebrow } from "@/components/ui/container";
 import { VehicleJourney } from "@/components/vehicle/vehicle-journey";
-import { contactLinks, diagnostics } from "@/config/site";
+import { diagnostics } from "@/config/site";
 import { createMetadata, serviceJsonLd } from "@/lib/seo";
 
 export const metadata = createMetadata(
@@ -25,11 +26,11 @@ const diagnosticFaqs: CategoryFaq[] = [
 ];
 
 const process = [
-  { icon: Activity, title: "Understand the symptoms", body: "Discuss what has changed, when it happens and any recent work." },
-  { icon: ScanLine, title: "Scan and inspect", body: "Review relevant control systems, visible condition and available data." },
-  { icon: Cable, title: "Test the system", body: "Carry out focused electrical or mechanical checks where appropriate." },
-  { icon: SearchCheck, title: "Isolate the likely cause", body: "Compare the evidence instead of treating a code as a parts instruction." },
-  { icon: Binary, title: "Explain the next step", body: "Set out the findings, limitations and recommended route forward." },
+  { title: "Understand the symptoms", body: "Discuss what has changed, when it happens and any recent work." },
+  { title: "Scan and inspect", body: "Review relevant control systems, visible condition and available data." },
+  { title: "Test the system", body: "Carry out focused electrical or mechanical checks where appropriate." },
+  { title: "Isolate the likely cause", body: "Compare the evidence instead of treating a code as a parts instruction." },
+  { title: "Explain the next step", body: "Set out the findings, limitations and recommended route forward." },
 ];
 
 export default function DiagnosticsPage() {
@@ -66,27 +67,14 @@ export default function DiagnosticsPage() {
 
       <section className="bg-[#F4F7FA] py-20 sm:py-24">
         <Container>
-          <div className="max-w-3xl">
-            <Eyebrow>Diagnostic services</Eyebrow>
-            <h2 className="text-4xl font-extrabold text-[#071127] sm:text-5xl">Choose the closest match to the problem.</h2>
-            <p className="mt-4 text-lg leading-8 text-[#586575]">If you are unsure, start with Vehicle Diagnostics or use the registration journey above. The appropriate service can be confirmed after the symptoms are reviewed.</p>
-          </div>
+          <SectionIntro eyebrow="Diagnostic services" title="Choose the closest match to the problem." body="If you are unsure, start with Vehicle Diagnostics or use the registration journey above. The appropriate service can be confirmed after the symptoms are reviewed." />
           <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {publishedDiagnostics.map((item) => <ServiceCard key={item.slug} title={item.name} body={item.summary} href={`/diagnostics/${item.slug}`} />)}
+            {publishedDiagnostics.map((item, index) => <ServiceCard key={item.slug} index={index} title={item.name} body={item.summary} href={`/diagnostics/${item.slug}`} />)}
           </div>
         </Container>
       </section>
 
-      <section className="diagnostic-panel py-20 text-white sm:py-24">
-        <Container>
-          <Eyebrow className="text-[#67B9FF]">A flexible diagnostic process</Eyebrow>
-          <h2 className="max-w-3xl text-balance text-4xl font-extrabold sm:text-5xl">The investigation follows the evidence.</h2>
-          <p className="mt-4 max-w-3xl leading-7 text-[#B7C5D7]">The exact checks depend on the vehicle and fault. These stages describe the approach rather than promising that every assessment follows an identical sequence.</p>
-          <ol className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-            {process.map(({ icon: Icon, title, body }, index) => <li key={title} className="rounded-2xl border border-[#1974E2]/25 bg-white/5 p-5"><div className="flex items-center justify-between"><Icon className="text-[#67B9FF]" size={22} /><span className="text-xs font-black text-[#67B9FF]">0{index + 1}</span></div><h3 className="mt-8 text-xl font-bold">{title}</h3><p className="mt-2 text-sm leading-6 text-[#B7C5D7]">{body}</p></li>)}
-          </ol>
-        </Container>
-      </section>
+      <ProcessFlow eyebrow="A flexible diagnostic process" title="The investigation follows the evidence." body="The exact checks depend on the vehicle and fault. These stages describe the approach rather than promising that every assessment follows an identical sequence." steps={process} />
 
       <section className="py-20 sm:py-24">
         <Container className="grid gap-10 lg:grid-cols-[1.1fr_.9fr] lg:items-center">
@@ -103,12 +91,7 @@ export default function DiagnosticsPage() {
 
       <CategoryFaqs faqs={diagnosticFaqs} />
 
-      <section className="bg-[#071127] py-16 text-white sm:py-20">
-        <Container className="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
-          <div><Eyebrow className="text-[#67B9FF]">Warning light or vehicle fault?</Eyebrow><h2 className="max-w-3xl text-4xl font-extrabold sm:text-5xl">Book a diagnostic assessment with SOB Autofix.</h2></div>
-          <div className="flex max-w-xl flex-wrap gap-3"><ButtonLink href="/book">Book Appointment</ButtonLink><ButtonLink href="/get-a-quote" variant="secondary">Get a Quote</ButtonLink><ButtonLink href={contactLinks.phone} variant="secondary">Call</ButtonLink><ButtonLink href={contactLinks.whatsapp} variant="secondary" target="_blank" rel="noreferrer">WhatsApp</ButtonLink></div>
-        </Container>
-      </section>
+      <PremiumCta eyebrow="Warning light or vehicle fault?" title="Book a diagnostic assessment with SOB Autofix." />
     </>
   );
 }

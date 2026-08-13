@@ -60,7 +60,7 @@ export const siteConfig = {
   phone: "07469273483",
   whatsapp: "07469273483",
 
-  email: "sobautofix@gmail.com",
+  email: "info@sobautofix.com",
 
   address: {
     building: "Cumbrae",
@@ -2879,7 +2879,7 @@ DN6 9HF
 
 07469 273483
 
-sobautofix@gmail.com
+info@sobautofix.com
 
 Company No. 16182532
 ```

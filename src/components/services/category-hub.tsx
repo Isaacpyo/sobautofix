@@ -26,8 +26,8 @@ export function ServiceCategoryNavigation({ current }: { current?: ServiceCatego
                 href={category.href}
                 aria-current={active ? "page" : undefined}
                 className={active
-                  ? "group rounded-xl border border-[#1974E2] bg-[#EAF3FF] p-4 text-[#071127]"
-                  : "group rounded-xl border border-[#E4EAF0] bg-[#F8FAFC] p-4 text-[#071127] transition hover:border-[#1974E2]/55 hover:bg-white"}
+                  ? "premium-card group border border-[#1974E2] bg-[#EAF3FF] p-4 text-[#071127]"
+                  : "premium-card group border border-[#E4EAF0] bg-[#F8FAFC] p-4 text-[#071127] transition hover:border-[#1974E2]/55 hover:bg-white"}
               >
                 <span className="flex items-center justify-between gap-3 font-bold">{category.label}<ArrowRight size={16} className="text-[#1974E2] transition group-hover:translate-x-1" aria-hidden="true" /></span>
                 <span className="mt-1 block text-xs leading-5 text-[#586575]">{category.description}</span>
@@ -52,7 +52,7 @@ export function CategoryFaqs({ faqs, eyebrow = "Questions about this service cat
         </div>
         <div className="grid content-start gap-3">
           {faqs.map((faq) => (
-            <details key={faq.question} className="group rounded-2xl border border-[#E4EAF0] bg-white p-5 open:border-[#1974E2]/40">
+            <details key={faq.question} className="group rounded-[1.25rem_.25rem_1.25rem_.25rem] border border-[#E4EAF0] bg-white p-5 transition open:border-[#1974E2]/40 open:shadow-lg" data-reveal>
               <summary className="flex min-h-8 cursor-pointer list-none items-center justify-between gap-4 font-bold text-[#071127] marker:content-none">
                 {faq.question}
                 <span className="text-xl text-[#1974E2] transition group-open:rotate-45" aria-hidden="true">+</span>

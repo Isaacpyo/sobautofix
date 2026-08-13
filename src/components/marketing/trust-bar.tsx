@@ -1,5 +1,6 @@
 import { MapPinned, MapPin, ScanLine, ShieldCheck } from "lucide-react";
 import { Container } from "@/components/ui/container";
+import styles from "./trust-bar.module.css";
 
 const facts = [
   { icon: ScanLine, label: "Diagnostic-led", detail: "Test before replacing" },
@@ -9,5 +10,5 @@ const facts = [
 ];
 
 export function TrustBar() {
-  return <section className="border-y border-[#E4EAF0] bg-white"><Container className="grid sm:grid-cols-2 lg:grid-cols-4">{facts.map(({ icon: Icon, label, detail }) => <div key={label} className="flex items-center gap-4 border-b border-[#E4EAF0] py-5 sm:border-b-0 sm:border-r sm:px-5 first:pl-0 last:border-r-0"><Icon className="text-[#1974E2]" /><div><strong className="block text-sm text-[#071127]">{label}</strong><span className="text-xs text-[#667586]">{detail}</span></div></div>)}</Container></section>;
+  return <section className={styles.bar} data-motion="off"><Container className={styles.grid}>{facts.map(({ icon: Icon, label, detail }) => <div key={label} className={styles.fact}><span className={styles.icon}><Icon size={20} /></span><div><strong className={styles.label}>{label}</strong><span className={styles.detail}>{detail}</span></div></div>)}</Container></section>;
 }

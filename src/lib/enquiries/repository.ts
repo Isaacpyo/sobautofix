@@ -1,10 +1,11 @@
 import "server-only";
 
 import { randomUUID } from "node:crypto";
+import { approvedEnquiryFallbackReplyTo } from "@/lib/email/identity";
 import { getResendConfig, sendTransactionalEmail } from "@/lib/email/resend";
 import { renderBusinessEnquiryNotification, renderEnquiryReceived } from "@/lib/email/templates/enquiries";
 import { createAdminClient } from "@/lib/supabase/server";
-import { createInitialEnquiryMessage } from "./thread-repository";
+import { createInitialEnquiryMessage, getEnquiryReplyAddress } from "./thread-repository";
 import type { EnquiryRequest } from "./schema";
 
 type NotificationInput = Omit<EnquiryRequest, "turnstileToken">;
@@ -87,6 +88,9 @@ export async function sendNotifications(enquiryId: string, input: NotificationIn
   const businessEmail = renderBusinessEnquiryNotification(templateInput);
 
   try {
+    const customerReplyTo = input.contact.email
+      ? await getEnquiryReplyAddress(enquiryId, input.type) || approvedEnquiryFallbackReplyTo
+      : null;
     const result = await sendTransactionalEmail({
       to: emailConfig.notificationRecipient,
       subject: `New ${input.type.replace("_", " ")} enquiry`,
@@ -97,7 +101,7 @@ export async function sendNotifications(enquiryId: string, input: NotificationIn
     await admin?.from("notification_attempts").insert({ enquiry_id: enquiryId, recipient_type: "business", status: "sent", provider_id: result.data?.id || null });
     if (input.contact.email) {
       const customerEmail = renderEnquiryReceived(templateInput);
-      const customerResult = await sendTransactionalEmail({ to: input.contact.email, subject: "We received your SOB Autofix request", text: customerEmail.text, html: customerEmail.html, replyTo: emailConfig.replyTo });
+      const customerResult = await sendTransactionalEmail({ to: input.contact.email, subject: "We received your SOB Autofix request", text: customerEmail.text, html: customerEmail.html, replyTo: customerReplyTo || approvedEnquiryFallbackReplyTo });
       await admin?.from("notification_attempts").insert({ enquiry_id: enquiryId, recipient_type: "customer", status: "sent", provider_id: customerResult.data?.id || null });
     }
     return "sent" as const;

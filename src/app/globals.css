@@ -36,6 +36,24 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+main[data-public-site] {
+  overflow: clip;
+}
+
+main[data-public-site][data-motion-ready="true"] [data-motion-item="true"] {
+  transform: translate3d(0, 22px, 0);
+  transition: transform 560ms cubic-bezier(.2,.75,.2,1);
+}
+
+main[data-public-site][data-motion-ready="true"] [data-motion-item="true"][data-motion-visible="true"] {
+  transform: translate3d(0, 0, 0);
+}
+
+main[data-public-site] section > div {
+  position: relative;
+  z-index: 1;
+}
+
 .deferred-section {
   content-visibility: auto;
   contain-intrinsic-size: auto 800px;
@@ -75,6 +93,48 @@ textarea {
   background-size: 52px 52px, 52px 52px, auto, auto;
 }
 
+.premium-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.premium-card::after {
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  content: "";
+  background: linear-gradient(90deg, transparent, #168bff, transparent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 350ms ease;
+}
+
+.premium-card:hover::after,
+.premium-card:focus-visible::after {
+  transform: scaleX(1);
+}
+
+.technical-rule {
+  border-top: 1px solid rgba(25, 116, 226, .22);
+}
+
+.media-frame {
+  border-radius: 1.75rem .35rem 1.75rem .35rem;
+}
+
+.footer-premium::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(103, 185, 255, .04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(103, 185, 255, .04) 1px, transparent 1px),
+    radial-gradient(circle at 12% 20%, rgba(25, 116, 226, .17), transparent 27%);
+  background-size: 52px 52px, 52px 52px, auto;
+  mask-image: linear-gradient(to bottom, #000, transparent 80%);
+}
+
 .diagnostic-panel {
   background:
     radial-gradient(circle at 90% 10%, rgba(22, 139, 255, 0.16), transparent 32%),
@@ -110,6 +170,51 @@ textarea {
   order: 3;
 }
 
+/* Keep the sticky vehicle identity bar compact while the listing scrolls. */
+.vehicle-detail-page > section:first-of-type > div > div {
+  gap: 0.5rem;
+}
+
+.vehicle-detail-page > section:first-of-type > div > p:first-child {
+  display: none;
+}
+
+.vehicle-detail-page > section:first-of-type > div > div > div:first-child,
+.vehicle-detail-page > section:first-of-type > div > div > div:last-child {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.vehicle-detail-page > section:first-of-type h1,
+.vehicle-detail-page > section:first-of-type > div > div > div:first-child > p,
+.vehicle-detail-page > section:first-of-type > div > div > div:last-child > span,
+.vehicle-detail-page > section:first-of-type > div > div > div:last-child > strong {
+  margin-top: 0;
+  white-space: nowrap;
+}
+
+.vehicle-detail-page > section:first-of-type h1 {
+  font-size: 1.5rem !important;
+}
+
+.vehicle-detail-page > section:first-of-type > div > div > div:first-child > p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vehicle-back-to-stock {
+  top: 8rem;
+  left: max(1.25rem, calc((100vw - 1240px) / 2 + 2.5rem));
+}
+
+@media (min-width: 640px) {
+  .vehicle-back-to-stock {
+    top: 8.5rem;
+  }
+}
+
 @media (min-width: 1024px) {
   .vehicle-detail-page > section:nth-of-type(2) > div {
     grid-template-columns: minmax(0, 1.35fr) minmax(20rem, 0.65fr);
@@ -137,6 +242,44 @@ textarea {
 }
 
 @media (max-width: 767px) {
+  .vehicle-detail-page > section:first-of-type > div > div {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .vehicle-detail-page > section:first-of-type > div > div > div:first-child {
+    flex: 1 1 auto;
+    width: auto;
+    overflow: hidden;
+    gap: 0.3rem;
+  }
+
+  .vehicle-detail-page > section:first-of-type > div > div > div:last-child {
+    flex: none;
+    width: auto;
+    gap: 0.25rem;
+    padding-left: 0.5rem;
+  }
+
+  .vehicle-detail-page > section:first-of-type h1 {
+    flex: none;
+    font-size: 1rem !important;
+  }
+
+  .vehicle-detail-page > section:first-of-type > div > div > div:first-child > p {
+    min-width: 0;
+    font-size: 0.625rem !important;
+  }
+
+  .vehicle-detail-page > section:first-of-type > div > div > div:last-child > span {
+    font-size: 0.5rem;
+  }
+
+  .vehicle-detail-page > section:first-of-type > div > div > div:last-child > strong {
+    font-size: 1rem !important;
+  }
+
   /* Keep the first mobile paint independent of optional webfont delivery. */
   body {
     font-family: Arial, ui-sans-serif, system-ui, sans-serif;
@@ -158,5 +301,9 @@ textarea {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  main[data-public-site] [data-motion-item="true"] {
+    transform: none !important;
   }
 }

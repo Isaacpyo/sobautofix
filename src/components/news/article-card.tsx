@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 export function ArticleCard({ article, featured = false }: { article: NewsArticle; featured?: boolean }) {
   return (
-    <article className={cn("group overflow-hidden rounded-2xl border border-[#E4EAF0] bg-white", featured && "lg:grid lg:grid-cols-[1.08fr_.92fr]")}>
+    <article className={cn("premium-card group overflow-hidden rounded-[1.75rem_.35rem_1.75rem_.35rem] border border-[#E4EAF0] bg-white", featured && "lg:grid lg:grid-cols-[1.08fr_.92fr]")} data-reveal>
       <Link href={`/news/${article.slug}`} className={cn("relative block overflow-hidden bg-[#071127]", featured ? "min-h-64 lg:min-h-[23rem]" : "aspect-[16/10]")} aria-label={`Read ${article.title}`}>
         {article.cover ? (
           <Image
@@ -34,7 +34,7 @@ export function ArticleCard({ article, featured = false }: { article: NewsArticl
           <Link href={`/news/${article.slug}`} className="hover:text-[#1974E2]">{article.title}</Link>
         </h2>
         <p className="mt-3 line-clamp-3 leading-7 text-[#586575]">{article.excerpt}</p>
-        <Link href={`/news/${article.slug}`} className="mt-6 inline-flex min-h-10 items-center gap-2 font-bold text-[#1974E2]">
+        <Link href={`/news/${article.slug}`} className="mt-6 inline-flex min-h-10 items-center gap-2 font-bold text-[#1974E2] [&_svg]:transition-transform group-hover:[&_svg]:translate-x-1">
           Read article <ArrowRight size={16} aria-hidden="true" />
         </Link>
       </div>

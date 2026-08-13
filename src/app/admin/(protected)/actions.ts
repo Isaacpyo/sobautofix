@@ -3,19 +3,34 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { randomUUID } from "node:crypto";
+import { headers } from "next/headers";
 import { z } from "zod";
 import { assertCustomerFacingContent } from "@/lib/content-guard";
 import { contentEntrySchema } from "@/lib/content/schema";
 import { attachmentRequestSchema } from "@/lib/enquiries/schema";
 import { retryEnquiryNotifications } from "@/lib/enquiries/repository";
-import { addInternalNote, linkUnmatchedInboundEmail, markEnquiryThreadRead, sendEnquiryReply, type ReplyState } from "@/lib/enquiries/thread-repository";
+import { addInternalNote, ignoreUnmatchedInboundEmail, linkUnmatchedInboundEmail, markEnquiryThreadRead, sendEnquiryReply, type ReplyState } from "@/lib/enquiries/thread-repository";
 import { createAdminClient, getAdminUser } from "@/lib/supabase/server";
 import { diagnostics, services } from "@/config/site";
 import { articleCategories } from "@/lib/news/article";
+import { formatOpeningHours } from "@/lib/settings/opening-hours";
 import { normalizeRegistration } from "@/lib/vehicle/registration-format";
+import { safeAdminReturnTo } from "@/lib/auth/mfa";
 
 async function requireAdmin() {
-  const auth = await getAdminUser();
+  const auth = await getAdminUser({ requireMfa: false });
+  if (auth?.mfaState === "enrollment_required") redirect("/admin/mfa/enroll");
+  if (auth?.mfaRequired && !auth.mfaVerified) {
+    const referer = (await headers()).get("referer");
+    let returnTo = "/admin";
+    try {
+      const url = referer ? new URL(referer) : null;
+      returnTo = safeAdminReturnTo(url ? `${url.pathname}${url.search}` : null);
+    } catch {
+      returnTo = "/admin";
+    }
+    redirect(`/admin/mfa?returnTo=${encodeURIComponent(returnTo)}&stepUp=1`);
+  }
   const client = createAdminClient();
   if (!auth || !client) throw new Error("Unauthorised");
   return { auth, client };
@@ -207,6 +222,15 @@ export async function linkUnmatchedInboundAction(formData: FormData) {
   revalidateEnquiryThread(enquiryId);
   revalidatePath("/admin/enquiries/unmatched");
   redirect(`/admin/enquiries/${enquiryId}`);
+}
+
+export async function ignoreUnmatchedInboundAction(formData: FormData) {
+  const { auth } = await requireAdmin();
+  await ignoreUnmatchedInboundEmail({ unmatchedId: String(formData.get("unmatchedId") || ""), actorId: auth.user.id });
+  revalidatePath("/admin/enquiries/unmatched");
+  revalidatePath("/admin/enquiries");
+  revalidatePath("/admin/notifications");
+  revalidatePath("/admin");
 }
 
 function revalidateEnquiryThread(enquiryId: string) {
@@ -415,7 +439,7 @@ export async function saveSettings(formData: FormData) {
   const { auth, client } = await requireAdmin();
   const openingHours = Object.fromEntries(
     ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "bankHolidays"]
-      .map((day) => [day, String(formData.get(day) || "").trim()] as const)
+      .map((day) => [day, formatOpeningHours(formData.get(`${day}Open`), formData.get(`${day}Close`))] as const)
       .filter(([, hours]) => hours.length > 0),
   );
   const value = {
