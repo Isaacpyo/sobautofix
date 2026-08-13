@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { requiresMfaChallenge } from "@/lib/auth/mfa";
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -19,7 +20,23 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
+  const pathname = request.nextUrl.pathname;
+  const challengeAllowed = pathname === "/admin/mfa" || pathname.startsWith("/admin/mfa/");
+  const publicAdminRoute = pathname === "/admin/login" || pathname.startsWith("/admin/forgot-password") || pathname.startsWith("/admin/reset-password");
+  if (user && pathname.startsWith("/admin") && !challengeAllowed && !publicAdminRoute) {
+    const { data: assurance } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (assurance && requiresMfaChallenge(assurance)) {
+      const challengeUrl = request.nextUrl.clone();
+      challengeUrl.pathname = "/admin/mfa";
+      const returnTo = `${pathname}${request.nextUrl.search}`;
+      challengeUrl.search = "";
+      challengeUrl.searchParams.set("returnTo", returnTo);
+      const redirectResponse = NextResponse.redirect(challengeUrl);
+      response.cookies.getAll().forEach((cookie) => redirectResponse.cookies.set(cookie));
+      return redirectResponse;
+    }
+  }
   return response;
 }
 

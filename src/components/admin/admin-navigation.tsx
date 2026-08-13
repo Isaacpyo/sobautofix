@@ -16,6 +16,7 @@ import {
   PanelLeftOpen,
   ReceiptText,
   Settings,
+  ShieldCheck,
   Star,
   X,
   type LucideIcon,
@@ -60,6 +61,7 @@ const navigationGroups: Array<{ label: string; links: AdminLink[] }> = [
     links: [
       { href: "/admin/notifications", label: "Notifications", icon: Bell },
       { href: "/admin/settings", label: "Settings", icon: Settings },
+      { href: "/admin/configuration/security", label: "Security", icon: ShieldCheck },
     ],
   },
 ];

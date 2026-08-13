@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { isAllowedAdminEmail } from "@/config/admin";
 import { siteConfig } from "@/config/site";
-import { createClient } from "@/lib/supabase/server";
+import { requiresMfaChallenge } from "@/lib/auth/mfa";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 
 export type LoginState = { message: string };
 
@@ -27,7 +28,12 @@ export async function loginWithPassword(_: LoginState, formData: FormData): Prom
   });
   if (error || !auth.user) return { message: "Sign-in failed. Check your password and try again." };
 
-  const { data: profile } = await client
+  const profileClient = createAdminClient();
+  if (!profileClient) {
+    await client.auth.signOut();
+    return { message: "Supabase authentication is not configured." };
+  }
+  const { data: profile } = await profileClient
     .from("admin_profiles")
     .select("user_id")
     .eq("user_id", auth.user.id)
@@ -37,7 +43,12 @@ export async function loginWithPassword(_: LoginState, formData: FormData): Prom
     return { message: "This account is not authorised for the CMS." };
   }
 
-  redirect("/admin");
+  const { data: assurance, error: assuranceError } = await client.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (assuranceError || !assurance) {
+    await client.auth.signOut();
+    return { message: "We couldn't verify the account security status. Please try again." };
+  }
+  redirect(requiresMfaChallenge(assurance) ? "/admin/mfa" : "/admin");
 }
 
 export async function requestPasswordReset(_: LoginState, formData: FormData): Promise<LoginState> {
@@ -66,7 +77,8 @@ export async function resetAdminPassword(_: LoginState, formData: FormData): Pro
   if (!client) return { message: "Password recovery is not configured." };
   const { data: { user } } = await client.auth.getUser();
   if (!user?.email || !isAllowedAdminEmail(user.email)) return { message: "This reset link is invalid or has expired. Request a new link." };
-  const { data: profile } = await client.from("admin_profiles").select("user_id").eq("user_id", user.id).maybeSingle();
+  const profileClient = createAdminClient();
+  const { data: profile } = profileClient ? await profileClient.from("admin_profiles").select("user_id").eq("user_id", user.id).maybeSingle() : { data: null };
   if (!profile) return { message: "This account is not authorised for the CMS." };
 
   const { error } = await client.auth.updateUser({ password: parsed.data.password });
