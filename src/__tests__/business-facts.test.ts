@@ -30,6 +30,14 @@ describe("approved business facts", () => {
     expect(siteConfig.phone).toBe(siteConfig.whatsapp);
   });
 
+  it("uses the public domain address without exposing the destination mailbox", () => {
+    expect(siteConfig.email).toBe("info@sobautofix.com");
+    expect(localBusinessJsonLd()).toMatchObject({ email: "info@sobautofix.com" });
+    for (const file of publicMarketingFiles) {
+      expect(readFileSync(join(process.cwd(), file), "utf8")).not.toContain("sobautofix@gmail.com");
+    }
+  });
+
   it("uses the approved transparent logo variants", () => {
     const logoComponent = readFileSync(join(process.cwd(), "src/components/layout/logo.tsx"), "utf8");
     const rootLayout = readFileSync(join(process.cwd(), "src/app/layout.tsx"), "utf8");
