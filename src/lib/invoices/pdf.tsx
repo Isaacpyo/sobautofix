@@ -53,13 +53,13 @@ const s = StyleSheet.create({
   registration: { fontFamily: "Helvetica-Bold", fontSize: 14, color: c.navy, letterSpacing: 0.7 }, vehicleName: { marginTop: 7, fontFamily: "Helvetica-Bold", fontSize: 10.2, color: c.navy }, service: { marginTop: 5, color: c.blue, fontFamily: "Helvetica-Bold" },
   issuer: { marginTop: 18, paddingTop: 11, borderTopWidth: 1, borderTopColor: c.border, flexDirection: "row", justifyContent: "space-between" },
   issuerBlock: { width: "48%" }, issuerDetails: { marginTop: 5, color: c.secondary, fontSize: 8.2 },
-  table: { marginTop: 16 }, tableHead: { flexDirection: "row", backgroundColor: c.navy, color: c.white, paddingVertical: 8.5, paddingHorizontal: 9, fontFamily: "Helvetica-Bold", fontSize: 7.6, letterSpacing: 0.35 },
+  table: { marginTop: 21 }, tableHead: { flexDirection: "row", backgroundColor: c.navy, color: c.white, paddingVertical: 8.5, paddingHorizontal: 9, fontFamily: "Helvetica-Bold", fontSize: 7.6, letterSpacing: 0.35 },
   row: { flexDirection: "row", paddingVertical: 9, paddingHorizontal: 9, borderBottomWidth: 1, borderBottomColor: c.border, minHeight: 31 }, rowAlt: { backgroundColor: "#FAFCFE" },
   description: { width: "55%", paddingRight: 9 }, qty: { width: "11%", textAlign: "right" }, unit: { width: "17%", textAlign: "right" }, amount: { width: "17%", textAlign: "right", fontFamily: "Helvetica-Bold" },
-  totalsWrap: { flexDirection: "row", justifyContent: "flex-end", marginTop: 12 }, totals: { width: 232 }, totalRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 4, color: c.secondary },
+  totalsWrap: { flexDirection: "row", justifyContent: "flex-end", marginTop: 17 }, totals: { width: 232 }, totalRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 4, color: c.secondary },
   paidMarker: { marginTop: 7, paddingTop: 8, borderTopWidth: 1, borderTopColor: c.border, color: c.green, fontFamily: "Helvetica-Bold", textAlign: "right", fontSize: 8 },
   grand: { marginTop: 4, paddingTop: 9, borderTopWidth: 2, borderTopColor: c.blue, fontSize: 18, fontFamily: "Helvetica-Bold", color: c.navy },
-  lower: { marginTop: 12, paddingTop: 8, borderTopWidth: 1, borderTopColor: c.border, flexDirection: "row", gap: 25 }, lowerColumn: { flexGrow: 1, flexBasis: 0 },
+  lower: { marginTop: 20, paddingTop: 14, borderTopWidth: 1, borderTopColor: c.border, flexDirection: "row", gap: 25 }, lowerColumn: { flexGrow: 1, flexBasis: 0 },
   paymentStatus: { marginTop: 7, fontFamily: "Helvetica-Bold", color: c.navy, fontSize: 10 }, paymentGrid: { marginTop: 6, flexDirection: "row", gap: 15 }, paymentItem: { flexGrow: 1, flexBasis: 0 },
   notes: { marginTop: 7, color: c.secondary }, watermark: { position: "absolute", top: 330, left: 115, transform: "rotate(-35deg)", fontSize: 60, fontFamily: "Helvetica-Bold", color: c.border, opacity: 0.28 },
   footer: { position: "absolute", top: 786, left: 38, right: 38, paddingTop: 8, borderTopWidth: 1, borderTopColor: c.border, flexDirection: "row", justifyContent: "space-between" },
@@ -101,8 +101,10 @@ export function InvoiceDocument({ invoice }: { invoice: Invoice }) {
         {invoice.invoice_items.map((item, index) => <View key={item.id} style={[s.row, index % 2 ? s.rowAlt : {}]} wrap={false}><Text style={s.description}>{item.description}</Text><Text style={s.qty}>{trimQuantity(String(item.quantity))}</Text><Text style={s.unit}>{formatPence(item.unit_price_pence)}</Text><Text style={s.amount}>{formatPence(item.line_total_pence)}</Text></View>)}
       </View>
 
-      <View style={s.totalsWrap} wrap={false}><View style={s.totals}><Total label="Subtotal" value={invoice.subtotal_pence} />{BigInt(invoice.discount_pence) > 0n && <Total label="Discount" value={-BigInt(invoice.discount_pence)} />}{invoice.status === "paid" && <Text style={s.paidMarker}>PAID / SETTLED</Text>}<View style={[s.totalRow, s.grand]}><Text>TOTAL GBP</Text><Text>{formatPence(invoice.total_pence)}</Text></View></View></View>
-      {(hasPaymentContent(invoice) || invoice.notes) && <View style={s.lower}><PaymentSection invoice={invoice} status={status} />{invoice.notes && <View style={s.lowerColumn}><SectionHeading>Notes</SectionHeading><Text style={s.notes}>{invoice.notes}</Text></View>}</View>}
+      <View wrap={false}>
+        <View style={s.totalsWrap}><View style={s.totals}><Total label="Subtotal" value={invoice.subtotal_pence} />{BigInt(invoice.discount_pence) > 0n && <Total label="Discount" value={-BigInt(invoice.discount_pence)} />}{invoice.status === "paid" && <Text style={s.paidMarker}>PAID / SETTLED</Text>}<View style={[s.totalRow, s.grand]}><Text>TOTAL GBP</Text><Text>{formatPence(invoice.total_pence)}</Text></View></View></View>
+        {(hasPaymentContent(invoice) || invoice.notes) && <View style={s.lower}><PaymentSection invoice={invoice} status={status} />{invoice.notes && <View style={s.lowerColumn}><SectionHeading>Notes</SectionHeading><Text style={s.notes}>{invoice.notes}</Text></View>}</View>}
+      </View>
     </Page>
   </Document>;
 }

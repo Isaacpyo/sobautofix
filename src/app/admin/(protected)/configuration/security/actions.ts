@@ -114,8 +114,7 @@ export async function revokeTrustedDevice(_: { message: string }, formData: Form
   return { message: "Trusted device revoked." };
 }
 
-export async function revokeEveryTrustedDevice(previous: { message: string }, formData: FormData) {
-  void previous;
+export async function revokeEveryTrustedDevice(_: { message: string }, formData: FormData) {
   void formData;
   const admin = await getAdminUser();
   if (!admin?.mfaVerified) return { message: "Verify with your authenticator before revoking trusted devices." };

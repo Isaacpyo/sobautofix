@@ -47,7 +47,7 @@ export function createAdminClient() {
 
 export async function createAdminReadClient() {
   const admin = await getAdminUser({ allowTrustedDevice: true });
-  if (!admin || (!admin.mfaVerified && !admin.trustedDevice)) return null;
+  if (!admin || (admin.mfaRequired && !admin.mfaVerified && !admin.trustedDevice)) return null;
   return createAdminClient();
 }
 

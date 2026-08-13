@@ -79,6 +79,9 @@ export type ImportPlan = {
   summary: Record<ImportDisposition, number>;
 };
 
+export const expectedHighIntentDraftCount = 18;
+export const expectedHighIntentEnhancementCount = 2;
+
 export function loadHighIntentArticleProposals(root = process.cwd()): ArticleProposal[] {
   const directory = resolve(root, "content", "article-imports", "high-intent");
   const proposals = highIntentSourceFiles.flatMap((sourceFile) => parseSourceFile(sourceFile, readFileSync(resolve(directory, sourceFile), "utf8")));
@@ -183,6 +186,17 @@ export function buildArticleImportPlan(proposals: ArticleProposal[], existing: E
       POTENTIAL_CONTENT_COLLISION: items.filter((item) => item.disposition === "POTENTIAL_CONTENT_COLLISION").length,
     },
   };
+}
+
+export function getArticleImportBlockers(plan: ImportPlan) {
+  const blockers = [...plan.linkErrors.map((error) => `INVALID: ${error}`)];
+  if (plan.summary.EXISTING_EXACT_SLUG) blockers.push(`${plan.summary.EXISTING_EXACT_SLUG} existing exact slug collision(s) require review.`);
+  if (plan.summary.POTENTIAL_CONTENT_COLLISION) blockers.push(`${plan.summary.POTENTIAL_CONTENT_COLLISION} potential content collision(s) require review.`);
+  if (plan.summary.NEW_DRAFT !== expectedHighIntentDraftCount) blockers.push(`Expected ${expectedHighIntentDraftCount} new drafts, found ${plan.summary.NEW_DRAFT}.`);
+  if (plan.summary.ENHANCEMENT_CANDIDATE !== expectedHighIntentEnhancementCount) blockers.push(`Expected ${expectedHighIntentEnhancementCount} enhancement candidates, found ${plan.summary.ENHANCEMENT_CANDIDATE}.`);
+  const unmappedEnhancements = plan.items.filter((item) => item.disposition === "ENHANCEMENT_CANDIDATE" && item.matches.length !== 1);
+  if (unmappedEnhancements.length) blockers.push(`Missing or ambiguous canonical enhancement article: ${unmappedEnhancements.map((item) => item.canonicalSlug).join(", ")}.`);
+  return blockers;
 }
 
 export function semanticCollisionReasons(article: ValidatedArticle, existing: ExistingArticle) {
@@ -311,8 +325,8 @@ export async function runArticleImportCli(args: string[], root = process.cwd()) 
 
   let writes = 0;
   if (options.mode === "apply") {
-    if (plan.linkErrors.length) throw new Error(`Import blocked by internal links: ${plan.linkErrors.join("; ")}`);
-    if (plan.summary.POTENTIAL_CONTENT_COLLISION) throw new Error("Import blocked until all potential content collisions are reviewed");
+    const blockers = getArticleImportBlockers(plan);
+    if (blockers.length) throw new Error(`Import blocked: ${blockers.join("; ")}`);
     const drafts = plan.items.filter((item) => item.disposition === "NEW_DRAFT").map((item) => item.article);
     const adminClient = createClient(url, publishableKey, {
       auth: { autoRefreshToken: false, persistSession: false },

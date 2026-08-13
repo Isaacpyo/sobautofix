@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { revokeEveryTrustedDevice, revokeTrustedDevice } from "./actions";
 
 type Device = { id: string; device_label: string; created_at: string; expires_at: string; last_used_at: string; current: boolean };
-
 const formatDate = (value: string) => new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }).format(new Date(value));
 
 export function TrustedDevicesPanel({ devices }: { devices: Device[] }) {

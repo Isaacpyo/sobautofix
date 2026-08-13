@@ -5,6 +5,7 @@ import {
   assertApplySafety,
   buildArticleImportPlan,
   enhancementCanonicalSlugs,
+  getArticleImportBlockers,
   highIntentSourceFiles,
   loadHighIntentArticleProposals,
   parseArticleImportArgs,
@@ -36,6 +37,7 @@ describe("safe high-intent article draft import", () => {
     expect(new Set(proposals.map((proposal) => proposal.sourceSlug)).size).toBe(20);
     expect(plan.summary).toEqual({ NEW_DRAFT: 18, ENHANCEMENT_CANDIDATE: 2, EXISTING_EXACT_SLUG: 0, POTENTIAL_CONTENT_COLLISION: 0 });
     expect(plan.linkErrors).toEqual([]);
+    expect(getArticleImportBlockers(plan)).toEqual([]);
   });
 
   it("validates every proposal with the real CMS schema and forces draft-only state", () => {
@@ -60,6 +62,7 @@ describe("safe high-intent article draft import", () => {
     const candidate = proposals.find((proposal) => proposal.sourceSlug === "car-limp-mode-causes")!;
     const plan = buildArticleImportPlan([candidate], [existing(candidate.sourceSlug)]);
     expect(plan.items[0]).toMatchObject({ disposition: "EXISTING_EXACT_SLUG", canonicalSlug: candidate.sourceSlug });
+    expect(getArticleImportBlockers(plan)).toEqual(expect.arrayContaining([expect.stringMatching(/exact slug collision/i)]));
   });
 
   it("flags a meaningful title or SEO collision for editorial review", () => {

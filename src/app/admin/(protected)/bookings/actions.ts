@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import {
   cancelBooking,
@@ -8,7 +9,6 @@ import {
   rescheduleBooking,
 } from "@/lib/bookings/repository";
 import { createAdminClient, getAdminUser } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 
 const uuidSchema = z.string().uuid();
 

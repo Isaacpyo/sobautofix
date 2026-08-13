@@ -50,7 +50,7 @@ describe("admin trusted devices", () => {
     expect(TRUSTED_DEVICE_COOKIE_OPTIONS).toMatchObject({ httpOnly: true, secure: true, sameSite: "lax", path: "/", maxAge: 604800 });
   });
 
-  it("accepts only a matching, active record for the authenticated user", async () => {
+  it("accepts only a matching, active record for the authenticated user and fails closed", async () => {
     const token = "a".repeat(64);
     const device = await findValidTrustedDevice(clientReturning(await recordFor(token)), "admin-id", token, { now: new Date("2026-08-14T08:00:00Z"), touch: false });
     expect(device?.id).toBe("device-id");
@@ -74,6 +74,15 @@ describe("admin trusted devices", () => {
     expect(read("src", "app", "admin", "(protected)", "actions.ts")).toContain("safeAdminReturnTo");
     expect(read("src", "app", "admin", "mfa", "page.tsx")).toContain('query.stepUp !== "1"');
     expect(read("src", "proxy.ts")).toContain("isSensitiveAdminPath(pathname)");
+    expect(read("src", "app", "admin", "(protected)", "invoices", "actions.ts")).toContain("requireFreshAdminSession");
+    expect(read("src", "app", "admin", "(protected)", "news", "import-actions.ts")).toContain("requireFreshAdminSession");
+  });
+
+  it("revokes trust before password and factor changes", () => {
+    const loginActions = read("src", "app", "admin", "login", "actions.ts");
+    expect(loginActions.indexOf("revokeAllTrustedDevices(user.id")).toBeLessThan(loginActions.indexOf("auth.updateUser"));
+    const securityActions = read("src", "app", "admin", "(protected)", "configuration", "security", "actions.ts");
+    expect(securityActions.indexOf('"mfa_trusted_devices_revoked_factor_removed"')).toBeLessThan(securityActions.lastIndexOf("auth.mfa.unenroll"));
   });
 
   it("stores only token hashes in a server-only table", () => {
