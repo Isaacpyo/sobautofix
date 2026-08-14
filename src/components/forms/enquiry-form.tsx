@@ -36,7 +36,7 @@ const eventForType: Partial<Record<EnquiryType, Parameters<typeof track>[0]>> = 
   diagnostic: "quote_submitted",
 };
 
-export function EnquiryForm({ type, title = "Tell us what you need", defaultService, askLocation = false, allowUploads = true }: { type: EnquiryType; title?: string; defaultService?: string; askLocation?: boolean; allowUploads?: boolean }) {
+export function EnquiryForm({ type, title = "Tell us what you need", defaultService, askLocation = false, allowUploads = true, compact = false }: { type: EnquiryType; title?: string; defaultService?: string; askLocation?: boolean; allowUploads?: boolean; compact?: boolean }) {
   const { session } = useVehicleSession();
   const [turnstileToken, setTurnstileToken] = useState("");
   const [files, setFiles] = useState<File[]>([]);
@@ -83,32 +83,32 @@ export function EnquiryForm({ type, title = "Tell us what you need", defaultServ
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="rounded-3xl border border-[#E4EAF0] bg-white p-6 shadow-xl sm:p-8" noValidate>
-      <h2 className="text-3xl font-extrabold text-[#071127]">{title}</h2>
+    <form onSubmit={handleSubmit(onSubmit)} className={compact ? "[&>p]:hidden bg-white" : "rounded-3xl border border-[#E4EAF0] bg-white p-6 shadow-xl sm:p-8"} noValidate>
+      {title && <h2 className={compact ? "text-xl font-extrabold text-[#071127]" : "text-3xl font-extrabold text-[#071127]"}>{title}</h2>}
       <p className="mt-2 text-sm leading-6 text-[#586575]">We’ll use these details only to respond to this request.</p>
-      <div className="mt-6"><VehicleSummary /></div>
-      <div className="mt-6 grid gap-5 sm:grid-cols-2">
-        <Field label="Name" error={errors.name?.message}><input {...register("name")} autoComplete="name" /></Field>
-        <Field label="Phone" error={errors.phone?.message}><input {...register("phone")} type="tel" autoComplete="tel" /></Field>
-        <Field label="Email (optional)" error={errors.email?.message}><input {...register("email")} type="email" autoComplete="email" /></Field>
-        <Field label="Preferred contact" error={errors.preferredContact?.message}><select {...register("preferredContact")}><option value="phone">Phone</option><option value="whatsapp">WhatsApp</option><option value="email">Email</option></select></Field>
-        {askLocation && <Field label="Current postcode" error={errors.locationPostcode?.message}><input {...register("locationPostcode")} autoComplete="postal-code" /></Field>}
-        {askLocation && <Field label="Can the vehicle be driven?" error={errors.driveable?.message}><select {...register("driveable")} defaultValue="unknown"><option value="unknown">Not sure</option><option value="yes">Yes</option><option value="no">No</option></select></Field>}
+      <div className={compact ? "mt-3" : "mt-6"}><VehicleSummary /></div>
+      <div className={compact ? "mt-3 grid grid-cols-2 gap-3" : "mt-6 grid gap-5 sm:grid-cols-2"}>
+        <Field compact={compact} label="Name" error={errors.name?.message}><input {...register("name")} autoComplete="name" /></Field>
+        <Field compact={compact} label="Phone" error={errors.phone?.message}><input {...register("phone")} type="tel" autoComplete="tel" /></Field>
+        <Field compact={compact} label="Email (optional)" error={errors.email?.message}><input {...register("email")} type="email" autoComplete="email" /></Field>
+        <Field compact={compact} label="Preferred contact" error={errors.preferredContact?.message}><select {...register("preferredContact")}><option value="phone">Phone</option><option value="whatsapp">WhatsApp</option><option value="email">Email</option></select></Field>
+        {askLocation && <Field compact={compact} label="Current postcode" error={errors.locationPostcode?.message}><input {...register("locationPostcode")} autoComplete="postal-code" /></Field>}
+        {askLocation && <Field compact={compact} label="Can the vehicle be driven?" error={errors.driveable?.message}><select {...register("driveable")} defaultValue="unknown"><option value="unknown">Not sure</option><option value="yes">Yes</option><option value="no">No</option></select></Field>}
       </div>
-      <div className="mt-5"><Field label="What is happening?" error={errors.description?.message}><textarea {...register("description")} rows={5} placeholder="Describe the symptoms, warning lights or work you need." /></Field></div>
+      <div className={compact ? "mt-3" : "mt-5"}><Field compact={compact} label="What is happening?" error={errors.description?.message}><textarea {...register("description")} rows={compact ? 3 : 5} placeholder="Describe the symptoms, warning lights or work you need." /></Field></div>
       {allowUploads && <div className="mt-5"><label className="block text-sm font-bold text-[#071127]">Photos (optional)</label><input className="mt-2 block w-full rounded-xl border border-[#D7E0E9] p-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-[#EAF3FF] file:px-4 file:py-2 file:font-bold file:text-[#1446A5]" type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(event) => setFiles(Array.from(event.target.files || []).slice(0, 5))} /><p className="mt-1 text-xs text-[#667586]">Up to five JPG, PNG or WebP images, 8 MB each.</p></div>}
-      <label className="mt-5 flex items-start gap-3 text-sm leading-6 text-[#586575]"><input {...register("privacyAccepted")} type="checkbox" className="mt-1 h-4 w-4 accent-[#1974E2]" /> <span>I have read the <a className="font-bold text-[#1974E2] underline" href="/privacy" target="_blank">privacy notice</a> and agree to be contacted about this request.</span></label>
+      <label className={`${compact ? "mt-3 gap-2 text-xs leading-5" : "mt-5 gap-3 text-sm leading-6"} flex items-start text-[#586575]`}><input {...register("privacyAccepted")} type="checkbox" className="mt-1 h-4 w-4 accent-[#1974E2]" /> <span>I have read the <a className="font-bold text-[#1974E2] underline" href="/privacy" target="_blank">privacy notice</a> and agree to be contacted about this request.</span></label>
       {errors.privacyAccepted && <p className="mt-2 text-sm text-red-700">{errors.privacyAccepted.message}</p>}
-      <div className="mt-5"><TurnstileField onToken={handleToken} /></div>
+      <div className={compact ? "mt-3" : "mt-5"}><TurnstileField onToken={handleToken} /></div>
       {result && <div role="status" className={result.success ? "mt-5 flex gap-3 rounded-xl bg-green-50 p-4 text-sm text-green-800" : "mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-800"}>{result.success && <CheckCircle2 className="shrink-0" size={19} />}{result.message}</div>}
       <Button type="submit" disabled={isSubmitting} className="mt-6 w-full disabled:cursor-wait disabled:opacity-70">{isSubmitting ? <><LoaderCircle className="animate-spin" size={18} /> Sending…</> : <><Send size={18} /> Send request</>}</Button>
     </form>
   );
 }
 
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactElement<{ className?: string; "aria-invalid"?: boolean }>; }) {
-  const element = cloneElement(children, { "aria-invalid": Boolean(error), className: "mt-2 block min-h-12 w-full rounded-xl border border-[#D7E0E9] bg-white px-4 py-3 text-[#071127] outline-none transition focus:border-[#168BFF] focus:ring-4 focus:ring-[#168BFF]/10" });
-  return <label className="block text-sm font-bold text-[#071127]">{label}{element}{error && <span className="mt-1 block font-normal text-red-700">{error}</span>}</label>;
+function Field({ label, error, children, compact = false }: { label: string; error?: string; children: React.ReactElement<{ className?: string; "aria-invalid"?: boolean }>; compact?: boolean }) {
+  const element = cloneElement(children, { "aria-invalid": Boolean(error), className: `${compact ? "mt-1 min-h-10 px-3 py-2 text-sm" : "mt-2 min-h-12 px-4 py-3"} block w-full rounded-xl border border-[#D7E0E9] bg-white text-[#071127] outline-none transition focus:border-[#168BFF] focus:ring-4 focus:ring-[#168BFF]/10` });
+  return <label className={`${compact ? "text-xs" : "text-sm"} block font-bold text-[#071127]`}>{label}{element}{error && <span className="mt-1 block font-normal text-red-700">{error}</span>}</label>;
 }
 
 async function uploadAttachments(enquiryId: string, uploadToken: string, files: File[]) {

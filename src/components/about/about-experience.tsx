@@ -1,13 +1,14 @@
 "use client";
 
-import { Activity, ArrowDown, ArrowRight, MapPin, Phone } from "lucide-react";
+import { ArrowDown, ArrowRight, MapPin, Phone } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { type CSSProperties, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import heroImage from "../../../assets/sobautofix-pics (3).png";
 import workshopImage from "../../../assets/sobautofix-pics (10).png";
 import { contactLinks, siteConfig } from "@/config/site";
 import styles from "./about-experience.module.css";
+import { HomeCoverageMap } from "@/components/marketing/home-coverage-map";
 
 const diagnosisSteps = [
   {
@@ -99,7 +100,6 @@ export function AboutExperience() {
   const [activePrinciple, setActivePrinciple] = useState(0);
   const [years, setYears] = useState<number>(siteConfig.yearsInBusiness);
   const [hasScrolled, setHasScrolled] = useState(false);
-  const [splitFocus, setSplitFocus] = useState<"mobile" | "workshop" | null>(null);
 
   useEffect(() => {
     const page = pageRef.current;
@@ -214,7 +214,6 @@ export function AboutExperience() {
             <p className={styles.heroEyebrow}><span />Who we are</p>
             <h1 id="about-title" className={styles.heroTitle}>Diagnosis-led<br /><span>automotive care.</span></h1>
             <p className={styles.heroBody}>Professional vehicle diagnostics, electrical fault finding and practical repair support across Doncaster and surrounding areas.</p>
-            <p className={styles.brandStatement}><Activity aria-hidden="true" size={17} />Understand the fault first. Repair second.</p>
             <div className={styles.heroActions}>
               <Link className={styles.primaryButton} href="/book">Book an appointment <RevealArrow /></Link>
               <Link className={styles.secondaryButton} href="/services">Explore our services <RevealArrow /></Link>
@@ -303,55 +302,6 @@ export function AboutExperience() {
         </div>
       </section>
 
-      <section className={styles.splitSection} aria-labelledby="split-title">
-        <div className={styles.splitHeading} data-reveal="up">
-          <p className={styles.eyebrowLight}>The right setting for the work</p>
-          <h2 id="split-title">Mobile when it works.<br />Workshop when it matters.</h2>
-        </div>
-        <div className={styles.splitGrid} data-focus={splitFocus ?? "none"}>
-          <article
-            className={styles.splitPanel}
-            tabIndex={0}
-            onMouseEnter={() => setSplitFocus("mobile")}
-            onMouseLeave={() => setSplitFocus(null)}
-            onFocus={() => setSplitFocus("mobile")}
-            onBlur={() => setSplitFocus(null)}
-          >
-            <span className={styles.splitNumber}>01 / MOBILE</span>
-            <h3>At the vehicle</h3>
-            <p>Suitable diagnostics and practical work where the vehicle is located.</p>
-            <ul><li>Diagnostics</li><li>Electrical faults</li><li>Battery / charging</li><li>No-start investigation</li><li>Inspections</li></ul>
-            <Link href="/mobile-mechanic">Explore mobile support <RevealArrow /></Link>
-          </article>
-          <article
-            className={`${styles.splitPanel} ${styles.splitPanelWorkshop}`}
-            tabIndex={0}
-            onMouseEnter={() => setSplitFocus("workshop")}
-            onMouseLeave={() => setSplitFocus(null)}
-            onFocus={() => setSplitFocus("workshop")}
-            onBlur={() => setSplitFocus(null)}
-          >
-            <span className={styles.splitNumber}>02 / WORKSHOP</span>
-            <h3>With full access</h3>
-            <p>A controlled setting for mechanical work, component access and longer repairs.</p>
-            <ul><li>Mechanical repair</li><li>Component access</li><li>Lifting equipment</li><li>Longer repairs</li><li>Controlled environment</li></ul>
-            <Link href="/services/repairs-maintenance">Explore workshop services <RevealArrow /></Link>
-          </article>
-        </div>
-      </section>
-
-      <section className={styles.flowSection} aria-labelledby="flow-title">
-        <div className={styles.flowHeader} data-reveal="up">
-          <p className={styles.eyebrow}>Where the problem leads us</p>
-          <h2 id="flow-title">Follow the signal. Find the cause.</h2>
-        </div>
-        <ol className={styles.flowRail} data-reveal="up">
-          {["Symptom", "Data", "Test", "Cause", "Repair"].map((item, index) => (
-            <li key={item} style={{ "--flow-index": index } as CSSProperties}><span>0{index + 1}</span><strong>{item}</strong><i aria-hidden="true" /></li>
-          ))}
-        </ol>
-      </section>
-
       <div className={styles.marquee} role="region" aria-label={`Service capabilities: ${services.join(", ")}`} tabIndex={0}>
         <div className={styles.marqueeTrack} aria-hidden="true">
           {[...services, ...services].map((service, index) => <span key={`${service}-${index}`}>{service}<i>•</i></span>)}
@@ -403,12 +353,10 @@ export function AboutExperience() {
 
       <section className={styles.localSection} aria-labelledby="local-title">
         <div className={styles.localGrid} aria-hidden="true" />
-        <div className={styles.localPin} aria-hidden="true"><span /><i /><b /></div>
+        <div className={styles.localMap}><HomeCoverageMap doncasterOnly variant="dark" /></div>
         <div className={styles.localContent} data-reveal="left">
           <p className={styles.eyebrowLight}><MapPin aria-hidden="true" size={14} />Local identity</p>
           <h2 id="local-title"><span>Based in</span>Doncaster.</h2>
-          <p>Supporting drivers across Doncaster and surrounding South Yorkshire areas through suitable workshop and mobile appointments.</p>
-          <Link href="/areas/doncaster">Explore our local coverage <RevealArrow /></Link>
         </div>
       </section>
 

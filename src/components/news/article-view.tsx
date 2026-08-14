@@ -36,7 +36,7 @@ export async function ArticleView({ article, related = [], preview = false }: { 
       {article.cover && (
         <Container className="max-w-6xl py-8 sm:py-12">
           <div className="relative aspect-[16/8] overflow-hidden rounded-2xl bg-[#E4EAF0] sm:rounded-3xl">
-            <Image src={article.cover.url} alt={article.cover.alt} fill priority sizes="(max-width: 1200px) 100vw, 1150px" className="object-cover" />
+            <Image src={article.cover.url} alt={article.cover.alt} fill preload sizes="(max-width: 1200px) 100vw, 1150px" className="object-cover" />
           </div>
         </Container>
       )}

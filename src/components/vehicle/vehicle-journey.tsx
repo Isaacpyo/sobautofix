@@ -42,7 +42,7 @@ const serviceOptions: ServiceOption[] = [
 
 type State = "input" | "loading" | "confirm" | "problem" | "manual";
 
-export function VehicleJourney({ compact = false, source = "website", heading = "Enter your registration" }: { compact?: boolean; source?: string; heading?: string }) {
+export function VehicleJourney({ compact = false, source = "website", heading = "Enter your registration", lightSurface = false }: { compact?: boolean; source?: string; heading?: string; lightSurface?: boolean }) {
   const { session, updateSession, clearVehicle } = useVehicleSession();
   const [registration, setRegistration] = useState("");
   const [state, setState] = useState<State | null>(null);
@@ -94,7 +94,9 @@ export function VehicleJourney({ compact = false, source = "website", heading = 
     track("service_selected", { source, selection: option.value });
   }
 
-  const shell = compact ? "rounded-2xl border border-[#1974E2]/35 bg-[#071127]/90 p-5 shadow-2xl" : "rounded-3xl border border-[#1974E2]/30 bg-[#071127] p-6 shadow-2xl sm:p-8";
+  const shell = compact
+    ? `rounded-2xl border p-5 shadow-2xl ${lightSurface ? "border-[#67B9FF]/30 bg-[#0B2A50]/88 backdrop-blur-xl" : "border-[#1974E2]/35 bg-[#071127]/90"}`
+    : "rounded-3xl border border-[#1974E2]/30 bg-[#071127] p-6 shadow-2xl sm:p-8";
   return (
     <div className="space-y-4">
       {imageId && <ContextualServiceImage id={imageId} className="min-h-56 shadow-none sm:min-h-64" />}

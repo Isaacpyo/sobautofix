@@ -15,11 +15,10 @@
 
 .hero {
   position: relative;
-  min-height: calc(100svh - 4.5rem);
+  min-height: 0;
   overflow: hidden;
   isolation: isolate;
-  display: grid;
-  align-items: center;
+  display: block;
   background: var(--night);
   color: white;
 }
@@ -87,7 +86,7 @@
 .heroInner {
   position: relative;
   width: min(100% - 2.5rem, 1320px);
-  padding-block: clamp(6rem, 10vh, 8.5rem) 8rem;
+  padding-block: clamp(2.75rem, 5vh, 4rem) 5rem;
 }
 
 .heroCopy {
@@ -128,7 +127,7 @@
 .heroTitle {
   max-width: 13ch;
   margin: 0;
-  font-size: clamp(4.25rem, 8.3vw, 8.4rem);
+  font-size: clamp(3.9rem, 7.3vw, 7.4rem);
   font-weight: 700;
   letter-spacing: -.045em;
   line-height: .83;
@@ -188,13 +187,12 @@
   padding: .85rem 1.25rem;
   font-size: .86rem;
   font-weight: 850;
-  transition: transform 220ms ease, background 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+  transition: transform 220ms ease, background 220ms ease, border-color 220ms ease;
 }
 
 .primaryButton {
   background: var(--blue);
   color: white;
-  box-shadow: 0 16px 40px rgba(25, 116, 226, .25);
 }
 
 .secondaryButton {
@@ -222,7 +220,6 @@
 .primaryButton:hover,
 .primaryButton:focus-visible {
   background: var(--electric);
-  box-shadow: 0 20px 50px rgba(22, 139, 255, .34);
 }
 
 .secondaryButton:hover,
@@ -773,6 +770,8 @@
 .localPin b { position: absolute; inset: 0; border: 1px solid rgba(103, 185, 255, .22); border-radius: 50%; animation: pinPulse 3s ease-out infinite; }
 .localPin i { inset: 16%; animation-delay: -1s; }
 .localPin b { inset: 40%; border: 0; background: var(--electric); box-shadow: 0 0 45px rgba(22, 139, 255, .65); animation: none; }
+.localMap { position: absolute; z-index: 1; top: 50%; right: clamp(1.25rem, 7vw, 8rem); width: min(40vw, 33rem); opacity: .9; transform: translateY(-50%); }
+.localContent { position: relative; z-index: 2; }
 .localContent { width: min(100% - 2.5rem, 1240px); }
 .localContent h2 { color: white; font-size: clamp(5rem, 11vw, 11rem); line-height: .75; }
 .localContent h2 span { display: block; color: var(--ice); font-size: .34em; letter-spacing: .04em; }
@@ -784,7 +783,7 @@
   isolation: isolate;
   overflow: hidden;
   background: var(--night);
-  padding: clamp(7rem, 12vw, 12rem) 0;
+  padding: clamp(4rem, 7vw, 6.5rem) 0;
   color: white;
 }
 
@@ -792,7 +791,7 @@
 .ctaGrid { opacity: .7; mask-image: radial-gradient(circle, #000, transparent 72%); }
 .ctaContent { text-align: center; }
 .ctaContent .eyebrowLight { justify-content: center; }
-.ctaContent h2 { max-width: 10ch; margin-inline: auto; color: white; font-size: clamp(4rem, 9vw, 9rem); }
+.ctaContent h2 { max-width: 12ch; margin-inline: auto; color: white; font-size: clamp(3rem, 5.5vw, 5.75rem); }
 .ctaContent > p:not(.eyebrowLight) { max-width: 39rem; margin: 1.5rem auto 0; color: #c2cfdd; font-size: 1.08rem; line-height: 1.75; }
 .ctaActions { justify-content: center; }
 .callLink { display: inline-flex; min-height: 3.35rem; align-items: center; gap: .55rem; padding: .85rem .65rem; color: white; font-size: .82rem; font-weight: 800; }
@@ -810,10 +809,6 @@
   .principlesLayout { grid-template-columns: minmax(20rem, .85fr) minmax(26rem, 1.15fr); }
   .processIntro,
   .principlesIntro { position: sticky; top: 10rem; }
-}
-
-@media (min-width: 1280px) {
-  .hero { min-height: calc(100svh - 5rem); }
 }
 
 @media (max-width: 899px) {
@@ -834,13 +829,13 @@
   .capabilityHeading > p:last-child { max-width: 34rem; }
   .capabilityLarge,
   .capabilitySmall { grid-column: span 6; }
-  .localPin { left: 79%; width: 48vw; opacity: .75; }
+  .localMap { right: 2rem; width: min(46vw, 28rem); opacity: .9; }
 }
 
 @media (max-width: 700px) {
-  .hero { min-height: calc(100svh - 4.5rem); align-items: start; }
-  .heroInner { padding-top: 5rem; }
-  .heroTitle { font-size: clamp(3.8rem, 17vw, 5.8rem); }
+  .hero { min-height: 0; align-items: start; }
+  .heroInner { padding-top: 2.5rem; }
+  .heroTitle { font-size: clamp(2.9rem, 12vw, 4.2rem); }
   .heroTitle span { -webkit-text-stroke-width: 1px; }
   .heroActions { display: grid; grid-template-columns: 1fr; }
   .heroActions a { width: 100%; }
@@ -851,7 +846,7 @@
   .philosophyInner h2 { font-size: clamp(3.5rem, 17vw, 6.4rem); line-height: .82; }
   .philosophyInner .accentLine { margin: 1rem 0 0; }
   .processIntro h2,
-  .principlesIntro h2 { max-width: 9ch; }
+  .principlesIntro h2 { max-width: none; }
   .processSteps li { grid-template-columns: 4.3rem 1fr; align-items: start; }
   .processSteps h3 { font-size: 2.3rem; }
   .trustStrip { grid-template-columns: 1fr 1fr; }
@@ -874,10 +869,12 @@
   .capabilityGrid { grid-template-columns: 1fr; }
   .capabilityLarge,
   .capabilitySmall { grid-column: auto; }
-  .capabilityCard { min-height: 20rem; }
-  .localSection { min-height: 40rem; }
-  .localGrid { left: 34%; }
-  .localContent h2 { font-size: clamp(4.5rem, 23vw, 7rem); }
+  .capabilityCard { min-height: 14.5rem; padding: 1.35rem; }
+  .localSection { display: flex; min-height: 0; flex-direction: column; align-items: stretch; padding: 3.5rem 0 2.75rem; }
+  .localContent { order: 1; }
+  .localMap { position: relative; z-index: 2; top: auto; right: auto; order: 2; width: min(100% - 2.5rem, 32rem); margin: 2.25rem auto 0; opacity: 1; transform: none; }
+  .localGrid { inset: 0; left: 0; opacity: .32; transform: none; }
+  .localContent h2 { font-size: clamp(3.55rem, 15vw, 5rem); white-space: nowrap; }
   .ctaActions { display: grid; grid-template-columns: 1fr; }
   .ctaActions a { width: 100%; }
 }
@@ -894,7 +891,7 @@
   .ctaContent { width: min(100% - 2rem, 1240px); }
   .splitSection,
   .capabilitiesSection { padding-inline: 1rem; }
-  .heroTitle { font-size: 3.55rem; }
+  .heroTitle { font-size: 2.9rem; }
   .heroBody { font-size: 1rem; }
   .storyCopy h2,
   .processIntro h2,

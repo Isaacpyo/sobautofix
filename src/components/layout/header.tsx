@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ButtonLink } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
+import { SocialLinks } from "@/components/marketing/social-links";
 import { diagnostics, services, siteConfig } from "@/config/site";
 import { linksForSettings, type SiteSettings } from "@/config/settings";
 import type { PublicNavigationItem } from "@/lib/navigation/repository";
@@ -122,7 +123,7 @@ export function Header({ settings = siteConfig }: HeaderProps) {
         </button>
 
         <div className="mr-auto flex min-w-0 items-center xl:hidden">
-          <Logo inverse compact />
+          <Logo inverse imageClassName="h-[3.75rem] w-auto object-contain" />
         </div>
 
         <div className="mr-auto hidden w-[7.5rem] shrink-0 xl:block">
@@ -240,7 +241,6 @@ export function Header({ settings = siteConfig }: HeaderProps) {
           )}
         >
           <div className="px-5 py-7 sm:px-7">
-            <div className="mb-5 border-b border-white/10 pb-5"><Logo inverse compact /></div>
             <nav className="grid" aria-label="Mobile navigation">
               <MobileAccordion
                 id="mobile-who-we-are"
@@ -306,6 +306,10 @@ export function Header({ settings = siteConfig }: HeaderProps) {
               <Phone size={17} className="text-[#67B9FF]" />
               {settings.phone}
             </a>
+            <div className="mt-5 border-t border-white/10 pt-5">
+              <p className="text-xs font-extrabold tracking-[.14em] text-[#67B9FF] uppercase">Follow SOB Autofix</p>
+              <SocialLinks socials={settings.socials} className="mt-3 text-[#DCE6F2]" />
+            </div>
           </div>
         </div>
       </div>
@@ -455,9 +459,6 @@ function MobileLinkGroup({
 }) {
   return (
     <div>
-      <p className="mb-1 text-[0.65rem] font-extrabold tracking-[0.14em] text-[#67B9FF] uppercase">
-        {group.title}
-      </p>
       <div className="grid">
         {group.links.map((item) => (
           <Link

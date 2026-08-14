@@ -11,9 +11,9 @@ export const metadata = createMetadata(
 
 export default function BookPage() {
   return (
-    <section className="hero-grid min-h-[calc(100vh-4.5rem)] overflow-hidden py-6 text-white sm:py-10 lg:min-h-[calc(100vh-5rem)] lg:py-14" data-motion="off">
+    <section className="hero-grid min-h-[calc(100vh-4.5rem)] overflow-hidden py-6 text-white max-lg:!bg-none max-lg:!bg-white max-lg:!text-[#202A36] sm:py-10 lg:min-h-[calc(100vh-5rem)] lg:py-14" data-motion="off">
       <Container className="grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,0.58fr)_minmax(36rem,1.2fr)] lg:gap-10 xl:gap-14">
-        <div className="min-w-0 lg:sticky lg:top-28 lg:pt-8">
+        <div className="hidden min-w-0 lg:sticky lg:block lg:top-28 lg:pt-8">
           <Eyebrow className="mb-2 text-[#67B9FF] sm:mb-3">Online vehicle booking</Eyebrow>
           <h1 className="text-balance text-4xl leading-[0.95] font-extrabold sm:text-5xl lg:text-6xl xl:text-7xl">
             Book your vehicle in

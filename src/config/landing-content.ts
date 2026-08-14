@@ -36,6 +36,7 @@ export const topLevelContent: Record<string, LandingContent> = {
       { title: "Mobile diagnostics", body: "System scanning and targeted checks where the vehicle is located." },
       { title: "Starting and charging", body: "Battery, alternator, drain and starting-circuit assessment." },
       { title: "Appropriate repairs", body: "Suitable mobile work after the underlying issue has been assessed." },
+      { title: "Coverage areas", body: "Workshop and mobile availability is confirmed using the service, vehicle condition and postcode." },
     ],
     process: ["Identify the vehicle", "Share the postcode and symptoms", "Confirm whether it can be driven", "We review the appropriate appointment route"],
     enquiryType: "mobile",

@@ -49,11 +49,6 @@ main[data-public-site][data-motion-ready="true"] [data-motion-item="true"][data-
   transform: translate3d(0, 0, 0);
 }
 
-main[data-public-site] section > div {
-  position: relative;
-  z-index: 1;
-}
-
 .deferred-section {
   content-visibility: auto;
   contain-intrinsic-size: auto 800px;

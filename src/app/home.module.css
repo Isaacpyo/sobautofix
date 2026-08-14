@@ -6,3 +6,80 @@
 .heroImage{animation:none}
 .heroTitle{animation:none!important}
 @keyframes hero-intro{from{transform:translateY(20px)}to{transform:none}}
+
+.heroImage {
+  filter: blur(2px);
+  transform: scale(1.025);
+}
+
+.heroOverlay {
+  background:
+    linear-gradient(90deg, rgba(3, 7, 18, .97) 0%, rgba(7, 17, 39, .86) 48%, rgba(7, 17, 39, .38) 100%),
+    linear-gradient(0deg, rgba(3, 7, 18, .7), transparent 48%);
+}
+
+@media (max-width: 767px) {
+  .heroImage {
+    opacity: .12 !important;
+  }
+
+  .heroOverlay {
+    background: rgba(3, 7, 18, .985);
+  }
+
+  .heroGrid {
+    display: none;
+  }
+}
+
+/* Compact homepage service tiles. */
+.servicesGrid {
+  margin-top: 2rem;
+}
+
+.servicesGrid > a:nth-child(1),
+.servicesGrid > a:nth-child(4) {
+  min-height: 10rem;
+}
+
+@media (max-width: 767px) {
+  .servicesGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .diagnosticList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .servicesGrid > a:nth-child(1),
+  .servicesGrid > a:nth-child(4) {
+    min-height: 11.5rem;
+  }
+
+  .stockGrid {
+    gap: 1.25rem;
+    border: 0;
+    background: transparent;
+  }
+
+  .stockCard {
+    overflow: hidden;
+    border: 1px solid #E4EAF0;
+    border-radius: 1.75rem .35rem 1.75rem .35rem;
+    box-shadow: 0 6px 18px rgba(7, 17, 39, .06);
+  }
+
+  .stockBody {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .stockBody > div {
+    min-width: 0;
+  }
+
+  .stockBody strong {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+}
