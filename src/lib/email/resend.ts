@@ -65,7 +65,7 @@ export function getResendConfig() {
 
 export function getInvoiceResendConfig() {
   const base = getBaseResendConfig();
-  if (!base || base.replyTo !== approvedInvoiceReplyTo) return null;
+  if (!base) return null;
   return { ...base, replyTo: approvedInvoiceReplyTo };
 }
 

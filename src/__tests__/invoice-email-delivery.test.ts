@@ -50,9 +50,12 @@ describe("invoice email delivery", () => {
 
     expect(dependencies.sendEmail).toHaveBeenCalledWith(expect.objectContaining({
       to: "customer@example.com",
-      replyTo: approvedInvoiceReplyTo,
+      replyTo: "info@sobautofix.com",
       idempotencyKey: databaseIdempotencyKey(logicalSendId),
       tags: [{ name: "invoice_send_id", value: logicalSendId }],
+    }));
+    expect(dependencies.sendEmail).not.toHaveBeenCalledWith(expect.objectContaining({
+      replyTo: "sobautofix@gmail.com",
     }));
   });
 
@@ -125,6 +128,8 @@ describe("invoice email delivery", () => {
     expect(providerMessages[0]?.idempotencyKey).toBe(databaseIdempotencyKey(logicalSendId));
     expect(providerMessages[1]?.idempotencyKey).toBe(databaseIdempotencyKey(copySendId));
     expect(providerMessages[0]?.idempotencyKey).not.toBe(providerMessages[1]?.idempotencyKey);
+    expect(providerMessages[0]?.replyTo).toBe("info@sobautofix.com");
+    expect(providerMessages[1]?.replyTo).toBe("info@sobautofix.com");
   });
 
   it("records a conclusive provider rejection as failed", async () => {
@@ -255,17 +260,15 @@ describe("invoice email configuration", () => {
     restoreEnvironment(originalEnvironment);
   });
 
-  it("requires the exact approved Reply-To for invoices without changing enquiry configuration", () => {
+  it("pins invoices to the approved Reply-To without changing enquiry configuration", () => {
     process.env.RESEND_API_KEY = "re_test";
     process.env.RESEND_FROM_EMAIL = productionEmailSender;
     process.env.RESEND_REPLY_TO = "another-valid-address@example.com";
     process.env.ENQUIRY_NOTIFICATION_EMAIL = "notifications@example.com";
 
     expect(getResendConfig()?.replyTo).toBe("another-valid-address@example.com");
-    expect(getInvoiceResendConfig()).toBeNull();
-
-    process.env.RESEND_REPLY_TO = approvedInvoiceReplyTo;
     expect(getInvoiceResendConfig()?.replyTo).toBe(approvedInvoiceReplyTo);
+    expect(getInvoiceResendConfig()?.replyTo).toBe("info@sobautofix.com");
   });
 });
 

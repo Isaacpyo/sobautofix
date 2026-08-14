@@ -24,7 +24,7 @@ No application calls were found for sign-up confirmation, invite-user, magic-lin
 - Internal enquiry Reply-To: validated customer email when supplied, otherwise configured approved business address.
 - Staff reply Reply-To: existing opaque `enquiry+<token>@reply.sobautofix.com` address when inbound configuration is available; existing business fallback otherwise.
 - Booking Reply-To: configured approved business address.
-- Invoice Reply-To: pinned to `sobautofix@gmail.com` and rejected if the configured identity differs.
+- Invoice Reply-To: pinned to `info@sobautofix.com` independently of the application-wide fallback.
 - Thread subjects, `In-Reply-To`, `References`, provider message IDs, reply tokens, and Cloudflare routing are unchanged.
 - Booking database reservation keys and provider idempotency keys are unchanged.
 - Invoice logical send IDs, claims, revision checks, attachment bytes/hash, retry reconciliation, and Send Copy semantics are unchanged. The payload hash now also covers final HTML.

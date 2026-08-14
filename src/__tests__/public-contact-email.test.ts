@@ -9,7 +9,7 @@ describe("public contact email separation", () => {
     expect(siteConfig.email).toBe("info@sobautofix.com");
     expect(contactLinks.email).toBe("mailto:info@sobautofix.com");
     expect(productionEmailSender).toBe("SOB Autofix <notifications@sobautofix.com>");
-    expect(approvedInvoiceReplyTo).toBe("sobautofix@gmail.com");
+    expect(approvedInvoiceReplyTo).toBe("info@sobautofix.com");
   });
 
   it("updates production public settings conditionally and preserves invoice history", () => {
