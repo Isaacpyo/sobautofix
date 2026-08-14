@@ -1,12 +1,11 @@
 import { ArrowRight, CircuitBoard, MapPin, Wrench } from "lucide-react";
 import Link from "next/link";
-import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { PageHero } from "@/components/marketing/page-hero";
-import { PremiumCta, SectionIntro } from "@/components/marketing/experience";
+import { ServiceRegistrationCta } from "@/components/marketing/service-registration-cta";
+import { SectionIntro } from "@/components/marketing/experience";
 import { ServiceCategoryNavigation } from "@/components/services/category-hub";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Container, Eyebrow } from "@/components/ui/container";
-import { VehicleJourney } from "@/components/vehicle/vehicle-journey";
 import { createMetadata, serviceJsonLd } from "@/lib/seo";
 
 export const metadata = createMetadata(
@@ -27,13 +26,12 @@ export default function ServicesPage() {
       <JsonLd value={categorySchema} />
       <PageHero
         eyebrow="SOB Autofix services"
-        title="Vehicle Services in Doncaster"
+        title="Vehicle Services"
         body="Start with the vehicle and what it is doing. Explore professional diagnostics, practical repair and maintenance, or mobile and specialist support—then choose the most useful next step."
-      >
-        <VehicleJourney compact source="services-hub" />
-      </PageHero>
+        cta={false}
+        showTrustFacts={false}
+      />
 
-      <section className="py-7"><Container><Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Services", href: "/services" }]} /></Container></section>
       <ServiceCategoryNavigation />
 
       <section className="py-20 sm:py-24">
@@ -88,8 +86,8 @@ export default function ServicesPage() {
           </div>
         </Container>
       </section>
+      <ServiceRegistrationCta source="services" />
 
-      <PremiumCta eyebrow="Tell us about the vehicle" title="Start with useful context, then plan the appointment." primaryHref="/get-a-quote" primaryLabel="Get a Quote" secondaryHref="/book" secondaryLabel="Book Appointment" />
     </>
   );
 }

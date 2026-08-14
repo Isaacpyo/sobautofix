@@ -3,34 +3,266 @@ import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { ContentRenderer } from "@/components/content/content-renderer";
 import { PageHero } from "@/components/marketing/page-hero";
-import { PremiumCta, ProcessFlow } from "@/components/marketing/experience";
-import { VehicleJourney } from "@/components/vehicle/vehicle-journey";
+import { ProcessFlow } from "@/components/marketing/experience";
+import { ServiceCategoryNavigation } from "@/components/services/category-hub";
+import { ServiceRegistrationCta } from "@/components/marketing/service-registration-cta";
 import { ButtonLink } from "@/components/ui/button";
 import { Container, Eyebrow } from "@/components/ui/container";
 import { diagnostics } from "@/config/site";
 import { createMetadata } from "@/lib/seo";
 import { getPublishedContent } from "@/lib/content/repository";
 
-const detail: Record<string, { title: string; symptoms: string[]; causes: string[]; specific: string }> = {
-  "car-diagnostics": { title: "Car Diagnostics in Doncaster", symptoms: ["Warning lights", "Poor running or lost power", "Intermittent faults", "Unexpected system behaviour"], causes: ["Sensor or actuator faults", "Wiring, power or earth issues", "Mechanical conditions affecting readings", "Control-system communication problems"], specific: "A comprehensive diagnostic assessment starts with the customer’s description, then focuses the scan and testing on the systems involved." },
-  "electrical-fault-finding": { title: "Auto Electrician & Electrical Fault Diagnosis in Doncaster", symptoms: ["Battery drain", "Starting or charging problems", "Electrical equipment failure", "Intermittent warning lights"], causes: ["Damaged wiring or connectors", "Poor power or earth supply", "Sensor and component failure", "Module communication faults"], specific: "Electrical faults can be intermittent and shared across several systems. Voltage, continuity, current draw and communication checks help isolate the affected circuit." },
-  "engine-management-light": { title: "Engine Management Light Diagnosis in Doncaster", symptoms: ["Amber engine warning", "Reduced power", "Rough running", "Higher fuel consumption"], causes: ["Air, fuel or ignition faults", "Sensor readings outside range", "Emissions-control issues", "Wiring or control faults"], specific: "The stored code identifies the system that noticed a problem. Live readings and focused checks are still required before deciding which repair is justified." },
-  "ecu-diagnostics": { title: "ECU Diagnostics in Doncaster", symptoms: ["Communication errors", "Multiple warning lights", "No-start conditions", "Intermittent control faults"], causes: ["Power or earth interruption", "Network wiring faults", "Connected component failure", "Internal control-unit concerns"], specific: "Control units depend on stable supplies and reliable network communication. Those foundations are checked before a unit itself is considered faulty." },
-  "abs-diagnostics": { title: "ABS Diagnostics in Doncaster", symptoms: ["ABS warning light", "Traction-control warning", "Unexpected intervention", "Speed-signal faults"], causes: ["Wheel-speed sensor or wiring", "Damaged tone ring or bearing", "Power and communication faults", "Hydraulic or control-unit concerns"], specific: "A stored wheel-speed code does not automatically prove the sensor has failed. Wiring, signal quality and the related mechanical components must be considered." },
-  "dpf-diagnostics": { title: "DPF Diagnostics in Doncaster", symptoms: ["Filter warning light", "Reduced power", "Frequent regeneration", "Poor fuel economy"], causes: ["Pressure or temperature sensing", "Underlying engine-running faults", "Usage pattern and incomplete cycles", "Exhaust or control-system issues"], specific: "Filter loading can be a consequence rather than the original fault. The cause should be investigated before any next step is recommended." },
-  "battery-charging": { title: "Battery & Charging Diagnostics in Doncaster", symptoms: ["Battery repeatedly flat", "Slow or failed starting", "Charging warning", "Electrical systems resetting"], causes: ["Weak or unsuitable battery", "Alternator or belt concern", "Parasitic current draw", "Cable, terminal or control fault"], specific: "Battery condition, cranking performance, charging output and current draw are considered together to avoid replacing a healthy part." },
+const detail: Record<
+  string,
+  { title: string; symptoms: string[]; causes: string[]; specific: string }
+> = {
+  "car-diagnostics": {
+    title: "Car Diagnostics in Doncaster",
+    symptoms: [
+      "Warning lights",
+      "Poor running or lost power",
+      "Intermittent faults",
+      "Unexpected system behaviour",
+    ],
+    causes: [
+      "Sensor or actuator faults",
+      "Wiring, power or earth issues",
+      "Mechanical conditions affecting readings",
+      "Control-system communication problems",
+    ],
+    specific:
+      "A comprehensive diagnostic assessment starts with the customer’s description, then focuses the scan and testing on the systems involved.",
+  },
+  "electrical-fault-finding": {
+    title: "Auto Electrician & Electrical Fault Diagnosis in Doncaster",
+    symptoms: [
+      "Battery drain",
+      "Starting or charging problems",
+      "Electrical equipment failure",
+      "Intermittent warning lights",
+    ],
+    causes: [
+      "Damaged wiring or connectors",
+      "Poor power or earth supply",
+      "Sensor and component failure",
+      "Module communication faults",
+    ],
+    specific:
+      "Electrical faults can be intermittent and shared across several systems. Voltage, continuity, current draw and communication checks help isolate the affected circuit.",
+  },
+  "engine-management-light": {
+    title: "Engine Management Light Diagnosis in Doncaster",
+    symptoms: [
+      "Amber engine warning",
+      "Reduced power",
+      "Rough running",
+      "Higher fuel consumption",
+    ],
+    causes: [
+      "Air, fuel or ignition faults",
+      "Sensor readings outside range",
+      "Emissions-control issues",
+      "Wiring or control faults",
+    ],
+    specific:
+      "The stored code identifies the system that noticed a problem. Live readings and focused checks are still required before deciding which repair is justified.",
+  },
+  "ecu-diagnostics": {
+    title: "ECU Diagnostics in Doncaster",
+    symptoms: [
+      "Communication errors",
+      "Multiple warning lights",
+      "No-start conditions",
+      "Intermittent control faults",
+    ],
+    causes: [
+      "Power or earth interruption",
+      "Network wiring faults",
+      "Connected component failure",
+      "Internal control-unit concerns",
+    ],
+    specific:
+      "Control units depend on stable supplies and reliable network communication. Those foundations are checked before a unit itself is considered faulty.",
+  },
+  "abs-diagnostics": {
+    title: "ABS Diagnostics in Doncaster",
+    symptoms: [
+      "ABS warning light",
+      "Traction-control warning",
+      "Unexpected intervention",
+      "Speed-signal faults",
+    ],
+    causes: [
+      "Wheel-speed sensor or wiring",
+      "Damaged tone ring or bearing",
+      "Power and communication faults",
+      "Hydraulic or control-unit concerns",
+    ],
+    specific:
+      "A stored wheel-speed code does not automatically prove the sensor has failed. Wiring, signal quality and the related mechanical components must be considered.",
+  },
+  "dpf-diagnostics": {
+    title: "DPF Diagnostics in Doncaster",
+    symptoms: [
+      "Filter warning light",
+      "Reduced power",
+      "Frequent regeneration",
+      "Poor fuel economy",
+    ],
+    causes: [
+      "Pressure or temperature sensing",
+      "Underlying engine-running faults",
+      "Usage pattern and incomplete cycles",
+      "Exhaust or control-system issues",
+    ],
+    specific:
+      "Filter loading can be a consequence rather than the original fault. The cause should be investigated before any next step is recommended.",
+  },
+  "battery-charging": {
+    title: "Battery & Charging Diagnostics in Doncaster",
+    symptoms: [
+      "Battery repeatedly flat",
+      "Slow or failed starting",
+      "Charging warning",
+      "Electrical systems resetting",
+    ],
+    causes: [
+      "Weak or unsuitable battery",
+      "Alternator or belt concern",
+      "Parasitic current draw",
+      "Cable, terminal or control fault",
+    ],
+    specific:
+      "Battery condition, cranking performance, charging output and current draw are considered together to avoid replacing a healthy part.",
+  },
 };
 
-export function generateStaticParams() { return diagnostics.filter((item) => item.published).map((item) => ({ slug: item.slug })); }
-
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug } = await params; const cms = await getPublishedContent("diagnostic", slug); if (cms) return createMetadata(cms.seoTitle, cms.seoDescription, `/diagnostics/${slug}`); const item = diagnostics.find((candidate) => candidate.slug === slug && candidate.published); const copy = detail[slug];
-  return item && copy ? createMetadata(copy.title, `${item.summary} Professional testing and clear next steps from SOB Autofix.`, `/diagnostics/${slug}`) : {};
+export function generateStaticParams() {
+  return diagnostics
+    .filter((item) => item.published)
+    .map((item) => ({ slug: item.slug }));
 }
 
-export default async function DiagnosticDetail({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params; const cms = await getPublishedContent("diagnostic", slug); if (cms) return <ContentRenderer entry={cms} />; const item = diagnostics.find((candidate) => candidate.slug === slug && candidate.published); const copy = detail[slug]; if (!item || !copy) notFound();
-  return <><PageHero eyebrow="Vehicle diagnostics" title={copy.title} body={item.summary}><VehicleJourney compact source={`diagnostic-${slug}`} /></PageHero><section className="py-8"><Container><Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Diagnostics", href: "/diagnostics" }, { label: item.name, href: `/diagnostics/${slug}` }]} /></Container></section><section className="pb-20 pt-8"><Container className="grid gap-12 lg:grid-cols-[1fr_1fr]"><div><Eyebrow>What the warning may mean</Eyebrow><h2 className="text-4xl font-extrabold text-[#071127]">Test the system before choosing a part.</h2><p className="mt-5 text-lg leading-8 text-[#586575]">{copy.specific}</p><ButtonLink className="mt-7" href="/book">Book this diagnostic</ButtonLink></div><div className="grid gap-5 sm:grid-cols-2"><List title="Common symptoms" items={copy.symptoms} /><List title="Possible causes" items={copy.causes} /></div></Container></section><ProcessFlow eyebrow="How we investigate" title="A clear, evidence-led pathway." steps={[{ title: "Warning & symptoms", body: "Understand what the vehicle is doing and when." }, { title: "Fault data", body: "Scan the relevant systems and review available evidence." }, { title: "System test", body: "Carry out focused checks instead of treating a code as an answer." }, { title: "Recommendation", body: "Explain the likely cause, limits and sensible next step." }]} /><PremiumCta eyebrow="Ready to investigate the fault?" title="Book this diagnostic with useful vehicle context." /></>;
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const cms = await getPublishedContent("diagnostic", slug);
+  if (cms)
+    return createMetadata(
+      cms.seoTitle,
+      cms.seoDescription,
+      `/diagnostics/${slug}`,
+    );
+  const item = diagnostics.find(
+    (candidate) => candidate.slug === slug && candidate.published,
+  );
+  const copy = detail[slug];
+  return item && copy
+    ? createMetadata(
+        copy.title,
+        `${item.summary} Professional testing and clear next steps from SOB Autofix.`,
+        `/diagnostics/${slug}`,
+      )
+    : {};
 }
 
-function List({ title, items }: { title: string; items: string[] }) { return <article className="premium-card rounded-[1.5rem_.35rem_1.5rem_.35rem] border border-[#E4EAF0] bg-[#F4F7FA] p-6" data-reveal><h2 className="text-2xl font-bold text-[#071127]">{title}</h2><ul className="mt-4 grid gap-3 text-sm text-[#586575]">{items.map((item) => <li className="flex gap-2" key={item}><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#1974E2]" />{item}</li>)}</ul></article>; }
+export default async function DiagnosticDetail({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const cms = await getPublishedContent("diagnostic", slug);
+  if (cms) return <><ContentRenderer entry={cms} /><ServiceRegistrationCta source={`diagnostic-${slug}`} /></>;
+  const item = diagnostics.find(
+    (candidate) => candidate.slug === slug && candidate.published,
+  );
+  const copy = detail[slug];
+  if (!item || !copy) notFound();
+  return (
+    <>
+      <PageHero
+        eyebrow="Vehicle diagnostics"
+        title={copy.title}
+        body={item.summary}
+      />
+      <ServiceCategoryNavigation current="diagnostics" />
+      <section className="py-8">
+        <Container>
+          <Breadcrumbs
+            items={[
+              { label: "Home", href: "/" },
+              { label: "Diagnostics", href: "/diagnostics" },
+              { label: item.name, href: `/diagnostics/${slug}` },
+            ]}
+          />
+        </Container>
+      </section>
+      <section className="pb-20 pt-8">
+        <Container className="grid gap-12 lg:grid-cols-[1fr_1fr]">
+          <div>
+            <Eyebrow>What the warning may mean</Eyebrow>
+            <h2 className="text-4xl font-extrabold text-[#071127]">
+              Test the system before choosing a part.
+            </h2>
+            <p className="mt-5 text-lg leading-8 text-[#586575]">
+              {copy.specific}
+            </p>
+            <ButtonLink className="mt-7" href="/book">
+              Book this diagnostic
+            </ButtonLink>
+          </div>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <List title="Common symptoms" items={copy.symptoms} />
+            <List title="Possible causes" items={copy.causes} />
+          </div>
+        </Container>
+      </section>
+      <ProcessFlow
+        eyebrow="How we investigate"
+        title="A clear, evidence-led pathway."
+        steps={[
+          {
+            title: "Warning & symptoms",
+            body: "Understand what the vehicle is doing and when.",
+          },
+          {
+            title: "Fault data",
+            body: "Scan the relevant systems and review available evidence.",
+          },
+          {
+            title: "System test",
+            body: "Carry out focused checks instead of treating a code as an answer.",
+          },
+          {
+            title: "Recommendation",
+            body: "Explain the likely cause, limits and sensible next step.",
+          },
+        ]}
+      />
+      <ServiceRegistrationCta source={`diagnostic-${slug}`} />
+    </>
+  );
+}
+
+function List({ title, items }: { title: string; items: string[] }) {
+  return (
+    <article
+      className="premium-card rounded-[1.5rem_.35rem_1.5rem_.35rem] border border-[#E4EAF0] bg-[#F4F7FA] p-6"
+      data-reveal
+    >
+      <h2 className="text-2xl font-bold text-[#071127]">{title}</h2>
+      <ul className="mt-4 grid gap-3 text-sm text-[#586575]">
+        {items.map((item) => (
+          <li className="flex gap-2" key={item}>
+            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#1974E2]" />
+            {item}
+          </li>
+        ))}
+      </ul>
+    </article>
+  );
+}

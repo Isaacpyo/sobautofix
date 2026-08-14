@@ -1,14 +1,13 @@
 import { CheckCircle2 } from "lucide-react";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { ContextualServiceImage } from "@/components/marketing/contextual-service-image";
+import { DiagnosticServiceCarousel } from "@/components/diagnostics/diagnostic-service-carousel";
 import { PageHero } from "@/components/marketing/page-hero";
-import { PremiumCta, ProcessFlow, SectionIntro } from "@/components/marketing/experience";
-import { ServiceCard } from "@/components/marketing/service-card";
+import { ServiceRegistrationCta } from "@/components/marketing/service-registration-cta";
+import { ProcessFlow, SectionIntro } from "@/components/marketing/experience";
 import { CategoryFaqs, ServiceCategoryNavigation, type CategoryFaq } from "@/components/services/category-hub";
 import { JsonLd } from "@/components/seo/json-ld";
-import { ButtonLink } from "@/components/ui/button";
 import { Container, Eyebrow } from "@/components/ui/container";
-import { VehicleJourney } from "@/components/vehicle/vehicle-journey";
 import { diagnostics } from "@/config/site";
 import { createMetadata, serviceJsonLd } from "@/lib/seo";
 
@@ -41,12 +40,11 @@ export default function DiagnosticsPage() {
       <JsonLd value={serviceJsonLd("Vehicle Diagnostics & Fault Finding", "Professional automotive diagnostics and systematic fault finding in Doncaster and South Yorkshire.", "/diagnostics")} />
       <PageHero
         eyebrow="Professional diagnostics. Not guesswork."
-        title="Vehicle Diagnostics & Fault Finding in Doncaster"
+        title="Vehicle Diagnostics & Fault Finding"
         body="Systematic automotive diagnostics for electrical faults, warning lights and vehicle modules across Doncaster and South Yorkshire. We use scans as evidence, then test the relevant system before recommending the next step."
-        actions={<><ButtonLink href="/book">Book Diagnostics</ButtonLink><ButtonLink href="/get-a-quote" variant="secondary">Get a Quote</ButtonLink></>}
-      >
-        <VehicleJourney compact source="diagnostics-hub" />
-      </PageHero>
+        cta={false}
+        showTrustFacts={false}
+      />
 
       <section className="py-7"><Container><Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Services", href: "/services" }, { label: "Diagnostics", href: "/diagnostics" }]} /></Container></section>
       <ServiceCategoryNavigation current="diagnostics" />
@@ -68,8 +66,8 @@ export default function DiagnosticsPage() {
       <section className="bg-[#F4F7FA] py-20 sm:py-24">
         <Container>
           <SectionIntro eyebrow="Diagnostic services" title="Choose the closest match to the problem." body="If you are unsure, start with Vehicle Diagnostics or use the registration journey above. The appropriate service can be confirmed after the symptoms are reviewed." />
-          <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {publishedDiagnostics.map((item, index) => <ServiceCard key={item.slug} index={index} title={item.name} body={item.summary} href={`/diagnostics/${item.slug}`} />)}
+          <div className="mt-10">
+            <DiagnosticServiceCarousel items={publishedDiagnostics} />
           </div>
         </Container>
       </section>
@@ -90,8 +88,8 @@ export default function DiagnosticsPage() {
       </section>
 
       <CategoryFaqs faqs={diagnosticFaqs} />
+      <ServiceRegistrationCta source="diagnostics" />
 
-      <PremiumCta eyebrow="Warning light or vehicle fault?" title="Book a diagnostic assessment with SOB Autofix." />
     </>
   );
 }

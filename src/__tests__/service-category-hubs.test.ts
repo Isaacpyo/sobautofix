@@ -33,10 +33,13 @@ describe("service category hub architecture", () => {
 
   it("keeps the expected individual-service links on each hub", () => {
     const diagnostics = read("src/app/diagnostics/page.tsx");
+    const diagnosticCarousel = read("src/components/diagnostics/diagnostic-service-carousel.tsx");
     const repairs = read("src/app/services/repairs-maintenance/page.tsx");
     const mobile = read("src/app/services/mobile-specialist/page.tsx");
     const serviceConfig = read("src/config/site.ts");
-    expect(diagnostics).toContain("publishedDiagnostics.map");
+    expect(diagnostics).toContain("<DiagnosticServiceCarousel items={publishedDiagnostics} />");
+    expect(diagnosticCarousel).toContain("items.map");
+    expect(diagnosticCarousel).toContain('href={`/diagnostics/${item.slug}`}');
     expect(repairs).toContain("coreServices.map");
     for (const slug of ["vehicle-servicing", "engine-repair", "brake-repair"]) expect(serviceConfig).toContain(`slug: "${slug}"`);
     for (const route of ["/mobile-mechanic", "/vehicle-recovery", "/vehicle-inspections", "/fleet"]) expect(mobile).toContain(route);
