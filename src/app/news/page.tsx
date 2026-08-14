@@ -1,7 +1,8 @@
 import { Newspaper } from "lucide-react";
-import { PageHero } from "@/components/marketing/page-hero";
 import { ArticleCard } from "@/components/news/article-card";
+import { NewsExplorer } from "@/components/news/news-explorer";
 import { Container } from "@/components/ui/container";
+import { siteConfig } from "@/config/site";
 import { createMetadata } from "@/lib/seo";
 import { getPublishedArticles } from "@/lib/news/repository";
 
@@ -18,17 +19,10 @@ export default async function NewsPage() {
 
   return (
     <>
-      <PageHero
-        title="News & Blog"
-        body="Practical vehicle advice, diagnostic insight and considered updates from SOB Autofix."
-        cta={false}
-        compact
-        showTrustFacts={false}
-      />
-
+      <h1 className="sr-only">News &amp; Blog</h1>
       {featured ? (
         <>
-          <section className="py-8 sm:py-10 lg:py-12" aria-labelledby="featured-article-heading">
+          <section className="py-8 sm:py-10 lg:py-12" aria-label="Featured article">
             <Container>
               <p className="text-xs font-extrabold tracking-[0.16em] text-[#1974E2] uppercase">Featured article</p>
               <h2 id="featured-article-heading" className="sr-only">Featured article</h2>
@@ -39,7 +33,7 @@ export default async function NewsPage() {
             <section className="border-t border-[#E4EAF0] bg-[#F4F7FA] py-14 sm:py-20" aria-labelledby="latest-articles-heading">
               <Container>
                 <h2 id="latest-articles-heading" className="text-4xl font-extrabold text-[#071127] sm:text-5xl">Latest articles</h2>
-                <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">{latest.map((article) => <ArticleCard key={article.id} article={article} />)}</div>
+                <NewsExplorer articles={latest} email={siteConfig.email} />
               </Container>
             </section>
           )}
