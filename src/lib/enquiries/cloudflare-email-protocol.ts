@@ -2,6 +2,8 @@ export const CLOUDFLARE_EMAIL_HEADERS = {
   timestamp: "x-sob-email-timestamp",
   envelopeFrom: "x-sob-envelope-from",
   envelopeTo: "x-sob-envelope-to",
+  rawDigest: "x-sob-email-content-sha256",
+  keyId: "x-sob-email-key-id",
   eventId: "x-sob-email-event-id",
   signature: "x-sob-email-signature",
   failureStage: "x-sob-email-failure-stage",

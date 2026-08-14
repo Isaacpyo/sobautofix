@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createCloudflareEmailEventId,
+  createCloudflareEmailKeyId,
   digestCloudflareEmail,
   signCloudflareEmail,
 } from "@/lib/enquiries/cloudflare-email-auth";
@@ -52,7 +53,7 @@ describe("Cloudflare inbound email webhook", () => {
     const changedMimeRequest = cloneHeadersWithBody(changedMime, changedBody);
     const changedMimeResponse = await POST(changedMimeRequest);
     expect(changedMimeResponse.status).toBe(401);
-    expect(changedMimeResponse.headers.get(CLOUDFLARE_EMAIL_HEADERS.failureStage)).toBe("signature");
+    expect(changedMimeResponse.headers.get(CLOUDFLARE_EMAIL_HEADERS.failureStage)).toBe("digest");
 
     const changedRecipient = signedRequest({ raw, envelopeFrom, envelopeTo });
     changedRecipient.headers.set(CLOUDFLARE_EMAIL_HEADERS.envelopeTo, "attacker@example.com");
@@ -109,6 +110,8 @@ function signedRequest(input: { raw: Uint8Array; signedRaw?: Uint8Array; envelop
       [CLOUDFLARE_EMAIL_HEADERS.timestamp]: timestamp,
       [CLOUDFLARE_EMAIL_HEADERS.envelopeFrom]: input.envelopeFrom,
       [CLOUDFLARE_EMAIL_HEADERS.envelopeTo]: input.envelopeTo,
+      [CLOUDFLARE_EMAIL_HEADERS.rawDigest]: rawDigest,
+      [CLOUDFLARE_EMAIL_HEADERS.keyId]: createCloudflareEmailKeyId(secret),
       [CLOUDFLARE_EMAIL_HEADERS.eventId]: eventId,
       [CLOUDFLARE_EMAIL_HEADERS.signature]: signature,
     },

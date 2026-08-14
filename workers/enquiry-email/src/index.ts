@@ -43,6 +43,7 @@ const enquiryEmailWorker = {
     const envelopeFrom = normalizeEnvelopeAddress(message.from);
     const envelopeTo = normalizeEnvelopeAddress(message.to);
     const rawDigest = await sha256Hex(raw);
+    const keyId = (await sha256Hex(new TextEncoder().encode(env.CLOUDFLARE_EMAIL_WEBHOOK_SECRET))).slice(0, 16);
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const eventId = `cf_${await sha256Hex(new TextEncoder().encode(cloudflareEmailEventPayload({ envelopeFrom, envelopeTo, rawDigest })))}`;
     const signature = `v1=${await hmacSha256Hex(
@@ -57,6 +58,8 @@ const enquiryEmailWorker = {
         [CLOUDFLARE_EMAIL_HEADERS.timestamp]: timestamp,
         [CLOUDFLARE_EMAIL_HEADERS.envelopeFrom]: envelopeFrom,
         [CLOUDFLARE_EMAIL_HEADERS.envelopeTo]: envelopeTo,
+        [CLOUDFLARE_EMAIL_HEADERS.rawDigest]: rawDigest,
+        [CLOUDFLARE_EMAIL_HEADERS.keyId]: keyId,
         [CLOUDFLARE_EMAIL_HEADERS.eventId]: eventId,
         [CLOUDFLARE_EMAIL_HEADERS.signature]: signature,
       },

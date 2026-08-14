@@ -14,6 +14,10 @@ export function digestCloudflareEmail(raw: Uint8Array) {
   return createHash("sha256").update(raw).digest("hex");
 }
 
+export function createCloudflareEmailKeyId(secret: string) {
+  return createHash("sha256").update(secret).digest("hex").slice(0, 16);
+}
+
 export function createCloudflareEmailEventId(input: { envelopeFrom: string; envelopeTo: string; rawDigest: string }) {
   return `cf_${createHash("sha256").update(cloudflareEmailEventPayload(input)).digest("hex")}`;
 }

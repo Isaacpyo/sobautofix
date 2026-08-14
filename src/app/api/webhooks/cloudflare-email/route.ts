@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   createCloudflareEmailEventId,
+  createCloudflareEmailKeyId,
   digestCloudflareEmail,
   isFreshCloudflareEmailTimestamp,
   verifyCloudflareEmailSignature,
@@ -19,13 +20,18 @@ export async function POST(request: Request) {
   const timestamp = request.headers.get(CLOUDFLARE_EMAIL_HEADERS.timestamp);
   const envelopeFrom = request.headers.get(CLOUDFLARE_EMAIL_HEADERS.envelopeFrom);
   const envelopeTo = request.headers.get(CLOUDFLARE_EMAIL_HEADERS.envelopeTo);
+  const suppliedRawDigest = request.headers.get(CLOUDFLARE_EMAIL_HEADERS.rawDigest);
+  const suppliedKeyId = request.headers.get(CLOUDFLARE_EMAIL_HEADERS.keyId);
   const eventId = request.headers.get(CLOUDFLARE_EMAIL_HEADERS.eventId);
   const signature = request.headers.get(CLOUDFLARE_EMAIL_HEADERS.signature);
-  if (!timestamp || !envelopeFrom || !envelopeTo || !eventId || !signature) {
+  if (!timestamp || !envelopeFrom || !envelopeTo || !suppliedRawDigest || !suppliedKeyId || !eventId || !signature) {
     return authenticationFailure("headers");
   }
   if (!isFreshCloudflareEmailTimestamp(timestamp)) {
     return authenticationFailure("timestamp");
+  }
+  if (suppliedKeyId !== createCloudflareEmailKeyId(config.webhookSecret)) {
+    return authenticationFailure("key");
   }
 
   const contentType = request.headers.get("content-type")?.toLowerCase() || "";
@@ -41,6 +47,9 @@ export async function POST(request: Request) {
   if (!raw) return NextResponse.json({ error: "Email payload is too large" }, { status: 413 });
   if (!raw.byteLength) return NextResponse.json({ error: "Email payload is empty" }, { status: 400 });
   const rawDigest = digestCloudflareEmail(raw);
+  if (suppliedRawDigest !== rawDigest) {
+    return authenticationFailure("digest");
+  }
   if (!verifyCloudflareEmailSignature({
     secret: config.webhookSecret,
     timestamp,
@@ -81,7 +90,7 @@ export async function POST(request: Request) {
   }
 }
 
-function authenticationFailure(stage: "headers" | "timestamp" | "signature" | "event") {
+function authenticationFailure(stage: "headers" | "timestamp" | "key" | "digest" | "signature" | "event") {
   return NextResponse.json(
     { error: "Invalid webhook signature" },
     { status: 401, headers: { [CLOUDFLARE_EMAIL_HEADERS.failureStage]: stage } },

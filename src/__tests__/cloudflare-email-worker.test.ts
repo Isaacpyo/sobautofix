@@ -21,6 +21,8 @@ describe("Cloudflare enquiry Email Worker", () => {
     expect(new Uint8Array(init.body as Uint8Array)).toEqual(raw);
     const headers = new Headers(init.headers);
     const rawDigest = digestCloudflareEmail(raw);
+    expect(headers.get(CLOUDFLARE_EMAIL_HEADERS.rawDigest)).toBe(rawDigest);
+    expect(headers.get(CLOUDFLARE_EMAIL_HEADERS.keyId)).toMatch(/^[a-f0-9]{16}$/);
     expect(headers.get(CLOUDFLARE_EMAIL_HEADERS.eventId)).toMatch(/^cf_[a-f0-9]{64}$/);
     expect(verifyCloudflareEmailSignature({
       secret,
