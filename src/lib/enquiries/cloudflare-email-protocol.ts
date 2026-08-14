@@ -4,6 +4,7 @@ export const CLOUDFLARE_EMAIL_HEADERS = {
   envelopeTo: "x-sob-envelope-to",
   eventId: "x-sob-email-event-id",
   signature: "x-sob-email-signature",
+  failureStage: "x-sob-email-failure-stage",
 } as const;
 
 export const CLOUDFLARE_EMAIL_MAX_BYTES = 4 * 1024 * 1024;

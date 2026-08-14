@@ -62,7 +62,11 @@ const enquiryEmailWorker = {
       },
       body: raw,
     });
-    if (!response.ok) throw new Error(`Inbound endpoint rejected the message with status ${response.status}`);
+    if (!response.ok) {
+      const failureStage = response.headers.get(CLOUDFLARE_EMAIL_HEADERS.failureStage);
+      const detail = failureStage ? ` at ${failureStage}` : "";
+      throw new Error(`Inbound endpoint rejected the message with status ${response.status}${detail}`);
+    }
   },
 };
 

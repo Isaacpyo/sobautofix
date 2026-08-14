@@ -34,12 +34,15 @@ describe("Cloudflare enquiry Email Worker", () => {
   });
 
   it("throws on backend failure so Cloudflare can retry safely", async () => {
-    vi.mocked(fetch).mockResolvedValue(new Response("unavailable", { status: 503 }));
+    vi.mocked(fetch).mockResolvedValue(new Response("unauthorized", {
+      status: 401,
+      headers: { [CLOUDFLARE_EMAIL_HEADERS.failureStage]: "signature" },
+    }));
     const raw = new TextEncoder().encode("From: customer@example.com\r\n\r\nRetry me");
     await expect(worker.email(emailMessage(raw, "customer@example.com", "token@reply.sobautofix.com"), {
       CLOUDFLARE_EMAIL_WEBHOOK_SECRET: secret,
       SOB_AUTOFIX_INBOUND_ENDPOINT: endpoint,
-    }, {})).rejects.toThrow("status 503");
+    }, {})).rejects.toThrow("status 401 at signature");
   });
 
   it("rejects unrelated recipients and oversized messages without forwarding", async () => {

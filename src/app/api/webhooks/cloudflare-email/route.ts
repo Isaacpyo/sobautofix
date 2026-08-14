@@ -22,10 +22,10 @@ export async function POST(request: Request) {
   const eventId = request.headers.get(CLOUDFLARE_EMAIL_HEADERS.eventId);
   const signature = request.headers.get(CLOUDFLARE_EMAIL_HEADERS.signature);
   if (!timestamp || !envelopeFrom || !envelopeTo || !eventId || !signature) {
-    return NextResponse.json({ error: "Invalid webhook signature" }, { status: 401 });
+    return authenticationFailure("headers");
   }
   if (!isFreshCloudflareEmailTimestamp(timestamp)) {
-    return NextResponse.json({ error: "Invalid webhook signature" }, { status: 401 });
+    return authenticationFailure("timestamp");
   }
 
   const contentType = request.headers.get("content-type")?.toLowerCase() || "";
@@ -49,12 +49,12 @@ export async function POST(request: Request) {
     rawDigest,
     signature,
   })) {
-    return NextResponse.json({ error: "Invalid webhook signature" }, { status: 401 });
+    return authenticationFailure("signature");
   }
 
   const expectedEventId = createCloudflareEmailEventId({ envelopeFrom, envelopeTo, rawDigest });
   if (eventId !== expectedEventId) {
-    return NextResponse.json({ error: "Invalid webhook event" }, { status: 401 });
+    return authenticationFailure("event");
   }
   if (recipientDomain(envelopeTo) !== config.replyDomain) {
     return NextResponse.json({ error: "Invalid inbound recipient" }, { status: 400 });
@@ -79,6 +79,13 @@ export async function POST(request: Request) {
     } catch { /* the non-2xx response allows Cloudflare to retry safely */ }
     return NextResponse.json({ error: "Inbound email processing failed" }, { status: 500 });
   }
+}
+
+function authenticationFailure(stage: "headers" | "timestamp" | "signature" | "event") {
+  return NextResponse.json(
+    { error: "Invalid webhook signature" },
+    { status: 401, headers: { [CLOUDFLARE_EMAIL_HEADERS.failureStage]: stage } },
+  );
 }
 
 function recipientDomain(address: string) {

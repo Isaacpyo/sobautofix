@@ -43,12 +43,16 @@ describe("Cloudflare inbound email webhook", () => {
   it("rejects a bad signature, changed MIME, and changed recipient", async () => {
     const badSignature = signedRequest({ raw, envelopeFrom, envelopeTo });
     badSignature.headers.set(CLOUDFLARE_EMAIL_HEADERS.signature, `v1=${"0".repeat(64)}`);
-    expect((await POST(badSignature)).status).toBe(401);
+    const badSignatureResponse = await POST(badSignature);
+    expect(badSignatureResponse.status).toBe(401);
+    expect(badSignatureResponse.headers.get(CLOUDFLARE_EMAIL_HEADERS.failureStage)).toBe("signature");
 
     const changedMime = signedRequest({ raw, envelopeFrom, envelopeTo, signedRaw: raw });
     const changedBody = new TextEncoder().encode("changed after signing");
     const changedMimeRequest = cloneHeadersWithBody(changedMime, changedBody);
-    expect((await POST(changedMimeRequest)).status).toBe(401);
+    const changedMimeResponse = await POST(changedMimeRequest);
+    expect(changedMimeResponse.status).toBe(401);
+    expect(changedMimeResponse.headers.get(CLOUDFLARE_EMAIL_HEADERS.failureStage)).toBe("signature");
 
     const changedRecipient = signedRequest({ raw, envelopeFrom, envelopeTo });
     changedRecipient.headers.set(CLOUDFLARE_EMAIL_HEADERS.envelopeTo, "attacker@example.com");
