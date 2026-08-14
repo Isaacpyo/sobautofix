@@ -11,6 +11,8 @@ playwright-report/
 test-results/
 .email-previews/
 .lighthouseci/
+/tmp/
+/output/
 
 # local environment
 .env
