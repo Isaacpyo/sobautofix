@@ -1,8 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { MapPin } from "lucide-react";
 import { useState } from "react";
+import coverageMap from "../../../assets/coverage-map-south-yorkshire.jpg";
 
 const locations = [
   { name: "Stainforth", left: "45%", top: "42%" },
@@ -26,6 +28,14 @@ export function HomeCoverageMap({ expanded = false, doncasterOnly = false, varia
   return (
     <div className={`overflow-hidden rounded-2xl border ${isDark ? "border-[#67B9FF]/25 bg-[#061027] shadow-none" : "border-[#D7E0E9] bg-[#EAF3FF] shadow-[0_18px_45px_rgba(7,17,39,.1)]"}`}>
       <div className={`relative isolate aspect-square overflow-hidden ${isDark ? "bg-[radial-gradient(circle_at_52%_44%,#164b80_0%,#0A2543_50%,#061027_100%)]" : "bg-[radial-gradient(circle_at_52%_44%,#fff_0%,#EAF3FF_52%,#DCEBFA_100%)]"}`}>
+        <Image
+          src={coverageMap}
+          alt="Map of the SOB Autofix service area around Doncaster and South Yorkshire"
+          fill
+          sizes="(max-width: 768px) 100vw, 50vw"
+          className={`object-cover ${isDark ? "opacity-95" : "opacity-90"}`}
+          priority={doncasterOnly}
+        />
         <div
           className={`absolute inset-0 ${isDark ? "opacity-35" : "opacity-55"}`}
           aria-hidden="true"

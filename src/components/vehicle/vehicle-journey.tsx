@@ -50,6 +50,7 @@ export function VehicleJourney({ compact = false, source = "website", heading = 
   const [error, setError] = useState("");
   const activeVehicle = vehicle || session.vehicle;
   const activeState = state || (session.vehicle ? session.vehicleConfirmed === false ? "confirm" : "problem" : "input");
+  const isHomepage = source === "homepage";
   const imageId = ({
     "diagnostic-electrical-fault-finding": "electrical",
     "diagnostic-ecu-diagnostics": "module",
@@ -102,17 +103,17 @@ export function VehicleJourney({ compact = false, source = "website", heading = 
       {imageId && <ContextualServiceImage id={imageId} className="min-h-56 shadow-none sm:min-h-64" />}
       <div className={shell}>
       {activeState === "input" && (
-        <form onSubmit={submit}>
+        <form onSubmit={submit} className={cn(isHomepage && "mx-auto w-full max-w-md text-center sm:max-w-none sm:text-left")}>
           <label htmlFor={`registration-${source}`} className="mb-3 block text-xs font-extrabold tracking-[.14em] text-[#67B9FF] uppercase">{heading}</label>
           <div className="flex flex-col gap-3 sm:flex-row">
             <div className="flex min-h-16 flex-1 overflow-hidden rounded-xl bg-white shadow-inner focus-within:ring-4 focus-within:ring-[#168BFF]/20">
               <span className="plate-strip grid w-12 place-items-center text-xs font-bold text-white">GB</span>
               <input id={`registration-${source}`} value={registration} onChange={(event) => setRegistration(event.target.value.toUpperCase())} className="min-w-0 flex-1 border-0 bg-white px-4 font-mono text-xl font-black tracking-[.14em] text-black outline-none" placeholder="AB12 CDE" autoComplete="off" maxLength={9} aria-describedby={error ? `registration-error-${source}` : undefined} />
             </div>
-            <Button type="submit" className="min-h-16 px-7"><Search size={19} /> Find my vehicle</Button>
+            <Button type="submit" className={cn("min-h-16 px-7", isHomepage && "w-full sm:w-auto")}><Search size={19} /> Find my vehicle</Button>
           </div>
           {error && <p id={`registration-error-${source}`} className="mt-3 text-sm text-red-300">{error}</p>}
-          <p className="mt-3 text-xs text-[#8F9EAF]">Your registration stays out of page URLs and analytics.</p>
+          <p className={cn("mt-3 text-xs text-[#8F9EAF]", isHomepage && "text-center sm:text-left")}>Your registration stays out of page URLs and analytics.</p>
         </form>
       )}
       {activeState === "loading" && <div className="flex min-h-32 items-center justify-center gap-3 text-white"><LoaderCircle className="animate-spin text-[#168BFF]" /> Finding your vehicle…</div>}

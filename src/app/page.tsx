@@ -38,7 +38,7 @@ export default async function HomePage() {
           <div className={styles.heroCopy}>
             <h1 className={`text-balance font-extrabold ${styles.heroTitle}`}>Professional Diagnostics,<br /><span className="text-[#168BFF]">and Repair.</span></h1>
             <p className="mt-7 max-w-2xl text-lg leading-8 text-[#C6D2DF]">Automotive diagnostics, electrical fault finding, repairs, servicing and vehicle sales.</p>
-            <div className="mt-8 flex flex-wrap gap-3"><ButtonLink href="/book">Book appointment <ArrowRight size={18} /></ButtonLink><ButtonLink href={contactLinks.phone} variant="secondary">Call SOB Autofix</ButtonLink></div>
+            <div className="mt-8 hidden flex-wrap gap-3 lg:flex"><ButtonLink href="/book">Book appointment <ArrowRight size={18} /></ButtonLink><ButtonLink href={contactLinks.phone} variant="secondary">Call SOB Autofix</ButtonLink></div>
           </div>
           <VehicleJourney compact source="homepage" lightSurface />
         </Container>

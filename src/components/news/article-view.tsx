@@ -4,7 +4,6 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { ArticleCard } from "@/components/news/article-card";
 import { ArticleShare } from "@/components/news/article-share";
-import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { ButtonLink } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { diagnostics, services, siteConfig } from "@/config/site";
@@ -17,8 +16,7 @@ export async function ArticleView({ article, related = [], preview = false }: { 
     <article>
       <header className="bg-[#F4F7FA] py-10 sm:py-14 lg:py-16">
         <Container className="max-w-5xl">
-          {!preview && <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "News & Blog", href: "/news" }, { label: article.title, href: `/news/${article.slug}` }]} />}
-          <div className={preview ? "" : "mt-9"}>
+          <div>
             <p className="text-xs font-extrabold tracking-[0.16em] text-[#1974E2] uppercase">{article.article.category}</p>
             <h1 className="text-balance mt-4 text-5xl leading-[0.95] font-extrabold text-[#071127] sm:text-6xl lg:text-7xl">{article.title}</h1>
             <p className="mt-6 max-w-3xl text-lg leading-8 text-[#586575]">{article.excerpt}</p>
