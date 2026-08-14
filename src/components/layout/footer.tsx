@@ -1,6 +1,5 @@
 import { ArrowRight, ChevronDown, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import Link from "next/link";
-import { ButtonLink } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { SocialLinks } from "@/components/marketing/social-links";
 import { diagnostics, formatPhone, services, siteConfig } from "@/config/site";
@@ -39,9 +38,9 @@ export function Footer({ settings = siteConfig }: { settings?: SiteSettings }) {
   const directionsHref = settings.googleMapsUrl || "/contact";
 
   return (
-    <footer className="footer-premium relative overflow-hidden border-t border-[#1974E2]/20 bg-[#030712] pb-24 pt-14 text-[#C6D2DF] md:pb-8 lg:pt-16">
+    <footer className="footer-premium relative overflow-hidden border-t border-[#1974E2]/20 bg-[#030712] pb-8 pt-14 text-[#C6D2DF] lg:pt-16">
       <Container>
-        <div className="grid gap-x-8 gap-y-12 md:grid-cols-2 xl:grid-cols-[1.35fr_.95fr_.95fr_.9fr_1.1fr]">
+        <div className="grid gap-x-8 gap-y-0 md:grid-cols-2 md:gap-y-12 xl:grid-cols-[1.35fr_.95fr_.95fr_.9fr_1.1fr]">
           <div>
             <div className="w-32">
               <Logo inverse />
@@ -49,10 +48,6 @@ export function Footer({ settings = siteConfig }: { settings?: SiteSettings }) {
             <p className="mt-5 max-w-sm text-sm leading-7">
               Professional diagnostics, fault finding, servicing, repairs and vehicle sales across Doncaster and South Yorkshire.
             </p>
-            <p className="mt-5 font-[family-name:var(--font-barlow)] text-xl font-bold text-white">
-              Professional Diagnostics. Not Guesswork.
-            </p>
-            <BusinessAddress settings={settings} className="mt-5" />
             <div className="mt-6">
               <h2 className="text-sm font-bold text-white">Follow SOB Autofix</h2>
               <SocialLinks socials={settings.socials} className="mt-3 text-[#C6D2DF]" />
@@ -70,54 +65,12 @@ export function Footer({ settings = siteConfig }: { settings?: SiteSettings }) {
 
           <FooterGroup title="Explore" links={exploreLinks} />
 
-          <div>
-            <h2 className="text-lg font-bold text-white">Contact</h2>
-            <div className="mt-4 grid gap-3 text-sm">
-              <a className="inline-flex items-start gap-2 hover:text-[#67B9FF]" href={contactLinks.phone}>
-                <Phone size={16} className="mt-0.5 shrink-0 text-[#67B9FF]" />
-                {formatPhone(settings.phone)}
-              </a>
-              <a className="inline-flex items-start gap-2 hover:text-[#67B9FF]" href={contactLinks.whatsapp}>
-                <MessageCircle size={16} className="mt-0.5 shrink-0 text-[#67B9FF]" />
-                WhatsApp: {formatPhone(settings.whatsapp)}
-              </a>
-              <a className="inline-flex min-w-0 items-start gap-2 break-all hover:text-[#67B9FF]" href={contactLinks.email}>
-                <Mail size={16} className="mt-0.5 shrink-0 text-[#67B9FF]" />
-                {settings.email}
-              </a>
-              <div className="flex items-start gap-2">
-                <MapPin size={16} className="mt-1 shrink-0 text-[#67B9FF]" />
-                <BusinessAddress settings={settings} />
-              </div>
-              <a
-                className="mt-1 inline-flex items-center gap-2 font-bold text-white hover:text-[#67B9FF]"
-                href={directionsHref}
-                target={settings.googleMapsUrl ? "_blank" : undefined}
-                rel={settings.googleMapsUrl ? "noreferrer" : undefined}
-              >
-                Get Directions <ArrowRight size={15} />
-              </a>
-            </div>
-            <div className="mt-5 grid gap-2">
-              <ButtonLink href="/book" className="min-h-11 w-full whitespace-nowrap rounded-full py-2.5">
-                Book Appointment
-              </ButtonLink>
-              <ButtonLink
-                href={contactLinks.whatsapp}
-                variant="secondary"
-                className="min-h-11 w-full whitespace-nowrap rounded-full py-2.5"
-                target="_blank"
-                rel="noreferrer"
-              >
-                WhatsApp Us
-              </ButtonLink>
-            </div>
-          </div>
+          <FooterContact settings={settings} contactLinks={contactLinks} directionsHref={directionsHref} />
         </div>
 
-        <div className="mt-14 flex flex-col gap-4 border-t border-white/10 pt-7 text-xs text-[#8F9EAF] sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-12 flex flex-col items-center gap-4 border-t border-white/10 px-5 py-5 text-center text-xs text-[#8F9EAF] md:flex-row md:justify-between md:text-left">
           <p>© 2026 {settings.legalName} · Company No. {settings.companyNumber}</p>
-          <nav aria-label="Legal" className="flex flex-wrap gap-x-5 gap-y-2">
+          <nav aria-label="Legal" className="flex flex-wrap justify-center gap-x-5 gap-y-2 md:justify-end">
             <Link className="hover:text-white" href="/privacy">Privacy</Link>
             <Link className="hover:text-white" href="/cookies">Cookies</Link>
             <Link className="hover:text-white" href="/terms">Terms</Link>
@@ -164,6 +117,15 @@ function FooterLinks({ links, action }: { links: FooterLink[]; action?: FooterLi
     {links.map((item) => <Link className="leading-5 hover:text-[#67B9FF]" key={item.href} href={item.href}>{item.label}</Link>)}
     {action && <Link className="mt-2 inline-flex items-center gap-2 font-bold text-white hover:text-[#67B9FF]" href={action.href}>{action.label} <ArrowRight size={15} /></Link>}
   </>;
+}
+
+function FooterContact({ settings, contactLinks, directionsHref }: { settings: SiteSettings; contactLinks: ReturnType<typeof linksForSettings>; directionsHref: string }) {
+  const content = <ContactDetails settings={settings} contactLinks={contactLinks} directionsHref={directionsHref} />;
+  return <div><details className="group border-b border-white/10 md:hidden"><summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 text-lg font-bold text-white marker:content-none">Contact<ChevronDown size={18} className="shrink-0 text-[#67B9FF] transition-transform group-open:rotate-180" aria-hidden="true" /></summary><div className="pb-5">{content}</div></details><div className="hidden md:block"><h2 className="text-lg font-bold text-white">Contact</h2>{content}</div></div>;
+}
+
+function ContactDetails({ settings, contactLinks, directionsHref }: { settings: SiteSettings; contactLinks: ReturnType<typeof linksForSettings>; directionsHref: string }) {
+  return <div className="mt-4 grid gap-3 text-sm"><a className="inline-flex items-start gap-2 hover:text-[#67B9FF]" href={contactLinks.phone}><Phone size={16} className="mt-0.5 shrink-0 text-[#67B9FF]" />{formatPhone(settings.phone)}</a><a className="inline-flex items-start gap-2 hover:text-[#67B9FF]" href={contactLinks.whatsapp}><MessageCircle size={16} className="mt-0.5 shrink-0 text-[#67B9FF]" />WhatsApp: {formatPhone(settings.whatsapp)}</a><a className="inline-flex min-w-0 items-start gap-2 break-all hover:text-[#67B9FF]" href={contactLinks.email}><Mail size={16} className="mt-0.5 shrink-0 text-[#67B9FF]" />{settings.email}</a><a className="flex items-start gap-2 hover:text-[#67B9FF]" href={directionsHref} target={settings.googleMapsUrl ? "_blank" : undefined} rel={settings.googleMapsUrl ? "noreferrer" : undefined}><MapPin size={16} className="mt-1 shrink-0 text-[#67B9FF]" /><BusinessAddress settings={settings} /></a></div>;
 }
 
 function BusinessAddress({

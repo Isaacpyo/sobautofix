@@ -16,5 +16,5 @@ export function Button({ children, variant = "primary", className, ...props }: S
 }
 
 export function ButtonLink({ children, variant = "primary", className, href, ...props }: Shared & AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) {
-  return <Link className={cn("inline-flex min-h-12 items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-bold transition duration-200 hover:-translate-y-0.5 [&_svg]:transition-transform [&_svg]:duration-200 hover:[&_svg]:translate-x-0.5", styles[variant], className)} href={href} {...props}>{children}</Link>;
+  return <Link className={cn("inline-flex min-h-12 items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-bold transition duration-200 hover:-translate-y-0.5 [&_svg]:transition-transform [&_svg]:duration-200 hover:[&_svg]:translate-x-0.5", styles[variant], href === "/book" && "shadow-none", className)} href={href} {...props}>{children}</Link>;
 }
