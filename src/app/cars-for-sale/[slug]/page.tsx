@@ -86,10 +86,7 @@ export default async function VehicleDetailPage({
               <p className="mt-3 text-[#C6D2DF]">{vehicle.derivative}</p>
             </div>
             <div className="order-1 border-l-2 border-[#1974E2] pl-5 md:order-2">
-              <span className="block text-xs font-bold tracking-[.16em] text-[#67B9FF] uppercase">
-                Vehicle price
-              </span>
-              <strong className="mt-1 block text-4xl font-black">
+              <strong className="block text-4xl font-black">
                 {formatCurrency(vehicle.price)}
               </strong>
               {vehicle.status !== "available" && (

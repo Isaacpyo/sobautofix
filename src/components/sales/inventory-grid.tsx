@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Gauge, ImageIcon } from "lucide-react";
+import { Funnel, Gauge, ImageIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { formatCurrency } from "@/lib/utils";
 import type { SaleVehicle } from "@/types/domain";
@@ -11,6 +11,7 @@ export function InventoryGrid({ vehicles }: { vehicles: SaleVehicle[] }) {
   const [make, setMake] = useState("");
   const [fuel, setFuel] = useState("");
   const [transmission, setTransmission] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const filtered = useMemo(
     () =>
       vehicles.filter(
@@ -46,7 +47,18 @@ export function InventoryGrid({ vehicles }: { vehicles: SaleVehicle[] }) {
 
   return (
     <>
-      <div className="mb-8 grid gap-3 border border-[#E4EAF0] bg-[#F4F7FA] p-4 sm:grid-cols-3">
+      <div className="mb-4 flex justify-end sm:hidden">
+        <button
+          type="button"
+          onClick={() => setFiltersOpen((open) => !open)}
+          aria-expanded={filtersOpen}
+          aria-controls="vehicle-filters"
+          className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-[#1974E2]/25 bg-white px-4 text-sm font-bold text-[#1974E2] shadow-sm transition hover:bg-[#EAF3FF] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#1974E2]/20"
+        >
+          <Funnel size={18} aria-hidden="true" /> {filtersOpen ? "Hide filters" : "Filter vehicles"}
+        </button>
+      </div>
+      <div id="vehicle-filters" className={`mb-8 gap-3 border border-[#E4EAF0] bg-[#F4F7FA] p-4 sm:grid sm:grid-cols-3 ${filtersOpen ? "grid" : "hidden"}`}>
         <Filter
           label="Make"
           value={make}
@@ -100,14 +112,14 @@ export function InventoryGrid({ vehicles }: { vehicles: SaleVehicle[] }) {
                   <p className="text-xs font-extrabold tracking-widest text-[#1974E2] uppercase">
                     {vehicle.year} · {vehicle.fuelType}
                   </p>
-                  <h2 className="mt-2 text-3xl font-extrabold text-[#071127]">
+                  <h2 className="mt-2 text-xl font-extrabold text-[#071127] sm:text-3xl">
                     {vehicle.make} {vehicle.model}
                   </h2>
                   <p className="mt-1 text-sm text-[#667586]">
                     {vehicle.derivative}
                   </p>
                 </div>
-                <p className="shrink-0 text-2xl font-black text-[#071127] md:mt-5">
+                <p className="shrink-0 text-xl font-black text-[#071127] sm:text-2xl md:mt-5">
                   {formatCurrency(vehicle.price)}
                 </p>
               </div>

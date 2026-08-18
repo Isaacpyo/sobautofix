@@ -46,7 +46,7 @@ export function VehicleImageGallery({ images, vehicleName }: VehicleImageGallery
               type="button"
               onClick={showPrevious}
               aria-label="Show previous vehicle photo"
-              className="absolute top-1/2 left-4 grid size-11 -translate-y-1/2 place-items-center rounded-full border border-white/40 bg-[#071127]/75 text-white backdrop-blur transition hover:bg-[#1974E2] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/60 sm:left-6 sm:size-12"
+              className="absolute top-1/2 left-4 z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full border border-white/80 bg-white text-[#071127] shadow-lg transition hover:bg-[#1974E2] hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/60 sm:left-6 sm:size-12"
             >
               <ChevronLeft size={25} aria-hidden="true" />
             </button>
@@ -54,7 +54,7 @@ export function VehicleImageGallery({ images, vehicleName }: VehicleImageGallery
               type="button"
               onClick={showNext}
               aria-label="Show next vehicle photo"
-              className="absolute top-1/2 right-4 grid size-11 -translate-y-1/2 place-items-center rounded-full border border-white/40 bg-[#071127]/75 text-white backdrop-blur transition hover:bg-[#1974E2] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/60 sm:right-6 sm:size-12"
+              className="absolute top-1/2 right-4 z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full border border-white/80 bg-white text-[#071127] shadow-lg transition hover:bg-[#1974E2] hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/60 sm:right-6 sm:size-12"
             >
               <ChevronRight size={25} aria-hidden="true" />
             </button>

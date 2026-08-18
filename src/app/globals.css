@@ -238,41 +238,38 @@ textarea {
 
 @media (max-width: 767px) {
   .vehicle-detail-page > section:first-of-type > div > div {
-    flex-direction: row;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
     gap: 0.5rem;
   }
 
   .vehicle-detail-page > section:first-of-type > div > div > div:first-child {
-    flex: 1 1 auto;
-    width: auto;
+    order: 1;
+    flex: none;
+    width: 100%;
     overflow: hidden;
     gap: 0.3rem;
   }
 
   .vehicle-detail-page > section:first-of-type > div > div > div:last-child {
+    order: 2;
     flex: none;
-    width: auto;
-    gap: 0.25rem;
+    width: 100%;
+    gap: 0;
     padding-left: 0.5rem;
   }
 
   .vehicle-detail-page > section:first-of-type h1 {
     flex: none;
-    font-size: 1rem !important;
+    font-size: 1.125rem !important;
   }
 
   .vehicle-detail-page > section:first-of-type > div > div > div:first-child > p {
-    min-width: 0;
-    font-size: 0.625rem !important;
-  }
-
-  .vehicle-detail-page > section:first-of-type > div > div > div:last-child > span {
-    font-size: 0.5rem;
+    display: none;
   }
 
   .vehicle-detail-page > section:first-of-type > div > div > div:last-child > strong {
-    font-size: 1rem !important;
+    font-size: 1.125rem !important;
   }
 
   /* Keep the first mobile paint independent of optional webfont delivery. */

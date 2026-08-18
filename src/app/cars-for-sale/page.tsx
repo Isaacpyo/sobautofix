@@ -15,7 +15,7 @@ export default async function CarsForSalePage() {
       <PageHero title="Used cars for sale in Doncaster." cta={false} compact showTrustFacts={false} />
       <section className="py-8 sm:py-10 lg:py-12">
         <Container>
-          <SectionIntro className="mb-8" eyebrow="Current stock" title="Available vehicles" body="Every listing is based on the approved vehicle record and published photography." />
+          <SectionIntro className="mb-8" eyebrow="Current stock" title="Available vehicles" />
           <InventoryGrid vehicles={vehicles} />
         </Container>
       </section>
