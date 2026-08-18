@@ -1,8 +1,8 @@
-import Image from "next/image";
 import type { Metadata } from "next";
 import { MessageCircle, Phone } from "lucide-react";
 import { notFound, permanentRedirect } from "next/navigation";
 import { VehicleEnquiryModal } from "@/components/sales/vehicle-enquiry-modal";
+import { VehicleImageGallery } from "@/components/sales/vehicle-image-gallery";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Container, Eyebrow } from "@/components/ui/container";
 import { contactLinks, siteConfig } from "@/config/site";
@@ -103,34 +103,7 @@ export default async function VehicleDetailPage({
       </section>
       <section className="py-10 sm:py-14">
         <Container>
-          <div className="grid gap-2 lg:grid-cols-12">
-            {vehicle.images.length ? (
-              vehicle.images.map((image, index) => (
-                <figure
-                  key={image.id}
-                  className={`group relative min-h-64 overflow-hidden bg-[#E4EAF0] ${index === 0 ? "lg:col-span-8 lg:min-h-[34rem]" : "lg:col-span-4"}`}
-                  data-reveal
-                >
-                  <Image
-                    src={image.url}
-                    alt={image.alt}
-                    fill
-                    priority={index === 0}
-                    sizes={
-                      index === 0
-                        ? "(max-width: 1024px) 100vw, 66vw"
-                        : "(max-width: 1024px) 100vw, 34vw"
-                    }
-                    className="object-cover transition-transform duration-700 group-hover:scale-[1.02]"
-                  />
-                </figure>
-              ))
-            ) : (
-              <div className="grid aspect-[16/8] place-items-center bg-[#E4EAF0] text-[#667586] lg:col-span-12">
-                Vehicle photography awaiting approval
-              </div>
-            )}
-          </div>
+          <VehicleImageGallery images={vehicle.images} vehicleName={vehicleName} />
           <div className="mt-14 grid gap-12 lg:grid-cols-[1fr_.65fr]">
             <div>
               <Eyebrow>Vehicle details</Eyebrow>
