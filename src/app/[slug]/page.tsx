@@ -32,7 +32,7 @@ export default async function TopLevelPage({ params }: { params: Promise<{ slug:
   const content = topLevelContent[slug];
   const legal = legalContent[slug];
   if (legal) {
-    return <><PageHero eyebrow="Business information" title={legal.title} body={legal.description} cta={false} /><section className="py-20"><Container className="max-w-3xl"><p className="mb-10 text-sm text-[#667586]">Last updated: 8 August 2026</p><div className="space-y-10">{legal.sections.map((section) => <section key={section.heading}><h2 className="text-3xl font-bold text-[#071127]">{section.heading}</h2><div className="mt-4 space-y-4 leading-7 text-[#586575]">{section.body.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</div></section>)}</div></Container></section></>;
+    return <><PageHero title={legal.title} cta={false} showTrustFacts={false} /><section className="py-20"><Container className="max-w-3xl"><p className="mb-10 text-sm text-[#667586]">Last updated: 8 August 2026</p><div className="space-y-10">{legal.sections.map((section) => <section key={section.heading}><h2 className="text-3xl font-bold text-[#071127]">{section.heading}</h2><div className="mt-4 space-y-4 leading-7 text-[#586575]">{section.body.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</div></section>)}</div></Container></section></>;
   }
   if (!content) notFound();
   const imageId = ({ about: "about", "mobile-mechanic": "mobile", "vehicle-inspections": "inspection" } as Partial<Record<string, ContextualImageId>>)[slug];
