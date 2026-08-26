@@ -7,6 +7,7 @@ import { ArticleCard } from "@/components/news/article-card";
 import { ServiceCard } from "@/components/marketing/service-card";
 import { TrustBar } from "@/components/marketing/trust-bar";
 import { HomeCoverageMap } from "@/components/marketing/home-coverage-map";
+import { GoogleReviewsSection } from "@/components/reviews/google-reviews-section";
 import { PremiumCta, ProcessFlow, SectionIntro } from "@/components/marketing/experience";
 import { VehicleJourney } from "@/components/vehicle/vehicle-journey";
 import { ButtonLink } from "@/components/ui/button";
@@ -90,6 +91,7 @@ export default async function HomePage() {
       {vehicles.length > 0 && <section className="bg-white py-20 sm:py-24"><Container><div className="flex flex-wrap items-end justify-between gap-5"><SectionIntro eyebrow="Cars for sale" title="Current approved stock." /><Link className="inline-flex items-center gap-2 font-bold text-[#1446A5]" href="/cars-for-sale">View all vehicles <ArrowRight size={16} /></Link></div><div className={styles.stockGrid}>{vehicles.slice(0, 3).map((vehicle) => <Link className={styles.stockCard} key={vehicle.id} href={`/cars-for-sale/${vehicle.slug}`} data-reveal><div className={styles.stockMedia}>{vehicle.images[0] ? <Image fill sizes="(max-width: 768px) 100vw, 33vw" src={vehicle.images[0].url} alt={vehicle.images[0].alt} /> : <span className="grid h-full place-items-center text-[#9AA7B6]"><ImageIcon size={38} /></span>}</div><div className={styles.stockBody}><div><p className={styles.stockMeta}>{vehicle.year} · {vehicle.fuelType}</p><h3>{vehicle.make} {vehicle.model}</h3></div><strong>{formatCurrency(vehicle.price)}</strong></div></Link>)}</div></Container></section>}
       {articles.length > 0 && <section className="border-y border-[#E4EAF0] bg-[#F4F7FA] py-20 sm:py-24"><Container><div className="flex flex-wrap items-end justify-between gap-5"><div><Eyebrow>News &amp; Blog</Eyebrow><h2 className="text-4xl font-extrabold text-[#071127] sm:text-5xl">Useful advice from the workshop.</h2></div><Link className="inline-flex items-center gap-2 font-bold text-[#1446A5]" href="/news">View all articles <ArrowRight size={16} /></Link></div><div className="mt-10 grid gap-5 md:grid-cols-3">{articles.map((article) => <ArticleCard key={article.id} article={article} />)}</div></Container></section>}
       <PremiumCta eyebrow="Ready when you are" title="Start with the vehicle. Leave the guesswork behind." />
+      <GoogleReviewsSection />
     </>
   );
 }

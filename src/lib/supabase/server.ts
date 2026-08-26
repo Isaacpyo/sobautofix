@@ -45,6 +45,16 @@ export function createAdminClient() {
   });
 }
 
+export function createPublicClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  if (!url || !publishableKey) return null;
+
+  return createSupabaseClient(url, publishableKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}
+
 export async function createAdminReadClient() {
   const admin = await getAdminUser({ allowTrustedDevice: true });
   if (!admin || (admin.mfaRequired && !admin.mfaVerified && !admin.trustedDevice)) return null;

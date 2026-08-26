@@ -1,6 +1,8 @@
 import { Newspaper } from "lucide-react";
+import { PageHero } from "@/components/marketing/page-hero";
 import { ArticleCard } from "@/components/news/article-card";
 import { NewsExplorer } from "@/components/news/news-explorer";
+import { GoogleReviewsSection } from "@/components/reviews/google-reviews-section";
 import { Container } from "@/components/ui/container";
 import { siteConfig } from "@/config/site";
 import { createMetadata } from "@/lib/seo";
@@ -19,7 +21,13 @@ export default async function NewsPage() {
 
   return (
     <>
-      <h1 className="sr-only">News &amp; Blog</h1>
+      <PageHero
+        title="Automotive news, advice and guides."
+        body="Practical vehicle advice, diagnostic insights and updates from the SOB Autofix team in Doncaster."
+        cta={false}
+        compact
+        showTrustFacts={false}
+      />
       {featured ? (
         <>
           <section className="py-8 sm:py-10 lg:py-12" aria-label="Featured article">
@@ -47,6 +55,7 @@ export default async function NewsPage() {
           </Container>
         </section>
       )}
+      <GoogleReviewsSection />
     </>
   );
 }

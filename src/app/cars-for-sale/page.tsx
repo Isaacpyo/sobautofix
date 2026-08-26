@@ -1,6 +1,7 @@
 import { PageHero } from "@/components/marketing/page-hero";
 import { SectionIntro } from "@/components/marketing/experience";
 import { InventoryGrid } from "@/components/sales/inventory-grid";
+import { GoogleReviewsSection } from "@/components/reviews/google-reviews-section";
 import { Container } from "@/components/ui/container";
 import { getPublicSaleVehicles } from "@/lib/sales/repository";
 import { createMetadata } from "@/lib/seo";
@@ -25,6 +26,7 @@ export default async function CarsForSalePage() {
           <p className="mt-3 max-w-2xl leading-7 text-[#C6D2DF]">Finance options may be available on selected vehicles. Contact us for details. SOB Autofix is not presented as the lender.</p>
         </Container>
       </section>
+      <GoogleReviewsSection />
     </>
   );
 }

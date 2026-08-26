@@ -1,4 +1,5 @@
 import { AboutExperience } from "@/components/about/about-experience";
+import { GoogleReviewsSection } from "@/components/reviews/google-reviews-section";
 import { createMetadata } from "@/lib/seo";
 
 export const metadata = createMetadata(
@@ -8,5 +9,5 @@ export const metadata = createMetadata(
 );
 
 export default function AboutPage() {
-  return <AboutExperience />;
+  return <><AboutExperience /><GoogleReviewsSection /></>;
 }
