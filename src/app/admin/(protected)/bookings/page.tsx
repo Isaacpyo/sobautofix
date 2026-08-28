@@ -8,6 +8,7 @@ import {
   Settings2,
 } from "lucide-react";
 import Link from "next/link";
+import { AdminBookingListFrame } from "@/components/admin/admin-booking-list-frame";
 import { AdminLoadingLink } from "@/components/admin/admin-loading-link";
 import { AdminListFilters, AdminPagination } from "@/components/admin/admin-list-controls";
 import { ADMIN_LIST_PAGE_SIZE, positiveAdminPage } from "@/lib/admin/pagination";
@@ -132,6 +133,10 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
           <p className="text-sm font-bold text-[#667586]">{filteredBookings.length} matching</p>
         </div>
 
+        <AdminBookingListFrame
+          key={`${page}:${query}:${status}:${view}`}
+          pagination={<AdminPagination path="/admin/bookings" page={page} pageSize={pageSize} totalItems={filteredBookings.length} query={query} status={status} additionalParams={{ view }} />}
+        >
         <div className="mt-5 hidden max-h-[60vh] overflow-auto rounded-2xl border border-[#E4EAF0] bg-white xl:block">
           <table className="w-full min-w-[1120px] table-fixed text-left">
             <thead className="sticky top-0 z-10 bg-[#F4F7FA] text-xs font-extrabold tracking-wide text-[#586575] uppercase shadow-[0_1px_0_#E4EAF0]">
@@ -149,6 +154,7 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
               {bookings.map((booking) => {
                 const customer = relation(booking.customers);
                 const vehicle = relation(booking.vehicles);
+                const bookedAt = formatBookedAt(booking.created_at);
                 return (
                   <tr key={booking.id} className={cn("border-t border-[#E4EAF0] align-top transition hover:bg-[#F8FAFC]", booking.provider_sync_state === "failed" && "bg-amber-50/60")}>
                     <td className="py-4 pl-4 pr-2 font-mono text-sm font-black text-[#1974E2]">{booking.booking_reference}</td>
@@ -156,7 +162,12 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
                     <td className="px-4 py-4 text-sm text-[#586575]">{vehicleLabel(vehicle)}</td>
                     <td className="px-4 py-4 text-sm font-semibold text-[#071127]">{booking.service_name}</td>
                     <td className="px-4 py-4"><BookingStatusBadge status={booking.status} /></td>
-                    <td className="px-4 py-4 text-sm font-bold text-[#071127]">{formatFullDate(booking.created_at)}</td>
+                    <td className="px-4 py-4">
+                      <time dateTime={booking.created_at} className="text-sm font-bold text-[#071127]">
+                        <span className="block">{bookedAt.date}</span>
+                        <span className="mt-1 block text-xs font-semibold text-[#667586]">{bookedAt.time}</span>
+                      </time>
+                    </td>
                     <td className="px-4 py-4"><BookingOpenLink href={`/admin/bookings/${booking.id}`} className="inline-flex min-h-10 items-center rounded-lg border border-[#BCD6F6] px-3 text-xs font-extrabold text-[#1446A5] hover:bg-[#F1F7FF]">View</BookingOpenLink></td>
                   </tr>
                 );
@@ -169,6 +180,7 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
           {bookings.map((booking) => {
             const customer = relation(booking.customers);
             const vehicle = relation(booking.vehicles);
+            const bookedAt = formatBookedAt(booking.created_at);
             return (
               <article key={booking.id} className={cn("rounded-2xl border bg-white p-5", booking.provider_sync_state === "failed" ? "border-amber-300" : "border-[#E4EAF0]")}>
                 <BookingOpenLink href={`/admin/bookings/${booking.id}`} className="block rounded-lg outline-none focus-visible:ring-4 focus-visible:ring-[#1974E2]/20">
@@ -176,7 +188,10 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
                     <div className="min-w-0">
                       <p className="font-mono text-sm font-black tracking-wide text-[#1974E2]">{booking.booking_reference}</p>
                       <h3 className="mt-2 truncate text-xl font-extrabold text-[#071127]">{customer?.name || "Customer"}</h3>
-                      <p className="mt-1 text-sm font-semibold text-[#586575]">Booked {formatFullDate(booking.created_at)}</p>
+                      <time dateTime={booking.created_at} className="mt-1 block text-sm font-semibold text-[#586575]">
+                        <span className="block">Booked {bookedAt.date}</span>
+                        <span className="mt-0.5 block text-xs">{bookedAt.time}</span>
+                      </time>
                     </div>
                     <ChevronRight className="mt-1 shrink-0 text-[#1974E2]" size={21} aria-hidden="true" />
                   </div>
@@ -200,7 +215,7 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
             <p className="mt-2 text-sm text-[#667586]">Appointments will appear here after a customer completes the SOB Autofix booking flow.</p>
           </div>
         )}
-        <AdminPagination path="/admin/bookings" page={page} pageSize={pageSize} totalItems={filteredBookings.length} query={query} status={status} additionalParams={{ view }} />
+        </AdminBookingListFrame>
       </section>
     </>
   );
@@ -251,8 +266,12 @@ function vehicleLabel(vehicle: { registration: string | null; make: string | nul
   return [vehicle?.make, vehicle?.model, vehicle?.registration ? formatRegistration(vehicle.registration) : null].filter(Boolean).join(" · ") || "Vehicle not recorded";
 }
 
-function formatFullDate(value: string) {
-  return new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" }).format(new Date(value));
+function formatBookedAt(value: string) {
+  const date = new Date(value);
+  return {
+    date: new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "Europe/London" }).format(date),
+    time: new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" }).format(date),
+  };
 }
 
 function dateKeyInLondon(value: Date) {

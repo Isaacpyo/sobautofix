@@ -42,7 +42,7 @@ export function AdminPagination({ path, page, pageSize, totalItems, query, statu
 function PageLink({ href, disabled, children }: { href: string; disabled: boolean; children: React.ReactNode }) {
   return disabled
     ? <span aria-disabled="true" className="inline-flex items-center gap-1 rounded-lg border border-[#E4EAF0] px-3 py-2 text-sm font-bold text-[#A3AFBC]">{children}</span>
-    : <Link href={href} className="inline-flex items-center gap-1 rounded-lg border border-[#C9D5E2] px-3 py-2 text-sm font-bold text-[#1446A5] hover:border-[#1974E2] hover:bg-[#F1F7FF]">{children}</Link>;
+    : <Link href={href} data-admin-pagination-link className="inline-flex items-center gap-1 rounded-lg border border-[#C9D5E2] px-3 py-2 text-sm font-bold text-[#1446A5] hover:border-[#1974E2] hover:bg-[#F1F7FF]">{children}</Link>;
 }
 
 function pageHref(path: string, page: number, query: string, status: string, additionalParams: Record<string, string>) {

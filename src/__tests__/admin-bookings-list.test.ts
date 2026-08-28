@@ -34,6 +34,16 @@ describe("admin booking list", () => {
     expect(source).toContain("Bookings are ordered by date booked, newest to oldest.");
     expect(source).not.toContain('ListDetail label="Location"');
     expect(source).not.toContain(">Location</th>");
+    expect(source).toContain("bookedAt.date");
+    expect(source).toContain("bookedAt.time");
+  });
+
+  it("scopes pagination loading feedback to the appointment list", () => {
+    const pageSource = readFileSync(join(process.cwd(), "src/app/admin/(protected)/bookings/page.tsx"), "utf8");
+    const paginationSource = readFileSync(join(process.cwd(), "src/components/admin/admin-list-controls.tsx"), "utf8");
+    expect(pageSource).toContain("<AdminBookingListFrame");
+    expect(pageSource).toContain("pagination={<AdminPagination");
+    expect(paginationSource).toContain("data-admin-pagination-link");
   });
 
   it("links every booking summary metric to its filtered list", () => {
