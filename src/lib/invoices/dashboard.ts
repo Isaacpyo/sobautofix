@@ -44,6 +44,7 @@ export type InvoiceDashboardData = {
   outstandingCount: string;
   paidCount: string;
   outstandingTotalPence: string;
+  currentWeekPaidTotalPence: string;
   error: unknown | null;
 };
 
@@ -86,6 +87,7 @@ export const emptyInvoiceDashboard: InvoiceDashboardData = {
   outstandingCount: "0",
   paidCount: "0",
   outstandingTotalPence: "0",
+  currentWeekPaidTotalPence: "0",
   error: null,
 };
 
@@ -100,6 +102,7 @@ function parseInvoiceDashboard(value: unknown): InvoiceDashboardData {
     outstandingCount: nonNegativeIntegerString(value.outstanding_count),
     paidCount: nonNegativeIntegerString(value.paid_count),
     outstandingTotalPence: nonNegativeIntegerString(value.outstanding_total_pence),
+    currentWeekPaidTotalPence: nonNegativeIntegerString(value.current_week_paid_total_pence),
     error: null,
   };
 }

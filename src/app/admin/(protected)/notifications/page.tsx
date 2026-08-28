@@ -1,4 +1,4 @@
-import { AlertTriangle, Bell, CheckCircle2, Clock3, MailWarning } from "lucide-react";
+import { AlertTriangle, Bell, MailWarning } from "lucide-react";
 import Link from "next/link";
 import { AdminPagination } from "@/components/admin/admin-list-controls";
 import { ADMIN_LIST_PAGE_SIZE, positiveAdminPage } from "@/lib/admin/pagination";
@@ -13,31 +13,22 @@ type AlertRow = {
   customers: { name: string; email: string | null; phone: string } | null;
 };
 
-type AttemptRow = {
-  id: number;
-  enquiry_id: string;
-  recipient_type: "business" | "customer";
-  status: "pending" | "sent" | "failed";
-  error_code: string | null;
-  attempted_at: string;
-};
-
 export default async function NotificationsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const requestedPage = positiveAdminPage((await searchParams).page);
   const client = await createAdminReadClient();
-  const [alertsResult, attemptsResult, unreadResult, unmatchedResult] = client
+  const [alertsResult, unreadResult, unmatchedResult, repliedResult] = client
     ? await Promise.all([
         client.from("enquiries").select("id,type,status,notification_status,created_at,customers(name,email,phone)").or("status.eq.new,notification_status.in.(pending,failed)").order("created_at", { ascending: false }).limit(100),
-        client.from("notification_attempts").select("id,enquiry_id,recipient_type,status,error_code,attempted_at").order("attempted_at", { ascending: false }).limit(100),
         client.from("enquiry_conversations").select("enquiry_id,unread_count").gt("unread_count", 0),
-        client.from("unmatched_inbound_emails").select("id", { count: "exact", head: true }).is("linked_enquiry_id", null).neq("reason", "automated_ignored"),
+        client.from("unmatched_inbound_emails").select("id", { count: "exact", head: true }).is("linked_enquiry_id", null).is("ignored_at", null).neq("reason", "automated_ignored"),
+        client.from("enquiry_messages").select("enquiry_id").eq("direction", "outbound").eq("message_type", "email").in("delivery_status", ["sent", "delivered"]),
       ])
-    : [{ data: [], error: new Error("Database unavailable") }, { data: [], error: new Error("Database unavailable") }, { data: [] }, { count: 0 }];
+    : [{ data: [], error: new Error("Database unavailable") }, { data: [] }, { count: 0 }, { data: [] }];
 
   let alerts = (alertsResult.data || []) as unknown as AlertRow[];
-  const attempts = (attemptsResult.data || []) as unknown as AttemptRow[];
+  const repliedIds = new Set((repliedResult.data || []).map((item) => item.enquiry_id));
+  alerts = alerts.filter((item) => item.status !== "new" || !repliedIds.has(item.id) || ["pending", "failed"].includes(item.notification_status));
   const failedEmails = alerts.filter((item) => item.notification_status === "failed").length;
-  const recentSuccessfulEmails = attempts.filter((item) => item.status === "sent").length;
   const unreadIds = new Set((unreadResult.data || []).map((item) => item.enquiry_id));
   const missingUnreadIds = [...unreadIds].filter((id) => !alerts.some((alert) => alert.id === id));
   if (client && missingUnreadIds.length) {
@@ -45,7 +36,7 @@ export default async function NotificationsPage({ searchParams }: { searchParams
     alerts = [...alerts, ...((unreadEnquiries || []) as unknown as AlertRow[])];
   }
   const attentionCount = new Set([...alerts.map((item) => item.id), ...unreadIds]).size + (unmatchedResult.count || 0);
-  const loadFailed = Boolean(alertsResult.error || attemptsResult.error);
+  const loadFailed = Boolean(alertsResult.error);
   const totalPages = Math.max(1, Math.ceil(alerts.length / ADMIN_LIST_PAGE_SIZE));
   const page = Math.min(requestedPage, totalPages);
   const visibleAlerts = alerts.slice((page - 1) * ADMIN_LIST_PAGE_SIZE, page * ADMIN_LIST_PAGE_SIZE);
@@ -62,9 +53,9 @@ export default async function NotificationsPage({ searchParams }: { searchParams
       </div>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
-        <SummaryCard icon={<Bell />} label="Requires attention" value={attentionCount} />
-        <SummaryCard icon={<MailWarning />} label="Email failures" value={failedEmails} tone={failedEmails ? "danger" : "default"} />
-        <SummaryCard icon={<CheckCircle2 />} label="Recent successful emails" value={recentSuccessfulEmails} />
+        <SummaryCard href="#attention-heading" icon={<Bell />} label="Requires attention" value={attentionCount} />
+        <SummaryCard href="/admin/enquiries?status=notification-failed" icon={<MailWarning />} label="Email failures" value={failedEmails} tone={failedEmails ? "danger" : "default"} />
+        <SummaryCard href="/admin/enquiries/unmatched" icon={<MailWarning />} label="Unmatched inbound" value={unmatchedResult.count || 0} />
       </div>
 
       {(unmatchedResult.count || 0) > 0 && <Link href="/admin/enquiries/unmatched" className="mt-6 flex items-center justify-between rounded-2xl border border-amber-200 bg-amber-50 p-5 font-bold text-amber-950"><span>{unmatchedResult.count} unmatched inbound {unmatchedResult.count === 1 ? "email needs" : "emails need"} review</span><span aria-hidden="true">→</span></Link>}
@@ -99,30 +90,12 @@ export default async function NotificationsPage({ searchParams }: { searchParams
         <AdminPagination path="/admin/notifications" page={page} pageSize={ADMIN_LIST_PAGE_SIZE} totalItems={alerts.length} query="" status="" />
       </section>
 
-      <section className="mt-10" aria-labelledby="delivery-heading">
-        <h2 id="delivery-heading" className="text-2xl font-bold text-[#071127]">Email delivery history</h2>
-        <div className="mt-4 overflow-hidden rounded-2xl border border-[#E4EAF0] bg-white">
-          {attempts.map((attempt) => (
-            <div key={attempt.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E4EAF0] px-5 py-4 last:border-b-0">
-              <div className="flex items-center gap-3">
-                {attempt.status === "sent" ? <CheckCircle2 className="text-green-700" size={19} /> : attempt.status === "failed" ? <MailWarning className="text-red-700" size={19} /> : <Clock3 className="text-amber-700" size={19} />}
-                <div>
-                  <p className="font-bold text-[#071127]">{attempt.recipient_type === "business" ? "Business notification" : "Customer confirmation"}</p>
-                  <p className="text-xs text-[#667586]">{formatDate(attempt.attempted_at)}{attempt.error_code ? ` · ${attempt.error_code}` : ""}</p>
-                </div>
-              </div>
-              <Link href={`/admin/enquiries/${attempt.enquiry_id}`} className="text-sm font-bold text-[#1974E2]">View enquiry</Link>
-            </div>
-          ))}
-          {!loadFailed && attempts.length === 0 && <p className="p-8 text-center text-[#667586]">No email attempts have been recorded yet.</p>}
-        </div>
-      </section>
     </>
   );
 }
 
-function SummaryCard({ icon, label, value, tone = "default" }: { icon: React.ReactNode; label: string; value: number; tone?: "default" | "danger" }) {
-  return <article className={`rounded-2xl border bg-white p-5 ${tone === "danger" ? "border-red-200" : "border-[#E4EAF0]"}`}><span className={tone === "danger" ? "text-red-700" : "text-[#1974E2]"}>{icon}</span><p className="mt-4 text-sm font-semibold text-[#667586]">{label}</p><strong className="mt-1 block text-3xl text-[#071127]">{value}</strong></article>;
+function SummaryCard({ href, icon, label, value, tone = "default" }: { href: string; icon: React.ReactNode; label: string; value: number; tone?: "default" | "danger" }) {
+  return <Link href={href} className={`group rounded-2xl border bg-white p-5 transition hover:-translate-y-0.5 hover:border-[#1974E2] hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1974E2] ${tone === "danger" ? "border-red-200" : "border-[#E4EAF0]"}`}><span className={tone === "danger" ? "text-red-700" : "text-[#1974E2]"}>{icon}</span><p className="mt-4 text-sm font-semibold text-[#667586] group-hover:text-[#1974E2]">{label}</p><strong className="mt-1 block text-3xl text-[#071127]">{value}</strong></Link>;
 }
 
 function StatusBadge({ label, danger = false, pending = false }: { label: string; danger?: boolean; pending?: boolean }) {

@@ -50,6 +50,24 @@ describe("Google reviews carousel", () => {
     fireEvent.click(screen.getByRole("button", { name: "Previous review" }));
     expect(screen.getByText(/second review/)).toBeVisible();
   });
+
+  it("supports horizontal swipe gestures without treating vertical scrolling as navigation", () => {
+    render(<GoogleReviewsCarousel reviews={reviews} />);
+    const carousel = screen.getByRole("region", { name: "Google customer reviews" });
+    const viewport = carousel.querySelector("[aria-live='polite']")!;
+
+    fireEvent.pointerDown(viewport, { pointerId: 1, isPrimary: true, button: 0, clientX: 180, clientY: 50 });
+    fireEvent.pointerUp(viewport, { pointerId: 1, clientX: 90, clientY: 55 });
+    expect(screen.getByText(/second review/)).toBeVisible();
+
+    fireEvent.pointerDown(viewport, { pointerId: 2, isPrimary: true, button: 0, clientX: 90, clientY: 50 });
+    fireEvent.pointerUp(viewport, { pointerId: 2, clientX: 180, clientY: 55 });
+    expect(screen.getByText(/Careful diagnosis/)).toBeVisible();
+
+    fireEvent.pointerDown(viewport, { pointerId: 3, isPrimary: true, button: 0, clientX: 180, clientY: 50 });
+    fireEvent.pointerUp(viewport, { pointerId: 3, clientX: 120, clientY: 140 });
+    expect(screen.getByText(/Careful diagnosis/)).toBeVisible();
+  });
 });
 
 describe("public Google review data path", () => {

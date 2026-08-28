@@ -4,6 +4,8 @@ const harness = vi.hoisted(() => ({
   admin: null as Record<string, unknown> | null,
   getAdminUser: vi.fn(),
   renderInvoicePdf: vi.fn(),
+  renderInvoiceExportPdf: vi.fn(),
+  loadInvoiceExportRows: vi.fn(),
 }));
 
 const serviceClient = {
@@ -23,11 +25,19 @@ vi.mock("@/lib/invoices/repository", () => ({
 vi.mock("@/lib/invoices/pdf", () => ({
   renderInvoicePdf: harness.renderInvoicePdf,
 }));
+vi.mock("@/lib/invoices/export", () => ({
+  InvoiceExportValidationError: class InvoiceExportValidationError extends Error {},
+  normalizeInvoiceExportFilters: vi.fn(() => ({ format: "csv", period: "all", startDate: null, endDate: null, status: null, source: null, label: "All dates", fileLabel: "all-dates" })),
+  loadInvoiceExportRows: harness.loadInvoiceExportRows,
+  invoiceExportCsv: vi.fn(() => "Invoice number\r\n"),
+}));
+vi.mock("@/lib/invoices/export-pdf", () => ({ renderInvoiceExportPdf: harness.renderInvoiceExportPdf }));
 vi.mock("@/lib/rate-limit", () => ({ consumeRateLimit: vi.fn(async () => true) }));
 vi.mock("@/lib/vehicle/configured-provider", () => ({ getConfiguredVehicleProvider: vi.fn() }));
 
 import { POST as inventoryLookup } from "@/app/api/admin/inventory/lookup/route";
 import { GET as invoicePdf } from "@/app/api/admin/invoices/[id]/pdf/route";
+import { GET as invoiceExport } from "@/app/api/admin/invoices/export/route";
 
 describe("admin API authorization", () => {
   beforeEach(() => {
@@ -35,6 +45,8 @@ describe("admin API authorization", () => {
     harness.admin = null;
     harness.getAdminUser.mockImplementation(async () => harness.admin);
     harness.renderInvoicePdf.mockResolvedValue(new Uint8Array([1, 2, 3]));
+    harness.renderInvoiceExportPdf.mockResolvedValue(new Uint8Array([1, 2, 3]));
+    harness.loadInvoiceExportRows.mockResolvedValue([]);
   });
 
   it("returns 401 with no-store before handling either endpoint", async () => {
@@ -52,6 +64,11 @@ describe("admin API authorization", () => {
     expect(pdfResponse.headers.get("cache-control")).toContain("private");
     expect(pdfResponse.headers.get("cache-control")).toContain("no-store");
     expect(harness.renderInvoicePdf).not.toHaveBeenCalled();
+
+    const exportResponse = await invoiceExport(new Request("https://sobautofix.com/api/admin/invoices/export?format=csv"));
+    expect(exportResponse.status).toBe(401);
+    expect(exportResponse.headers.get("cache-control")).toContain("no-store");
+    expect(harness.loadInvoiceExportRows).not.toHaveBeenCalled();
   });
 
   it("serves a private PDF after the strict admin guard succeeds", async () => {
@@ -62,5 +79,15 @@ describe("admin API authorization", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toBe("application/pdf");
     expect(response.headers.get("cache-control")).toBe("private, no-store, max-age=0");
+  });
+
+  it("serves a private invoice export after the strict admin guard succeeds", async () => {
+    harness.admin = { user: { id: "admin-id" }, mfaVerified: true };
+    const response = await invoiceExport(new Request("https://sobautofix.com/api/admin/invoices/export?format=csv"));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("text/csv");
+    expect(response.headers.get("content-disposition")).toContain("SOB-Invoices-all-dates.csv");
+    expect(response.headers.get("cache-control")).toContain("no-store");
   });
 });

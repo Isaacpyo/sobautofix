@@ -1,0 +1,43 @@
+.viewport {
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+.slideNext {
+  animation: slide-next 360ms cubic-bezier(.22, .78, .24, 1) both;
+}
+
+.slidePrevious {
+  animation: slide-previous 360ms cubic-bezier(.22, .78, .24, 1) both;
+}
+
+@keyframes slide-next {
+  from {
+    opacity: .35;
+    transform: translate3d(3rem, 0, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes slide-previous {
+  from {
+    opacity: .35;
+    transform: translate3d(-3rem, 0, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slideNext,
+  .slidePrevious {
+    animation: none;
+  }
+}

@@ -65,4 +65,12 @@ describe("admin operations dashboard", () => {
     expect(dashboardSource).toContain("upcomingBookings");
     expect(dashboardSource).toContain("provider_sync_state");
   });
+
+  it("shows the shared current-week paid invoice total", () => {
+    expect(dashboardSource).toContain("loadInvoiceDashboard");
+    expect(dashboardSource).toContain("currentWeekPaidTotalPence");
+    expect(dashboardSource).toContain('label="Paid this week"');
+    expect(dashboardSource).toContain("Settled since Monday");
+    expect(dashboardSource).toContain("xl:grid-cols-6");
+  });
 });

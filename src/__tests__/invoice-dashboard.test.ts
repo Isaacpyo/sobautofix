@@ -36,6 +36,7 @@ describe("invoice dashboard query", () => {
         outstanding_count: "2",
         paid_count: "7",
         outstanding_total_pence: "9007199254740992",
+        current_week_paid_total_pence: "123456",
       },
       error: null,
     });
@@ -55,6 +56,7 @@ describe("invoice dashboard query", () => {
       pages: 41,
       draftCount: "1005",
       outstandingTotalPence: "9007199254740992",
+      currentWeekPaidTotalPence: "123456",
       error: null,
     });
   });
@@ -71,5 +73,36 @@ describe("invoice dashboard query", () => {
     expect(migration).not.toMatch(/limit\s+500/i);
     expect(migration).toContain("from public, anon, authenticated, service_role");
     expect(migration).toContain("to authenticated");
+  });
+
+  it("totals payments from the current London week", () => {
+    const migration = readFileSync(
+      join(process.cwd(), "supabase", "migrations", "202608280001_invoice_weekly_paid_total.sql"),
+      "utf8",
+    );
+    expect(migration).toContain("current_week_paid_total_pence");
+    expect(migration).toContain("timezone('Europe/London', statement_timestamp())");
+    expect(migration).toContain("invoice.paid_at >= week_start");
+    expect(migration).toContain("invoice.paid_at < week_end");
+  });
+
+  it("uses the shared admin pagination and preserves invoice filters", () => {
+    const source = readFileSync(
+      join(process.cwd(), "src/app/admin/(protected)/invoices/page.tsx"),
+      "utf8",
+    );
+    expect(source).toContain('<AdminPagination path="/admin/invoices"');
+    expect(source).toContain("totalItems={matchingCount}");
+    expect(source).toContain("totalPages={pages}");
+    expect(source).toContain("additionalParams={{ date }}");
+  });
+
+  it("matches the appointment table's customer and vehicle column spacing", () => {
+    const source = readFileSync(
+      join(process.cwd(), "src/app/admin/(protected)/invoices/page.tsx"),
+      "utf8",
+    );
+    expect(source).toContain('min-w-[1100px] table-fixed');
+    expect(source).toContain('<col className="w-[10%]" /><col className="w-[17%]" /><col className="w-[18%]" />');
   });
 });

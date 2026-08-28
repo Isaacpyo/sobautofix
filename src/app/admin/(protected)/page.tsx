@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   AlertTriangle,
   ArrowRight,
+  BadgePoundSterling,
   CalendarClock,
   CarFront,
   CheckCircle2,
@@ -22,6 +23,8 @@ import {
   formatRelativeTime,
   type HealthState,
 } from "@/lib/admin/dashboard";
+import { emptyInvoiceDashboard, loadInvoiceDashboard, normalizeInvoiceDashboardFilters } from "@/lib/invoices/dashboard";
+import { formatPence } from "@/lib/invoices/money";
 import { createAdminReadClient, getAdminUser } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 
@@ -52,8 +55,6 @@ type BookingSummary = {
   provider_sync_state: string;
 };
 
-type InvoiceSummary = { id: string; status: string; total_pence: string | number };
-
 const emptyResult = { data: [], count: 0, error: null };
 
 export default async function DashboardPage() {
@@ -71,17 +72,17 @@ export default async function DashboardPage() {
         client.from("admin_audit_log").select("id,actor_id,action,entity_type,entity_id,detail,created_at").order("created_at", { ascending: false }).limit(6),
         client.from("bookings").select("id,status,appointment_start,provider_sync_state").order("appointment_start", { ascending: true }).limit(500),
         client.from("booking_service_types").select("id", { count: "exact", head: true }).eq("online_booking_enabled", true).not("provider_event_type_id", "is", null),
-        client.from("invoices").select("id,status,total_pence").eq("status", "issued"),
+        admin
+          ? loadInvoiceDashboard(admin.client, normalizeInvoiceDashboardFilters({}))
+          : { ...emptyInvoiceDashboard, error: new Error("Admin session is unavailable") },
       ])
-    : [emptyResult, emptyResult, emptyResult, emptyResult, emptyResult, emptyResult, emptyResult, emptyResult, emptyResult];
+    : [emptyResult, emptyResult, emptyResult, emptyResult, emptyResult, emptyResult, emptyResult, emptyResult, emptyInvoiceDashboard];
 
   const recentEnquiries = (recentEnquiriesResult.data || []) as unknown as RecentEnquiry[];
   const stockRows = (stockResult.data || []) as Array<{ status: string }>;
   const contentRows = (contentResult.data || []) as Array<{ status: string; kind: string }>;
   const activity = (activityResult.data || []) as unknown as AuditEntry[];
   const bookingRows = (bookingsResult.data || []) as BookingSummary[];
-  const outstandingInvoices = (invoicesResult.data || []) as InvoiceSummary[];
-  const outstandingValue = outstandingInvoices.reduce((sum, invoice) => sum + BigInt(invoice.total_pence), 0n);
   const stockCounts = countStatuses(stockRows, ["available", "reserved", "sold"]);
   const articleCounts = countStatuses(contentRows.filter((entry) => entry.kind === "article"), ["published", "draft", "scheduled"]);
   const databaseReady = Boolean(client) && ![
@@ -143,14 +144,21 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      <section className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-5" aria-label="Key performance indicators">
+      <section className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" aria-label="Key performance indicators">
         <KpiCard
           label="Outstanding invoices"
-          value={outstandingInvoices.length}
-          support={`${formatDashboardPence(outstandingValue)} unpaid`}
+          value={invoicesResult.outstandingCount}
+          support={`${formatPence(invoicesResult.outstandingTotalPence)} unpaid`}
           href="/admin/invoices?status=issued"
           icon={ReceiptText}
-          tone={outstandingInvoices.length > 0 ? "warning" : "default"}
+          tone={invoicesResult.outstandingCount !== "0" ? "warning" : "default"}
+        />
+        <KpiCard
+          label="Paid this week"
+          value={formatPence(invoicesResult.currentWeekPaidTotalPence)}
+          support="Settled since Monday"
+          href="/admin/invoices?status=paid"
+          icon={BadgePoundSterling}
         />
         <KpiCard
           label="New enquiries"
@@ -201,10 +209,6 @@ export default async function DashboardPage() {
   );
 }
 
-function formatDashboardPence(value: bigint) {
-  return `£${value / 100n}.${String(value % 100n).padStart(2, "0")}`;
-}
-
 function KpiCard({
   label,
   value,
@@ -214,7 +218,7 @@ function KpiCard({
   tone = "default",
 }: {
   label: string;
-  value: number;
+  value: number | string;
   support: string;
   href: string;
   icon: LucideIcon;
@@ -362,7 +366,7 @@ function SystemHealthPanel({ checks }: { checks: ReturnType<typeof createSystemH
           </div>
         ))}
       </div>
-      <Link href="/admin/settings" className="mt-5 inline-flex min-h-10 items-center gap-2 text-sm font-bold text-[#1974E2] hover:text-[#1446A5]">
+      <Link href="/admin/settings/review-health" className="mt-5 inline-flex min-h-10 items-center gap-2 text-sm font-bold text-[#1974E2] hover:text-[#1446A5]">
         Review settings <ArrowRight size={15} aria-hidden="true" />
       </Link>
     </section>

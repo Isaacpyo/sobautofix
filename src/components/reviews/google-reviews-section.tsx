@@ -12,7 +12,6 @@ export async function GoogleReviewsSection() {
         <div className="mx-auto mb-9 max-w-3xl text-center">
           <Eyebrow>Customer reviews</Eyebrow>
           <h2 id="google-reviews-heading" className="text-4xl font-extrabold text-[#071127] sm:text-5xl">What our customers say</h2>
-          <p className="mx-auto mt-4 max-w-2xl leading-7 text-[#586575]">Showing the newest Google reviews that SOB Autofix has selected for public display.</p>
         </div>
         <GoogleReviewsCarousel reviews={reviews} />
       </Container>

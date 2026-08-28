@@ -1,8 +1,9 @@
-import Link from "next/link";
 import { AdminLoadingLink } from "@/components/admin/admin-loading-link";
 import { AdminListFilters, AdminPagination } from "@/components/admin/admin-list-controls";
+import { EmailDeliveryDrawer, type EmailDeliveryAttempt } from "@/components/admin/email-delivery-drawer";
+import { UnmatchedInboundDrawer, type UnmatchedInboundEmail } from "@/components/admin/unmatched-inbound-drawer";
 import { ADMIN_LIST_PAGE_SIZE, positiveAdminPage } from "@/lib/admin/pagination";
-import { resendEnquiryNotifications } from "../actions";
+import { ignoreUnmatchedInboundAction, linkUnmatchedInboundAction, resendEnquiryNotifications } from "../actions";
 import { createAdminReadClient } from "@/lib/supabase/server";
 
 type EnquiryRow = {
@@ -20,11 +21,13 @@ export default async function EnquiriesPage({ searchParams }: { searchParams: Pr
   const status = params.status || "";
   const requestedPage = positiveAdminPage(params.page);
   const client = await createAdminReadClient();
-  const [enquiriesResult, conversationsResult, messagesResult] = client ? await Promise.all([
+  const [enquiriesResult, conversationsResult, messagesResult, attemptsResult, unmatchedResult] = client ? await Promise.all([
     client.from("enquiries").select("id,type,description,status,notification_status,created_at,customers(name,email,phone),vehicles(registration,make,model)").order("created_at", { ascending: false }).limit(250),
     client.from("enquiry_conversations").select("enquiry_id,unread_count,last_activity_at").order("last_activity_at", { ascending: false }).limit(250),
     client.from("enquiry_messages").select("enquiry_id,text_body,direction,created_at").order("created_at", { ascending: false }).limit(1000),
-  ]) : [{ data: [] }, { data: [] }, { data: [] }];
+    client.from("notification_attempts").select("id,enquiry_id,recipient_type,status,error_code,attempted_at").order("attempted_at", { ascending: false }).limit(100),
+    client.from("unmatched_inbound_emails").select("id,sender_email,subject,text_body,reason,created_at").is("linked_enquiry_id", null).is("ignored_at", null).neq("reason", "automated_ignored").order("created_at", { ascending: false }).limit(100),
+  ]) : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }];
   const enquiries = (enquiriesResult.data || []) as unknown as EnquiryRow[];
   const conversations = new Map(((conversationsResult.data || []) as ConversationRow[]).map((item) => [item.enquiry_id, item]));
   const latestMessages = new Map<string, MessageRow>();
@@ -44,7 +47,7 @@ export default async function EnquiriesPage({ searchParams }: { searchParams: Pr
   return (
     <>
       <p className="text-xs font-extrabold tracking-widest text-[#1974E2] uppercase">Customer requests</p>
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-4"><h1 className="text-4xl font-extrabold text-[#071127]">Enquiries</h1><Link href="/admin/enquiries/unmatched" className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-bold text-amber-950">Unmatched inbound</Link></div>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-4"><h1 className="text-4xl font-extrabold text-[#071127]">Enquiries</h1><div className="flex flex-wrap gap-2"><EmailDeliveryDrawer attempts={(attemptsResult.data || []) as EmailDeliveryAttempt[]} /><UnmatchedInboundDrawer messages={(unmatchedResult.data || []) as UnmatchedInboundEmail[]} enquiries={enquiries.filter((enquiry) => enquiry.status !== "closed").map((enquiry) => ({ id: enquiry.id, type: enquiry.type, created_at: enquiry.created_at, customerName: enquiry.customers?.name || "Customer" }))} linkAction={linkUnmatchedInboundAction} ignoreAction={ignoreUnmatchedInboundAction} /></div></div>
       <p className="mt-2 max-w-2xl text-[#586575]">Open an enquiry to read and continue its email conversation.</p>
 
       <AdminListFilters action="/admin/enquiries" query={query} status={status} placeholder="Customer, email, phone, vehicle or message…" statusOptions={[{ value: "new", label: "New" }, { value: "contacted", label: "Contacted" }, { value: "booked", label: "Booked" }, { value: "closed", label: "Closed" }, { value: "unread", label: "Unread replies" }, { value: "notification-failed", label: "Email failed" }]} />

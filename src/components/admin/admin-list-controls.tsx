@@ -22,18 +22,19 @@ export function AdminListFilters({ action, query, status, statusOptions, placeho
   );
 }
 
-export function AdminPagination({ path, page, pageSize, totalItems, query, status, additionalParams = {} }: { path: string; page: number; pageSize: number; totalItems: number; query: string; status: string; additionalParams?: Record<string, string> }) {
-  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
-  if (!totalItems) return null;
-  const start = (page - 1) * pageSize + 1;
-  const end = Math.min(page * pageSize, totalItems);
+export function AdminPagination({ path, page, pageSize, totalItems, totalPages, query, status, additionalParams = {} }: { path: string; page: number; pageSize: number; totalItems: number | string; totalPages?: number; query: string; status: string; additionalParams?: Record<string, string> }) {
+  const total = BigInt(totalItems);
+  if (total === 0n) return null;
+  const pages = totalPages ?? Math.max(1, Math.ceil(Number(total) / pageSize));
+  const start = BigInt((page - 1) * pageSize + 1);
+  const end = total < BigInt(page * pageSize) ? total : BigInt(page * pageSize);
   return (
     <nav aria-label="List pagination" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#E4EAF0] bg-white px-4 py-3">
-      <p className="text-sm font-semibold text-[#667586]">Showing {start}–{end} of {totalItems}</p>
+      <p className="text-sm font-semibold text-[#667586]">Showing {start.toString()}–{end.toString()} of {total.toString()}</p>
       <div className="flex items-center gap-2">
         <PageLink disabled={page <= 1} href={pageHref(path, page - 1, query, status, additionalParams)}><ChevronLeft aria-hidden="true" size={16} /> Previous</PageLink>
-        <span className="px-2 text-sm font-extrabold text-[#071127]">Page {page} of {totalPages}</span>
-        <PageLink disabled={page >= totalPages} href={pageHref(path, page + 1, query, status, additionalParams)}>Next <ChevronRight aria-hidden="true" size={16} /></PageLink>
+        <span className="px-2 text-sm font-extrabold text-[#071127]">Page {page} of {pages}</span>
+        <PageLink disabled={page >= pages} href={pageHref(path, page + 1, query, status, additionalParams)}>Next <ChevronRight aria-hidden="true" size={16} /></PageLink>
       </div>
     </nav>
   );

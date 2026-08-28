@@ -1,9 +1,12 @@
 "use client";
 
 import { ChevronLeft, ChevronRight, ExternalLink, Star } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { PublicReview } from "@/lib/reviews/repository";
+import styles from "./google-reviews-carousel.module.css";
+
+const SWIPE_THRESHOLD = 48;
 
 function formatReviewDate(value?: string) {
   if (!value) return null;
@@ -14,6 +17,8 @@ function formatReviewDate(value?: string) {
 
 export function GoogleReviewsCarousel({ reviews }: { reviews: PublicReview[] }) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [direction, setDirection] = useState<-1 | 1>(1);
+  const pointerStart = useRef<{ id: number; x: number; y: number } | null>(null);
   if (reviews.length === 0) return null;
 
   const review = reviews[activeIndex] ?? reviews[0]!;
@@ -21,13 +26,35 @@ export function GoogleReviewsCarousel({ reviews }: { reviews: PublicReview[] }) 
   const hasNavigation = reviews.length > 1;
 
   function move(direction: -1 | 1) {
+    setDirection(direction);
     setActiveIndex((current) => (current + direction + reviews.length) % reviews.length);
+  }
+
+  function finishSwipe(pointerId: number, clientX: number, clientY: number) {
+    const start = pointerStart.current;
+    pointerStart.current = null;
+    if (!start || start.id !== pointerId) return;
+
+    const horizontalDistance = clientX - start.x;
+    const verticalDistance = clientY - start.y;
+    if (Math.abs(horizontalDistance) < SWIPE_THRESHOLD || Math.abs(horizontalDistance) <= Math.abs(verticalDistance)) return;
+    move(horizontalDistance < 0 ? 1 : -1);
   }
 
   return (
     <div className="mx-auto max-w-3xl" role="region" aria-roledescription="carousel" aria-label="Google customer reviews">
-      <div className="min-h-[19rem]" aria-live="polite" aria-atomic="true">
-        <article key={review.id} className="premium-card flex min-h-[19rem] flex-col rounded-[1.6rem_.35rem_1.6rem_.35rem] border border-[#E4EAF0] bg-white p-6 shadow-sm sm:p-8">
+      <div
+        className={`min-h-[19rem] ${styles.viewport}`}
+        aria-live="polite"
+        aria-atomic="true"
+        onPointerDown={(event) => {
+          if (!event.isPrimary || event.button !== 0) return;
+          pointerStart.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
+        }}
+        onPointerUp={(event) => finishSwipe(event.pointerId, event.clientX, event.clientY)}
+        onPointerCancel={() => { pointerStart.current = null; }}
+      >
+        <article key={review.id} className={`premium-card flex min-h-[19rem] flex-col rounded-[1.6rem_.35rem_1.6rem_.35rem] border border-[#E4EAF0] bg-white p-6 shadow-sm sm:p-8 ${direction === 1 ? styles.slideNext : styles.slidePrevious}`}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-1 text-amber-600" aria-hidden="true">
               {Array.from({ length: 5 }, (_, index) => <Star key={index} size={19} fill={index < review.rating ? "currentColor" : "none"} />)}

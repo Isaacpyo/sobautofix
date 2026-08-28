@@ -177,6 +177,7 @@ export async function updateEnquiryStatus(formData: FormData) {
   revalidatePath("/admin/enquiries");
   revalidatePath(`/admin/enquiries/${id}`);
   revalidatePath("/admin/notifications");
+  revalidatePath("/admin", "layout");
 }
 
 export async function sendEnquiryReplyAction(previous: ReplyState, formData: FormData): Promise<ReplyState> {
@@ -230,7 +231,7 @@ export async function ignoreUnmatchedInboundAction(formData: FormData) {
   revalidatePath("/admin/enquiries/unmatched");
   revalidatePath("/admin/enquiries");
   revalidatePath("/admin/notifications");
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
 }
 
 function revalidateEnquiryThread(enquiryId: string) {
@@ -421,6 +422,22 @@ async function hasValidImageSignature(file: File) {
   if (file.type === "image/png") return bytes.slice(0, 8).every((value, index) => value === [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a][index]);
   if (file.type === "image/webp") return String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" && String.fromCharCode(...bytes.slice(8, 12)) === "WEBP";
   return false;
+}
+
+export async function updateMediaDetails(formData: FormData) {
+  const { auth, client } = await requireAdmin();
+  const parsed = z.object({
+    id: z.string().uuid(),
+    alt: z.string().trim().min(5).max(180),
+    category: z.enum(["news", "diagnostics", "engine-repairs", "electrical-repairs", "servicing", "before-after", "workshop"]),
+  }).parse(Object.fromEntries(formData));
+  assertCustomerFacingContent({ alt: parsed.alt, category: parsed.category });
+  const { data, error } = await client.from("media_assets").update({ alt_text: parsed.alt, category: parsed.category }).eq("id", parsed.id).select("id").single();
+  if (error || !data) throw new Error("Image details could not be updated");
+  await audit(client, auth.user.id, "update", "media", parsed.id, { category: parsed.category });
+  revalidatePath("/admin/media");
+  revalidatePath("/gallery");
+  revalidatePath("/news", "layout");
 }
 
 export async function toggleMediaPublication(formData: FormData) { const { auth, client } = await requireAdmin(); const id = z.string().uuid().parse(formData.get("id")); const published = formData.get("published") === "true"; const { data } = await client.from("media_assets").select("alt_text").eq("id", id).single(); if (published && (!data?.alt_text || data.alt_text.trim().length < 5)) throw new Error("Alt text is required"); await client.from("media_assets").update({ published }).eq("id", id); await audit(client, auth.user.id, published ? "publish" : "unpublish", "media", id); revalidatePath("/admin/media"); revalidatePath("/gallery"); revalidatePath("/sitemap.xml"); }

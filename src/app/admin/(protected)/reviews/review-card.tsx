@@ -39,7 +39,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
       <form action={toggleReview}>
         <input type="hidden" name="id" value={review.id} />
         <input type="hidden" name="visible" value={String(!review.visible)} />
-        <button className="rounded-lg border border-[#1974E2]/30 px-4 py-2 text-sm font-bold text-[#1974E2]">{review.visible ? "Hide" : "Publish"}</button>
+        <button className="rounded-lg border border-[#1974E2]/30 bg-white px-4 py-2 text-sm font-bold text-[#1974E2] shadow-sm transition-[transform,background-color,color,border-color,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:border-[#1974E2] hover:bg-[#1974E2] hover:text-white hover:shadow-[0_8px_18px_rgba(25,116,226,.22)] active:translate-y-0 active:scale-95 active:shadow-none">{review.visible ? "Hide" : "Publish"}</button>
       </form>
     </div>
   </article>;

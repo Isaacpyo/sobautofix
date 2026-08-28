@@ -27,6 +27,7 @@ export default async function SettingsPage() {
 
       <nav aria-label="Configuration pages" className="mt-6 flex w-fit gap-1 rounded-xl border border-[#D7E0E9] bg-white p-1">
         <Link href="/admin/settings" aria-current="page" className="rounded-lg bg-[#071127] px-4 py-2 text-sm font-bold text-white">Settings</Link>
+        <Link href="/admin/settings/review-health" className="rounded-lg px-4 py-2 text-sm font-bold text-[#586575] hover:bg-[#F4F7FA] hover:text-[#1974E2]">Review health</Link>
         <Link href="/admin/configuration/security" className="rounded-lg px-4 py-2 text-sm font-bold text-[#586575] hover:bg-[#F4F7FA] hover:text-[#1974E2]">Security</Link>
       </nav>
 
@@ -82,7 +83,7 @@ export default async function SettingsPage() {
           <div className="mt-6 grid gap-6">
             <ManagementSection id="media-settings" icon={<ImageIcon />} title="Media library" description="Manage approved website images, publication status and accessible alternative text." href="/admin/media" action="Open media library" />
             <ManagementSection id="notification-settings" icon={<Bell />} title="Notifications" description="Review new enquiries, pending messages and email delivery issues requiring attention." href="/admin/notifications" action="Review notifications" />
-            <ManagementSection id="system-settings" icon={<HeartPulse />} title="System health" description="Check integration readiness, publishing health and the services used by the website." href="/admin#system-health" action="View system health" />
+            <ManagementSection id="system-settings" icon={<HeartPulse />} title="System health" description="Check integration readiness, publishing health and the services used by the website." href="/admin/settings/review-health" action="View review health" />
           </div>
 
       <section id="publishing-controls" className="mt-6 scroll-mt-6 rounded-2xl border border-[#E4EAF0] bg-white p-6" aria-labelledby="safeguards-heading">
