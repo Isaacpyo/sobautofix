@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Download, KeyRound, LoaderCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Download, KeyRound, LoaderCircle } from "lucide-react";
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { regenerateMfaRecoveryCodes } from "./actions";
@@ -37,8 +37,9 @@ export function RecoveryCodeDisplay({ codes, title = "Save your recovery codes" 
     </ol>
     <div className="mt-5 flex flex-wrap items-center gap-3">
       <Button type="button" onClick={() => downloadRecoveryCodes(codes)}><Download size={18} aria-hidden="true" />Download codes (.txt)</Button>
-      <p className="text-xs leading-5 text-[#586575]">The downloaded file contains every plaintext code. Keep it in secure offline storage.</p>
+      <Button type="button" variant="outline" onClick={() => window.location.reload()}><ArrowLeft size={18} aria-hidden="true" />Back to Security</Button>
     </div>
+    <p className="mt-3 text-xs leading-5 text-[#586575]">The downloaded file contains every plaintext code. Keep it in secure offline storage.</p>
     <p className="mt-4 text-xs leading-5 text-[#586575]">Leaving or refreshing this page permanently removes these plaintext values from the application. Existing values cannot be retrieved later.</p>
   </section>;
 }

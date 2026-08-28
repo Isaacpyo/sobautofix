@@ -33,4 +33,10 @@ describe("MFA recovery-code download", () => {
     expect(revokeObjectURL).toHaveBeenCalledWith("blob:recovery-codes");
     click.mockRestore();
   });
+
+  it("offers a way back to the Security page", () => {
+    render(<RecoveryCodeDisplay codes={["FIRST-CODE"]} />);
+
+    expect(screen.getByRole("button", { name: "Back to Security" })).toBeVisible();
+  });
 });
