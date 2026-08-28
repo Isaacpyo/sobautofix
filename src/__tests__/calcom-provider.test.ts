@@ -62,6 +62,43 @@ describe("Cal.com API v2 adapter", () => {
     expect(new Headers(init.headers).get("Authorization")).toBe("Bearer cal_live_test-only");
   });
 
+  it("excludes Cal.com slots returned for the inclusive boundary date", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => success({
+      "2026-08-18": [{ start: "2026-08-18T13:00:00.000Z" }],
+      "2026-08-19": [{ start: "2026-08-19T13:00:00.000Z" }],
+    })));
+
+    const slots = await new CalComProvider().getAvailableSlots({
+      eventTypeId: 123,
+      start: "2026-08-18",
+      end: "2026-08-19",
+      timeZone: "Europe/London",
+    });
+
+    expect(slots).toEqual([{ start: "2026-08-18T13:00:00.000Z", end: undefined }]);
+  });
+
+  it("retains every requested day while excluding the final boundary of a multi-day range", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => success({
+      "2026-08-18": ["2026-08-18T08:00:00.000Z"],
+      "2026-08-19": ["2026-08-19T08:00:00.000Z"],
+      "2026-08-20": ["2026-08-20T08:00:00.000Z"],
+    })));
+
+    const slots = await new CalComProvider().getAvailableSlots({
+      eventTypeId: 123,
+      start: "2026-08-18",
+      end: "2026-08-20",
+      timeZone: "Europe/London",
+      bookingUidToReschedule: "booking-to-review",
+    });
+
+    expect(slots.map((slot) => slot.start)).toEqual([
+      "2026-08-18T08:00:00.000Z",
+      "2026-08-19T08:00:00.000Z",
+    ]);
+  });
+
   it("creates an ordinary booking with only safe correlation metadata", async () => {
     const fetchMock = vi.fn(async () => success({
       uid: "provider-uid",

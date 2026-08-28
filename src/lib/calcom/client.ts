@@ -127,9 +127,14 @@ function normalizeBooking(value: CalComBooking | CalComBooking[]): SchedulingBoo
   };
 }
 
-function normalizeSlots(value: Record<string, Array<string | { start?: string; end?: string }>>): AvailableSlot[] {
-  return Object.values(value)
-    .flat()
+function normalizeSlots(
+  value: Record<string, Array<string | { start?: string; end?: string }>>,
+  start: string,
+  end: string,
+): AvailableSlot[] {
+  return Object.entries(value)
+    .filter(([date]) => date >= start && date < end)
+    .flatMap(([, slots]) => slots)
     .flatMap((slot) => {
       if (typeof slot === "string") return [{ start: slot }];
       return slot.start ? [{ start: slot.start, end: slot.end }] : [];
@@ -148,7 +153,7 @@ export class CalComProvider implements SchedulingProvider {
     });
     if (input.bookingUidToReschedule) params.set("bookingUidToReschedule", input.bookingUidToReschedule);
     const data = await request<Record<string, Array<string | { start?: string; end?: string }>>>("slots", `/v2/slots?${params}`);
-    return normalizeSlots(data);
+    return normalizeSlots(data, input.start, input.end);
   }
 
   async createBooking(input: CreateSchedulingBookingRequest) {
