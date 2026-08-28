@@ -28,7 +28,7 @@ describe("MFA recovery-code download", () => {
     fireEvent.click(screen.getByRole("button", { name: "Download codes (.txt)" }));
 
     expect(createObjectURL).toHaveBeenCalledOnce();
-    expect(createObjectURL.mock.calls[0]?.[0]).toBeInstanceOf(Blob);
+    expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
     expect(click).toHaveBeenCalledOnce();
     expect(revokeObjectURL).toHaveBeenCalledWith("blob:recovery-codes");
     click.mockRestore();
