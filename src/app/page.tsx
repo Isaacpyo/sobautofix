@@ -32,7 +32,7 @@ export default async function HomePage() {
     <>
       <JsonLd value={localBusinessJsonLd()} />
       <section className={`hero-grid relative overflow-hidden py-16 text-white sm:py-20 lg:py-28 ${styles.hero}`} data-motion="off">
-        <Image src={heroImage} alt="" fill loading="eager" sizes="100vw" className={`object-cover object-[67%_center] opacity-90 md:object-center ${styles.heroImage}`} />
+        <Image src={heroImage} alt="" fill preload sizes="100vw" className={`object-cover object-center opacity-90 ${styles.heroImage}`} />
         <div className={styles.heroOverlay} />
         <div className={styles.heroGrid} aria-hidden="true" />
         <Container className="relative grid items-center gap-12 lg:grid-cols-[1fr_.95fr]">

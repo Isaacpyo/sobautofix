@@ -10,10 +10,10 @@ import {
 import { JsonLd } from "@/components/seo/json-ld";
 import { Container, Eyebrow } from "@/components/ui/container";
 import { createMetadata, serviceJsonLd } from "@/lib/seo";
-import recoveryImage from "../../../../assets/sobautofix-new (1).jpg";
-import inspectionImage from "../../../../assets/sobautofix-new (7).jpg";
-import fleetImage from "../../../../assets/sobautofix-new (9).jpg";
-import mobileMechanicImage from "../../../../assets/sobautofix-new (6).jpg";
+import recoveryImage from "../../../../assets/sobautofix-new-pictures (8).png";
+import inspectionImage from "../../../../assets/sobautofix-new-pictures (7).png";
+import fleetImage from "../../../../assets/sobautofix-new-pictures (6).png";
+import mobileMechanicImage from "../../../../assets/sobautofix-new-pictures (1).png";
 
 export const metadata = createMetadata(
   "Mobile & Specialist Vehicle Services Doncaster",

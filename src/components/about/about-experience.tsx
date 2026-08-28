@@ -4,8 +4,8 @@ import { ArrowDown, ArrowRight, MapPin, Phone } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import heroImage from "../../../assets/sobautofix-new (8).jpg";
-import workshopImage from "../../../assets/sobautofix-new (2).jpg";
+import heroImage from "../../../assets/sobautofix-new-pictures (3).png";
+import workshopImage from "../../../assets/sobautofix-new-pictures (5).png";
 import { contactLinks, siteConfig } from "@/config/site";
 import styles from "./about-experience.module.css";
 import { HomeCoverageMap } from "@/components/marketing/home-coverage-map";
@@ -206,7 +206,7 @@ export function AboutExperience() {
         <div className={styles.heroGrid} aria-hidden="true" />
         <div className={styles.heroGlow} aria-hidden="true" />
         <div className={styles.heroImage} aria-hidden="true">
-          <Image src={heroImage} alt="" fill priority sizes="(min-width: 900px) 55vw, 100vw" className={styles.coverImage} />
+          <Image src={heroImage} alt="" fill preload sizes="(min-width: 900px) 55vw, 100vw" className={styles.coverImage} />
         </div>
         <div className={styles.heroShade} aria-hidden="true" />
         <div className={styles.heroInner}>

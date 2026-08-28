@@ -8,23 +8,25 @@
 @keyframes hero-intro{from{transform:translateY(20px)}to{transform:none}}
 
 .heroImage {
-  filter: blur(2px);
-  transform: scale(1.025);
+  transform: scale(1.015);
 }
 
 .heroOverlay {
   background:
-    linear-gradient(90deg, rgba(3, 7, 18, .97) 0%, rgba(7, 17, 39, .86) 48%, rgba(7, 17, 39, .38) 100%),
-    linear-gradient(0deg, rgba(3, 7, 18, .7), transparent 48%);
+    linear-gradient(90deg, rgba(3, 7, 18, .93) 0%, rgba(7, 17, 39, .78) 48%, rgba(7, 17, 39, .24) 100%),
+    linear-gradient(0deg, rgba(3, 7, 18, .56), transparent 48%);
 }
 
 @media (max-width: 767px) {
   .heroImage {
-    opacity: .12 !important;
+    object-position: 57% center;
+    opacity: .48 !important;
   }
 
   .heroOverlay {
-    background: rgba(3, 7, 18, .985);
+    background:
+      linear-gradient(90deg, rgba(3, 7, 18, .94) 0%, rgba(3, 7, 18, .7) 72%, rgba(3, 7, 18, .48) 100%),
+      linear-gradient(0deg, rgba(3, 7, 18, .76), transparent 58%);
   }
 
   .heroGrid {
