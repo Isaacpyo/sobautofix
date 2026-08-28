@@ -18,9 +18,9 @@ import { ButtonLink } from "@/components/ui/button";
 import { Container, Eyebrow } from "@/components/ui/container";
 import { services } from "@/config/site";
 import { createMetadata, serviceJsonLd } from "@/lib/seo";
-import servicingImage from "../../../../assets/sobautofix-parts (1).png";
-import brakeImage from "../../../../assets/sobautofix-parts (2).png";
-import engineImage from "../../../../assets/sobautofix-parts (3).png";
+import servicingImage from "../../../../assets/sobautofix-new (3).jpg";
+import brakeImage from "../../../../assets/sobautofix-new (5).jpg";
+import engineImage from "../../../../assets/sobautofix-new (4).jpg";
 
 export const metadata = createMetadata(
   "Vehicle Repairs & Servicing Doncaster",

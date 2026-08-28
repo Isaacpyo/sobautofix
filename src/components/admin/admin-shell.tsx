@@ -46,7 +46,7 @@ export function AdminShell({ children, displayName, notificationCount }: AdminSh
     <div className={`min-h-screen bg-[#F4F7FA] lg:grid ${sidebarCollapsed ? "lg:grid-cols-[84px_minmax(0,1fr)]" : "lg:grid-cols-[260px_minmax(0,1fr)]"}`}>
       <AdminNavigation displayName={displayName} notificationCount={notificationCount} collapsed={sidebarCollapsed} onToggleCollapsed={() => setSidebarCollapsed((value) => !value)} />
       <div className="min-w-0">
-        <header className="border-b border-[#E4EAF0] bg-white px-5 py-3 lg:px-8 xl:px-10">
+        <header className="sticky top-0 z-30 border-b border-[#E4EAF0] bg-white px-5 py-3 lg:px-8 xl:px-10">
           <div className="flex items-center justify-between gap-4">
             <div className="hidden min-w-0 items-center gap-4 sm:flex">
               <p className="shrink-0 text-sm font-bold text-[#071127]">SOB Autofix CMS</p>

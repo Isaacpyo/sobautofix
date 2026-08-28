@@ -425,12 +425,43 @@ async function hasValidImageSignature(file: File) {
 
 export async function toggleMediaPublication(formData: FormData) { const { auth, client } = await requireAdmin(); const id = z.string().uuid().parse(formData.get("id")); const published = formData.get("published") === "true"; const { data } = await client.from("media_assets").select("alt_text").eq("id", id).single(); if (published && (!data?.alt_text || data.alt_text.trim().length < 5)) throw new Error("Alt text is required"); await client.from("media_assets").update({ published }).eq("id", id); await audit(client, auth.user.id, published ? "publish" : "unpublish", "media", id); revalidatePath("/admin/media"); revalidatePath("/gallery"); revalidatePath("/sitemap.xml"); }
 
-export async function syncGoogleReviews() {
-  const { auth, client } = await requireAdmin(); const apiKey = process.env.GOOGLE_PLACES_API_KEY; const placeId = process.env.GOOGLE_PLACE_ID; if (!apiKey || !placeId) throw new Error("Google Places is not configured");
-  const response = await fetch(`https://places.googleapis.com/v1/places/${placeId}`, { headers: { "X-Goog-Api-Key": apiKey, "X-Goog-FieldMask": "id,rating,userRatingCount,reviews,googleMapsUri" }, cache: "no-store" }); if (!response.ok) throw new Error("Review sync failed");
-  const body = await response.json() as { googleMapsUri?: string; reviews?: Array<{ name: string; rating: number; publishTime?: string; googleMapsUri?: string; text?: { text?: string }; authorAttribution?: { displayName?: string; uri?: string } }> };
-  for (const review of body.reviews || []) { const text = review.text?.text?.trim(); if (!text) continue; try { assertCustomerFacingContent(text); } catch { continue; } await client.from("reviews").upsert({ provider: "google", provider_review_id: review.name, author_name: review.authorAttribution?.displayName || "Google user", author_uri: review.authorAttribution?.uri || null, rating: review.rating, text, published_at: review.publishTime || null, source_uri: review.googleMapsUri || body.googleMapsUri || "https://maps.google.com", fetched_at: new Date().toISOString() }, { onConflict: "provider_review_id" }); }
-  await audit(client, auth.user.id, "sync", "reviews", placeId); for (const path of ["/admin/reviews", "/reviews", "/", "/contact", "/about", "/cars-for-sale", "/news"]) revalidatePath(path); revalidatePath("/sitemap.xml");
+export type ReviewSyncState = { status: "idle" | "success" | "error"; message: string };
+
+export async function syncGoogleReviews(_: ReviewSyncState, formData: FormData): Promise<ReviewSyncState> {
+  void formData;
+  try {
+    const { auth, client } = await requireAdmin();
+    const apiKey = process.env.GOOGLE_PLACES_API_KEY?.trim();
+    const placeId = process.env.GOOGLE_PLACE_ID?.trim();
+    if (!apiKey || !placeId) return { status: "error", message: "Google review sync is not configured. Add the server API key and Place ID, then try again." };
+    const response = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`, { headers: { "X-Goog-Api-Key": apiKey, "X-Goog-FieldMask": "id,rating,userRatingCount,reviews,googleMapsUri" }, cache: "no-store" });
+    if (!response.ok) {
+      const message = response.status === 401 || response.status === 403 ? "Google rejected the configured review credentials or permissions."
+        : response.status === 404 ? "Google could not find the configured Place ID."
+          : response.status === 429 ? "Google review sync is temporarily rate limited. Try again later."
+            : "Google review sync is temporarily unavailable. Try again later.";
+      return { status: "error", message };
+    }
+    const body = await response.json().catch(() => null) as { googleMapsUri?: unknown; reviews?: unknown } | null;
+    if (!body || (body.reviews !== undefined && !Array.isArray(body.reviews))) return { status: "error", message: "Google returned an unexpected review response. No reviews were changed." };
+    let synced = 0;
+    for (const item of body.reviews || []) {
+      if (!item || typeof item !== "object") continue;
+      const review = item as { name?: unknown; rating?: unknown; publishTime?: unknown; googleMapsUri?: unknown; text?: { text?: unknown }; authorAttribution?: { displayName?: unknown; uri?: unknown } };
+      const text = typeof review.text?.text === "string" ? review.text.text.trim() : "";
+      if (typeof review.name !== "string" || !review.name || typeof review.rating !== "number" || review.rating < 1 || review.rating > 5 || !text) continue;
+      try { assertCustomerFacingContent(text); } catch { continue; }
+      const { error } = await client.from("reviews").upsert({ provider: "google", provider_review_id: review.name, author_name: typeof review.authorAttribution?.displayName === "string" ? review.authorAttribution.displayName : "Google user", author_uri: typeof review.authorAttribution?.uri === "string" ? review.authorAttribution.uri : null, rating: review.rating, text, published_at: typeof review.publishTime === "string" ? review.publishTime : null, source_uri: typeof review.googleMapsUri === "string" ? review.googleMapsUri : typeof body.googleMapsUri === "string" ? body.googleMapsUri : "https://maps.google.com", fetched_at: new Date().toISOString() }, { onConflict: "provider_review_id" });
+      if (error) return { status: "error", message: "Google reviews were retrieved, but could not be saved. No moderation settings were changed." };
+      synced += 1;
+    }
+    await audit(client, auth.user.id, "sync", "reviews", placeId, { count: synced });
+    for (const path of ["/admin/reviews", "/reviews", "/", "/contact", "/about", "/cars-for-sale", "/news"]) revalidatePath(path);
+    revalidatePath("/sitemap.xml");
+    return { status: "success", message: synced ? `${synced} Google ${synced === 1 ? "review" : "reviews"} synced. New reviews remain hidden until published.` : "Google returned no eligible reviews for this place." };
+  } catch {
+    return { status: "error", message: "Your admin session expired or review sync could not be completed safely. Refresh and try again." };
+  }
 }
 
 export async function toggleReview(formData: FormData) { const { auth, client } = await requireAdmin(); const id = z.string().uuid().parse(formData.get("id")); const visible = formData.get("visible") === "true"; const { data } = await client.from("reviews").select("text").eq("id", id).single(); if (visible) assertCustomerFacingContent(data?.text || ""); await client.from("reviews").update({ visible }).eq("id", id); await audit(client, auth.user.id, visible ? "publish" : "unpublish", "review", id); for (const path of ["/admin/reviews", "/reviews", "/", "/contact", "/about", "/cars-for-sale", "/news"]) revalidatePath(path); revalidatePath("/sitemap.xml"); }

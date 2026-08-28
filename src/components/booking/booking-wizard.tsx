@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { useVehicleSession } from "@/components/vehicle/vehicle-context";
 import { contactLinks, formatPhone, siteConfig } from "@/config/site";
 import { track } from "@/lib/analytics/events";
+import { addCalendarDays, slotBelongsToCalendarDate } from "@/lib/bookings/date";
 import { cn } from "@/lib/utils";
 import { formatRegistration, normalizeRegistration } from "@/lib/vehicle/registration-format";
 import type { VehicleDetails } from "@/types/domain";
@@ -323,6 +324,7 @@ export function BookingWizard() {
     if (currentStep === 5) {
       if (!appointmentDate) nextErrors.appointmentDate = "Choose a date and check its availability.";
       if (!appointmentStart) nextErrors.appointmentStart = "Choose an available appointment time.";
+      else if (!slotBelongsToCalendarDate(appointmentStart, appointmentDate, slotTimeZone)) nextErrors.appointmentStart = "Choose a time on the selected appointment date.";
     }
     return nextErrors;
   }
@@ -358,8 +360,11 @@ export function BookingWizard() {
       const result = await response.json().catch(() => ({})) as { slots?: unknown; timeZone?: unknown };
       if (!response.ok || !Array.isArray(result.slots)) throw new Error("availability_unavailable");
       if (requestId !== slotRequestRef.current) return;
-      const nextSlots = result.slots.filter(isSlot).sort((left, right) => left.start.localeCompare(right.start));
-      setSlotTimeZone(safeTimeZone(result.timeZone));
+      const nextTimeZone = safeTimeZone(result.timeZone);
+      const nextSlots = result.slots.filter(isSlot)
+        .filter((slot) => slotBelongsToCalendarDate(slot.start, targetDate, nextTimeZone))
+        .sort((left, right) => left.start.localeCompare(right.start));
+      setSlotTimeZone(nextTimeZone);
       setSlots(nextSlots);
       setSlotsState(nextSlots.length ? "ready" : "empty");
       track("booking_slot_viewed", { source: "booking_wizard", availability: nextSlots.length ? "available" : "empty" });
@@ -1134,9 +1139,7 @@ function appointmentWindow(date: string) {
 }
 
 function shiftDate(date: string, days: number) {
-  const next = new Date(`${date}T12:00:00.000Z`);
-  next.setUTCDate(next.getUTCDate() + days);
-  return next.toISOString().slice(0, 10);
+  return addCalendarDays(date, days);
 }
 
 function safeTimeZone(value: unknown) {

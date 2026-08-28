@@ -82,3 +82,16 @@ Disabling the switch is a manual project-owner incident action, not an applicati
 10. Preserve deployment, migration and smoke-test evidence.
 
 Never enable mandatory MFA before steps 4-7 succeed for the sole production administrator.
+
+## Authenticator ownership handover
+
+An administrator who still has access to the current factor should use **Admin → Configuration → Security → Replace authenticator**. This is preferable to the lost-authenticator route:
+
+1. Sign in and complete the current TOTP challenge so the session is genuinely AAL2.
+2. Start replacement; the current verified factor remains active.
+3. Have the client scan the new QR code and enter a code from the client-controlled device.
+4. Only after that code reaches AAL2 does the server revoke trusted devices, replace the recovery-code set, and delete the previous factor through the Supabase Admin MFA boundary.
+5. Give the newly displayed recovery codes directly to the client for secure offline storage. They cannot be retrieved later.
+6. Sign out and verify a fresh login using only the client-controlled authenticator.
+
+If recovery-code creation reports that secure recovery storage is unavailable, do not remove either factor. Confirm that migration `202608130008_admin_mfa_recovery.sql` is applied to the target project and that `SUPABASE_SECRET_KEY` is configured only on the server. The application deliberately cannot repair missing production database objects or credentials from the browser.

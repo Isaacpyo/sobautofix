@@ -15,6 +15,49 @@ export type EnrollmentState = {
   recoveryCodes?: string[];
 };
 
+export async function startMfaReplacement(_: EnrollmentState, formData: FormData): Promise<EnrollmentState> {
+  void formData;
+  const admin = await getAdminUser();
+  if (!admin?.mfaVerified) return { message: "Verify with your current authenticator before replacing it." };
+  const { data: factors, error: listError } = await admin.client.auth.mfa.listFactors();
+  if (listError || !factors?.totp.length) return { message: "The current authenticator could not be confirmed. Refresh and try again." };
+  for (const factor of factors.all.filter((item) => item.factor_type === "totp" && item.status === "unverified")) {
+    const { error } = await admin.client.auth.mfa.unenroll({ factorId: factor.id });
+    if (error) return { message: "An incomplete replacement could not be cleared. Try again later." };
+  }
+  const { data, error } = await admin.client.auth.mfa.enroll({ factorType: "totp", friendlyName: "SOB Autofix Admin Replacement" });
+  if (error || !data || data.type !== "totp") return { message: "The replacement authenticator could not be started. Try again." };
+  return { message: "", enrollment: { factorId: data.id, qrCode: data.totp.qr_code, secret: data.totp.secret } };
+}
+
+export async function verifyMfaReplacement(_: EnrollmentState, formData: FormData): Promise<EnrollmentState> {
+  const admin = await getAdminUser();
+  if (!admin?.mfaVerified) return { message: "Your secure session expired. Sign in with the current authenticator and start again." };
+  const factorId = String(formData.get("factorId") || "");
+  const code = String(formData.get("code") || "").replace(/\s/g, "");
+  if (!isSixDigitMfaCode(code)) return { message: "Enter the 6-digit code from the replacement authenticator." };
+  if (!(await consumeRateLimit(admin.user.id, "admin_mfa_replacement", 6, 300))) return { message: "Too many verification attempts. Please wait before trying again." };
+  const { data: factors, error: listError } = await admin.client.auth.mfa.listFactors();
+  const replacement = factors?.all.find((item) => item.id === factorId && item.factor_type === "totp" && item.status === "unverified");
+  const oldFactors = factors?.totp.filter((item) => item.id !== factorId) || [];
+  if (listError || !replacement || oldFactors.length === 0) return { message: "This replacement setup has expired. Start again without removing the current authenticator." };
+  const { error: verifyError } = await admin.client.auth.mfa.challengeAndVerify({ factorId, code });
+  if (verifyError) return { message: "That verification code is incorrect or has expired. The current authenticator is still active." };
+  const { data: assurance } = await admin.client.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (assurance?.currentLevel !== "aal2") return { message: "The replacement was not confirmed at the required security level. The current authenticator remains active." };
+  const service = createAdminClient();
+  if (!service) return { message: "The trusted replacement service is unavailable. Both authenticators remain active; contact the project owner." };
+  const recoveryCodes = await createMfaRecoveryCodeSet(admin.user.id, "mfa_recovery_codes_regenerated");
+  if (!recoveryCodes) return { message: "The new authenticator works, but recovery codes could not be stored securely. Both authenticators remain active; try again later." };
+  for (const factor of oldFactors) {
+    const { error } = await service.auth.admin.mfa.deleteFactor({ userId: admin.user.id, id: factor.id });
+    if (error) return { message: "The new authenticator works, but the previous authenticator could not be invalidated. Contact the project owner before continuing." };
+  }
+  await service.from("admin_audit_log").insert({ actor_id: admin.user.id, action: "mfa_factor_replaced", entity_type: "admin_security", entity_id: admin.user.id, detail: { factorType: "totp" } });
+  revalidatePath("/admin/configuration/security");
+  return { message: "", recoveryCodes };
+}
+
 export async function startMfaEnrollment(previous: EnrollmentState, formData: FormData): Promise<EnrollmentState> {
   void previous;
   void formData;
@@ -69,7 +112,7 @@ export async function regenerateMfaRecoveryCodes(
     return { message: "Too many recovery-code changes. Please wait before trying again." };
   }
   const recoveryCodes = await createMfaRecoveryCodeSet(admin.user.id, "mfa_recovery_codes_regenerated");
-  if (!recoveryCodes) return { message: "Recovery codes could not be created securely. Try again later." };
+  if (!recoveryCodes) return { message: "Secure recovery storage is unavailable. Ask the project owner to verify the MFA recovery migration and server credentials before trying again." };
   revalidatePath("/admin/configuration/security");
   return { message: "", recoveryCodes };
 }

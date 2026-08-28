@@ -7,6 +7,7 @@ import { siteConfig } from "@/config/site";
 import { SchedulingProviderError } from "@/lib/scheduling/provider";
 import { createAdminClient } from "@/lib/supabase/server";
 import { formatRegistration } from "@/lib/vehicle/registration-format";
+import { addCalendarDays, calendarDateInTimeZone, slotBelongsToCalendarDate } from "./date";
 import { sendBookingNotification, type BookingNotificationDetails } from "./notifications";
 import { bookingTimezone, getAvailableRescheduleSlots, getBookableService } from "./services";
 import type { BookingLookupInput, CreateBookingInput } from "./schema";
@@ -229,18 +230,6 @@ export async function findBooking(input: BookingLookupInput) {
   return { id: row.id, booking: toPublicBooking(row) };
 }
 
-function dateInTimezone(value: string, timeZone: string) {
-  const parts = new Intl.DateTimeFormat("en-GB", { year: "numeric", month: "2-digit", day: "2-digit", timeZone }).formatToParts(new Date(value));
-  const valueFor = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value || "";
-  return `${valueFor("year")}-${valueFor("month")}-${valueFor("day")}`;
-}
-
-function addUtcDays(date: string, days: number) {
-  const value = new Date(`${date}T00:00:00Z`);
-  value.setUTCDate(value.getUTCDate() + days);
-  return value.toISOString().slice(0, 10);
-}
-
 function providerPhone(value: string) {
   const digits = value.replace(/[^0-9+]/g, "");
   if (/^0\d{9,10}$/.test(digits)) return `+44${digits.slice(1)}`;
@@ -264,17 +253,18 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingC
   if (!service) throw new BookingWorkflowError("This service is not currently available for online booking.", "service_unavailable");
   const timeZone = bookingTimezone();
   const provider = getSchedulingProvider();
-  const selectedDate = dateInTimezone(input.appointmentStart, timeZone);
+  const selectedDate = calendarDateInTimeZone(input.appointmentStart, timeZone);
+  if (!selectedDate) throw new BookingWorkflowError("Choose a valid appointment date and time.", "slot_unavailable");
 
   try {
     const currentSlots = await provider.getAvailableSlots({
       eventTypeId: service.providerEventTypeId,
       start: selectedDate,
-      end: addUtcDays(selectedDate, 1),
+      end: addCalendarDays(selectedDate, 1),
       timeZone,
     });
     const selectedTime = new Date(input.appointmentStart).getTime();
-    if (!currentSlots.some((slot) => new Date(slot.start).getTime() === selectedTime)) {
+    if (!currentSlots.some((slot) => slotBelongsToCalendarDate(slot.start, selectedDate, timeZone) && new Date(slot.start).getTime() === selectedTime)) {
       throw new BookingWorkflowError("That appointment time has just become unavailable. Please choose another time.", "slot_unavailable");
     }
   } catch (error) {
@@ -399,16 +389,17 @@ export async function rescheduleBooking(bookingId: string, appointmentStart: str
   }
   const provider = getSchedulingProvider();
   const timeZone = bookingTimezone();
-  const selectedDate = dateInTimezone(appointmentStart, timeZone);
+  const selectedDate = calendarDateInTimeZone(appointmentStart, timeZone);
+  if (!selectedDate) throw new BookingWorkflowError("Choose a valid appointment date and time.", "slot_unavailable");
   const currentSlots = await provider.getAvailableSlots({
     eventTypeId: row.provider_event_type_id,
     bookingUidToReschedule: row.provider_booking_uid,
     start: selectedDate,
-    end: addUtcDays(selectedDate, 1),
+    end: addCalendarDays(selectedDate, 1),
     timeZone,
   });
   const selectedTime = new Date(appointmentStart).getTime();
-  if (!currentSlots.some((slot) => new Date(slot.start).getTime() === selectedTime)) {
+  if (!currentSlots.some((slot) => slotBelongsToCalendarDate(slot.start, selectedDate, timeZone) && new Date(slot.start).getTime() === selectedTime)) {
     throw new SchedulingProviderError("That appointment time is no longer available", "slot_unavailable", 409);
   }
   const updatedProviderBooking = await provider.rescheduleBooking(row.provider_booking_uid, appointmentStart, `${actor === "admin" ? "Staff" : "Customer"} requested reschedule through SOB Autofix`);

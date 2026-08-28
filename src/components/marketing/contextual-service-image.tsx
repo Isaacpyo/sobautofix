@@ -1,13 +1,13 @@
 import Image, { type StaticImageData } from "next/image";
-import heroImage from "../../../assets/sobautofix-pics (3).png";
-import diagnosticsImage from "../../../assets/sobautofix-pics (2).png";
-import electricalImage from "../../../assets/sobautofix-pics (4).png";
-import serviceImage from "../../../assets/sobautofix-pics (5).png";
-import engineImage from "../../../assets/sobautofix-pics (6).png";
-import brakesImage from "../../../assets/sobautofix-pics (7).png";
-import moduleImage from "../../../assets/sobautofix-pics (8).png";
-import inspectionImage from "../../../assets/sobautofix-pics (9).png";
-import aboutImage from "../../../assets/sobautofix-pics (10).png";
+import heroImage from "../../../assets/sobautofix-new (4).jpg";
+import diagnosticsImage from "../../../assets/sobautofix-new (11).jpg";
+import electricalImage from "../../../assets/sobautofix-new (6).jpg";
+import serviceImage from "../../../assets/sobautofix-new (3).jpg";
+import engineImage from "../../../assets/sobautofix-new (8).jpg";
+import brakesImage from "../../../assets/sobautofix-new (5).jpg";
+import moduleImage from "../../../assets/sobautofix-new (10).jpg";
+import inspectionImage from "../../../assets/sobautofix-new (7).jpg";
+import aboutImage from "../../../assets/sobautofix-new (2).jpg";
 
 export type ContextualImageId =
   | "hero"

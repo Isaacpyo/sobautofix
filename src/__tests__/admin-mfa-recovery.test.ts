@@ -136,6 +136,19 @@ describe("administrator MFA recovery", () => {
     expect(actions).not.toContain("SUPABASE_SECRET_KEY");
   });
 
+  it("supports an authenticated atomic-style handover without removing the current factor first", () => {
+    const actions = read("src", "app", "admin", "(protected)", "configuration", "security", "actions.ts");
+    const start = actions.indexOf("export async function startMfaReplacement");
+    const verify = actions.indexOf("export async function verifyMfaReplacement");
+    const replacement = actions.slice(start, actions.indexOf("export async function startMfaEnrollment"));
+    expect(start).toBeGreaterThan(-1);
+    expect(verify).toBeGreaterThan(start);
+    expect(replacement.indexOf("challengeAndVerify")).toBeLessThan(replacement.indexOf("auth.admin.mfa.deleteFactor"));
+    expect(replacement).toContain("createMfaRecoveryCodeSet");
+    expect(replacement).toContain("oldFactors");
+    expect(replacement).not.toContain("removeMfaFactor");
+  });
+
   it("does not let an email recovery session enter factor or recovery-code management", () => {
     const recovery = read("src", "app", "admin", "mfa", "recover", "actions.ts");
     const security = read("src", "app", "admin", "(protected)", "configuration", "security", "actions.ts");

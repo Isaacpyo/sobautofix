@@ -21,6 +21,7 @@ type AdminBookingListRow = {
   booking_reference: string;
   status: BookingStatus;
   service_name: string;
+  created_at: string;
   appointment_start: string;
   location_mode: "workshop" | "mobile" | null;
   location: string | null;
@@ -30,12 +31,15 @@ type AdminBookingListRow = {
 };
 
 const activeStatuses: BookingStatus[] = ["pending", "confirmed", "rescheduled"];
+const bookingViews = ["today", "upcoming", "attention", "completed", "cancelled"] as const;
+type BookingView = typeof bookingViews[number];
 const pageSize = ADMIN_LIST_PAGE_SIZE;
 
-export default async function AdminBookingsPage({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; page?: string }> }) {
+export default async function AdminBookingsPage({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; view?: string; page?: string }> }) {
   const params = await searchParams;
   const query = (params.q || "").trim();
   const status = params.status || "";
+  const view = bookingViews.includes(params.view as BookingView) ? params.view as BookingView : "";
   const requestedPage = positiveAdminPage(params.page);
   const client = await createAdminReadClient();
   const now = new Date();
@@ -47,8 +51,9 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
   const results = client ? await Promise.all([
     client
       .from("bookings")
-      .select("id,booking_reference,status,service_name,appointment_start,location_mode,location,provider_sync_state,customers(name,email),vehicles(registration,make,model)")
-      .order("appointment_start", { ascending: false })
+      .select("id,booking_reference,status,service_name,appointment_start,created_at,location_mode,location,provider_sync_state,customers(name,email),vehicles(registration,make,model)")
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
       .limit(250),
     client.from("bookings").select("id", { count: "exact", head: true }).gte("appointment_start", todayStart).lt("appointment_start", tomorrowStart).neq("status", "cancelled"),
     client.from("bookings").select("id", { count: "exact", head: true }).gte("appointment_start", now.toISOString()).in("status", activeStatuses),
@@ -62,18 +67,20 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
     const customer = relation(booking.customers);
     const vehicle = relation(booking.vehicles);
     const searchable = [booking.booking_reference, booking.service_name, customer?.name, customer?.email, vehicle?.registration, vehicle?.make, vehicle?.model, booking.location].filter(Boolean).join(" ").toLowerCase();
-    return (!query || searchable.includes(query.toLowerCase())) && (!status || booking.status === status);
+    return (!query || searchable.includes(query.toLowerCase()))
+      && (!status || booking.status === status)
+      && matchesBookingView(booking, view, now, todayStart, tomorrowStart);
   });
   const totalPages = Math.max(1, Math.ceil(filteredBookings.length / pageSize));
   const page = Math.min(requestedPage, totalPages);
   const bookings = filteredBookings.slice((page - 1) * pageSize, page * pageSize);
 
   const metrics = [
-    { label: "Today", value: results?.[1].count || 0, icon: CalendarCheck2, tone: "blue" },
-    { label: "Upcoming", value: results?.[2].count || 0, icon: CalendarClock, tone: "navy" },
-    { label: "Awaiting action", value: results?.[3].count || 0, icon: AlertTriangle, tone: "amber" },
-    { label: "Completed", value: results?.[4].count || 0, icon: CheckCircle2, tone: "green" },
-    { label: "Cancelled", value: results?.[5].count || 0, icon: CircleX, tone: "red" },
+    { label: "Today", value: results?.[1].count || 0, icon: CalendarCheck2, tone: "blue", view: "today" },
+    { label: "Upcoming", value: results?.[2].count || 0, icon: CalendarClock, tone: "navy", view: "upcoming" },
+    { label: "Awaiting action", value: results?.[3].count || 0, icon: AlertTriangle, tone: "amber", view: "attention" },
+    { label: "Completed", value: results?.[4].count || 0, icon: CheckCircle2, tone: "green", view: "completed" },
+    { label: "Cancelled", value: results?.[5].count || 0, icon: CircleX, tone: "red", view: "cancelled" },
   ] as const;
 
   return (
@@ -98,7 +105,7 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
         {metrics.map((metric) => {
           const Icon = metric.icon;
           return (
-            <article key={metric.label} className="rounded-2xl border border-[#E4EAF0] bg-white p-4 sm:p-5">
+            <Link key={metric.label} href={view === metric.view ? "/admin/bookings" : `/admin/bookings?view=${metric.view}`} aria-current={view === metric.view ? "page" : undefined} className={cn("rounded-2xl border bg-white p-4 transition hover:border-[#1974E2] hover:shadow-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#1974E2]/20 sm:p-5", view === metric.view ? "border-[#1974E2] ring-2 ring-[#1974E2]/15" : "border-[#E4EAF0]")}>
               <span className={cn(
                 "grid size-9 place-items-center rounded-xl",
                 metric.tone === "blue" && "bg-[#EAF3FF] text-[#1974E2]",
@@ -109,18 +116,18 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
               )}><Icon size={18} aria-hidden="true" /></span>
               <p className="mt-4 text-3xl font-extrabold text-[#071127]">{metric.value}</p>
               <p className="mt-1 text-xs font-bold text-[#667586] sm:text-sm">{metric.label}</p>
-            </article>
+            </Link>
           );
         })}
       </section>
 
-      <AdminListFilters action="/admin/bookings" query={query} status={status} placeholder="Reference, customer, vehicle or service…" statusOptions={[{ value: "pending", label: "Pending" }, { value: "confirmed", label: "Confirmed" }, { value: "rescheduled", label: "Rescheduled" }, { value: "completed", label: "Completed" }, { value: "cancelled", label: "Cancelled" }]} />
+      <AdminListFilters action="/admin/bookings" query={query} status={status} additionalParams={{ view }} placeholder="Reference, customer, vehicle or service…" statusOptions={[{ value: "pending", label: "Pending" }, { value: "confirmed", label: "Confirmed" }, { value: "rescheduled", label: "Rescheduled" }, { value: "completed", label: "Completed" }, { value: "cancelled", label: "Cancelled" }]} />
 
       <section className="mt-8" aria-labelledby="booking-list-heading">
         <div className="flex items-end justify-between gap-4">
           <div>
             <h2 id="booking-list-heading" className="text-2xl font-extrabold text-[#071127]">Appointment list</h2>
-            <p className="mt-1 text-sm text-[#667586]">Appointments are ordered from newest to oldest.</p>
+            <p className="mt-1 text-sm text-[#667586]">Bookings are ordered by date booked, newest to oldest.</p>
           </div>
           <p className="text-sm font-bold text-[#667586]">{filteredBookings.length} matching</p>
         </div>
@@ -134,7 +141,7 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
                 <th className="w-[18%] px-4 py-4">Vehicle</th>
                 <th className="w-[18%] px-4 py-4">Service</th>
                 <th className="w-[12%] px-4 py-4">Status</th>
-                <th className="w-[15%] px-4 py-4">Location</th>
+                <th className="w-[15%] px-4 py-4">Date booked</th>
                 <th className="w-[5%] px-4 py-4"><span className="sr-only">Action</span></th>
               </tr>
             </thead>
@@ -149,7 +156,7 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
                     <td className="px-4 py-4 text-sm text-[#586575]">{vehicleLabel(vehicle)}</td>
                     <td className="px-4 py-4 text-sm font-semibold text-[#071127]">{booking.service_name}</td>
                     <td className="px-4 py-4"><BookingStatusBadge status={booking.status} /></td>
-                    <td className="px-4 py-4"><p className="text-sm font-bold text-[#071127]">{locationModeLabel(booking.location_mode)}</p>{booking.location && <p className="mt-1 line-clamp-2 text-xs text-[#667586]">{booking.location}</p>}</td>
+                    <td className="px-4 py-4 text-sm font-bold text-[#071127]">{formatFullDate(booking.created_at)}</td>
                     <td className="px-4 py-4"><BookingOpenLink href={`/admin/bookings/${booking.id}`} className="inline-flex min-h-10 items-center rounded-lg border border-[#BCD6F6] px-3 text-xs font-extrabold text-[#1446A5] hover:bg-[#F1F7FF]">View</BookingOpenLink></td>
                   </tr>
                 );
@@ -169,14 +176,13 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
                     <div className="min-w-0">
                       <p className="font-mono text-sm font-black tracking-wide text-[#1974E2]">{booking.booking_reference}</p>
                       <h3 className="mt-2 truncate text-xl font-extrabold text-[#071127]">{customer?.name || "Customer"}</h3>
-                      <p className="mt-1 text-sm font-semibold text-[#586575]">{formatFullDate(booking.appointment_start)}</p>
+                      <p className="mt-1 text-sm font-semibold text-[#586575]">Booked {formatFullDate(booking.created_at)}</p>
                     </div>
                     <ChevronRight className="mt-1 shrink-0 text-[#1974E2]" size={21} aria-hidden="true" />
                   </div>
                   <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-5 text-sm">
                     <ListDetail label="Vehicle" value={vehicleLabel(vehicle)} />
                     <ListDetail label="Service" value={booking.service_name} />
-                    <ListDetail label="Location" value={booking.location || locationModeLabel(booking.location_mode)} />
                     <div><dt className="text-xs font-extrabold tracking-wide text-[#667586] uppercase">Status</dt><dd className="mt-2"><BookingStatusBadge status={booking.status} /></dd></div>
                   </dl>
                   <div className="mt-5 border-t border-[#E4EAF0] pt-4"><SyncStateBadge state={booking.provider_sync_state} /></div>
@@ -194,10 +200,19 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
             <p className="mt-2 text-sm text-[#667586]">Appointments will appear here after a customer completes the SOB Autofix booking flow.</p>
           </div>
         )}
-        <AdminPagination path="/admin/bookings" page={page} pageSize={pageSize} totalItems={filteredBookings.length} query={query} status={status} />
+        <AdminPagination path="/admin/bookings" page={page} pageSize={pageSize} totalItems={filteredBookings.length} query={query} status={status} additionalParams={{ view }} />
       </section>
     </>
   );
+}
+
+function matchesBookingView(booking: AdminBookingListRow, view: BookingView | "", now: Date, todayStart: string, tomorrowStart: string) {
+  if (!view) return true;
+  const appointmentTime = new Date(booking.appointment_start).getTime();
+  if (view === "today") return appointmentTime >= new Date(todayStart).getTime() && appointmentTime < new Date(tomorrowStart).getTime() && booking.status !== "cancelled";
+  if (view === "upcoming") return appointmentTime >= now.getTime() && activeStatuses.includes(booking.status);
+  if (view === "attention") return booking.status === "pending" || booking.provider_sync_state === "pending" || booking.provider_sync_state === "failed";
+  return booking.status === view;
 }
 
 function ListDetail({ label, value }: { label: string; value: string }) {
@@ -234,12 +249,6 @@ function relation<T>(value: T | T[] | null): T | null {
 
 function vehicleLabel(vehicle: { registration: string | null; make: string | null; model: string | null } | null) {
   return [vehicle?.make, vehicle?.model, vehicle?.registration ? formatRegistration(vehicle.registration) : null].filter(Boolean).join(" · ") || "Vehicle not recorded";
-}
-
-function locationModeLabel(value: AdminBookingListRow["location_mode"]) {
-  if (value === "mobile") return "Mobile";
-  if (value === "workshop") return "Workshop";
-  return "Location recorded";
 }
 
 function formatFullDate(value: string) {

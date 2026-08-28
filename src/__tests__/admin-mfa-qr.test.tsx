@@ -10,6 +10,8 @@ const { qrCode } = vi.hoisted(() => ({
 vi.mock("@/app/admin/(protected)/configuration/security/actions", () => ({
   startMfaEnrollment: vi.fn(),
   verifyMfaEnrollment: vi.fn(),
+  startMfaReplacement: vi.fn(),
+  verifyMfaReplacement: vi.fn(),
   removeMfaFactor: vi.fn(),
 }));
 
@@ -17,10 +19,11 @@ vi.mock("react", async (importOriginal) => {
   const react = await importOriginal<typeof import("react")>();
   return {
     ...react,
-    useActionState: vi.fn()
-      .mockReturnValueOnce([{ message: "", enrollment: { factorId: "test-factor", qrCode, secret: "TESTSETUPKEY" } }, vi.fn(), false])
-      .mockReturnValueOnce([{ message: "" }, vi.fn(), false])
-      .mockReturnValueOnce([{ message: "" }, vi.fn(), false]),
+    useActionState: vi.fn().mockReturnValue([
+      { message: "", enrollment: { factorId: "test-factor", qrCode, secret: "TESTSETUPKEY" } },
+      vi.fn(),
+      false,
+    ]),
   };
 });
 
