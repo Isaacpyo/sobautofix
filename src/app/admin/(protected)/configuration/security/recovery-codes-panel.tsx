@@ -1,9 +1,33 @@
 "use client";
 
-import { CheckCircle2, KeyRound, LoaderCircle } from "lucide-react";
+import { CheckCircle2, Download, KeyRound, LoaderCircle } from "lucide-react";
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { regenerateMfaRecoveryCodes } from "./actions";
+
+export function formatMfaRecoveryCodesDownload(codes: string[]) {
+  return [
+    "SOB Autofix administrator MFA recovery codes",
+    "",
+    "Each code can be used once. Store this file securely and do not email or share it.",
+    "",
+    ...codes.map((code, index) => `${String(index + 1).padStart(2, "0")}. ${code}`),
+    "",
+  ].join("\n");
+}
+
+function downloadRecoveryCodes(codes: string[]) {
+  const blob = new Blob([formatMfaRecoveryCodesDownload(codes)], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `sob-autofix-mfa-recovery-codes-${new Date().toISOString().slice(0, 10)}.txt`;
+  link.rel = "noopener";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
 
 export function RecoveryCodeDisplay({ codes, title = "Save your recovery codes" }: { codes: string[]; title?: string }) {
   return <section className="rounded-2xl border-2 border-[#1974E2] bg-[#F7FBFF] p-6 sm:p-7" aria-labelledby="recovery-code-display-heading">
@@ -11,6 +35,10 @@ export function RecoveryCodeDisplay({ codes, title = "Save your recovery codes" 
     <ol className="mt-6 grid gap-2 rounded-xl bg-[#071127] p-5 font-mono text-sm font-bold tracking-wide text-white sm:grid-cols-2">
       {codes.map((code, index) => <li key={code}><span className="mr-2 text-[#67B9FF]">{String(index + 1).padStart(2, "0")}.</span>{code}</li>)}
     </ol>
+    <div className="mt-5 flex flex-wrap items-center gap-3">
+      <Button type="button" onClick={() => downloadRecoveryCodes(codes)}><Download size={18} aria-hidden="true" />Download codes (.txt)</Button>
+      <p className="text-xs leading-5 text-[#586575]">The downloaded file contains every plaintext code. Keep it in secure offline storage.</p>
+    </div>
     <p className="mt-4 text-xs leading-5 text-[#586575]">Leaving or refreshing this page permanently removes these plaintext values from the application. Existing values cannot be retrieved later.</p>
   </section>;
 }
