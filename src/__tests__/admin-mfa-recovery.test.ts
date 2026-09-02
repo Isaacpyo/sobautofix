@@ -145,6 +145,7 @@ describe("administrator MFA recovery", () => {
     expect(verify).toBeGreaterThan(start);
     expect(replacement.indexOf("challengeAndVerify")).toBeLessThan(replacement.indexOf("auth.admin.mfa.deleteFactor"));
     expect(replacement).toContain("createMfaRecoveryCodeSet");
+    expect(replacement).toContain("createMfaReplacementFriendlyName()");
     expect(replacement).toContain("oldFactors");
     expect(replacement).not.toContain("removeMfaFactor");
   });

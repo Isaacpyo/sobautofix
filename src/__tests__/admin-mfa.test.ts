@@ -1,7 +1,13 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { canChangeAdminPassword, isSixDigitMfaCode, requiresMfaChallenge, safeAdminReturnTo } from "@/lib/auth/mfa";
+import {
+  canChangeAdminPassword,
+  createMfaReplacementFriendlyName,
+  isSixDigitMfaCode,
+  requiresMfaChallenge,
+  safeAdminReturnTo,
+} from "@/lib/auth/mfa";
 
 const read = (...parts: string[]) => readFileSync(join(process.cwd(), ...parts), "utf8");
 
@@ -29,6 +35,15 @@ describe("admin TOTP MFA", () => {
     expect(isSixDigitMfaCode(" 123456 ")).toBe(true);
     expect(isSixDigitMfaCode("12345")).toBe(false);
     expect(isSixDigitMfaCode("12345a")).toBe(false);
+  });
+
+  it("uses a unique friendly name for every authenticator replacement", () => {
+    const first = createMfaReplacementFriendlyName("11111111-1111-4111-8111-111111111111");
+    const second = createMfaReplacementFriendlyName("22222222-2222-4222-8222-222222222222");
+    expect(first).toBe("SOB Autofix Admin Replacement 11111111");
+    expect(second).toBe("SOB Autofix Admin Replacement 22222222");
+    expect(first).not.toBe(second);
+    expect(first).not.toBe("SOB Autofix Admin Replacement");
   });
 
   it("allows only local admin return paths", () => {

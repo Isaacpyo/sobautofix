@@ -13,6 +13,10 @@ export function isSixDigitMfaCode(value: string) {
   return /^\d{6}$/.test(value.trim());
 }
 
+export function createMfaReplacementFriendlyName(nonce = crypto.randomUUID()) {
+  return `SOB Autofix Admin Replacement ${nonce.slice(0, 8)}`;
+}
+
 export function requiresMfaChallenge(assurance: { currentLevel: string | null; nextLevel: string | null }) {
   return assurance.currentLevel === "aal1" && assurance.nextLevel === "aal2";
 }

@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { consumeRateLimit } from "@/lib/rate-limit";
-import { isSixDigitMfaCode } from "@/lib/auth/mfa";
+import { createMfaReplacementFriendlyName, isSixDigitMfaCode } from "@/lib/auth/mfa";
 import {
   completeMfaRecovery,
   consumeMfaRecoveryCode,
@@ -56,7 +56,10 @@ export async function startAuthenticatorReplacement(
     }
   }
 
-  const { data, error } = await admin.client.auth.mfa.enroll({ factorType: "totp", friendlyName: "SOB Autofix Admin Replacement" });
+  const { data, error } = await admin.client.auth.mfa.enroll({
+    factorType: "totp",
+    friendlyName: createMfaReplacementFriendlyName(),
+  });
   if (error || !data || data.type !== "totp") return { message: "The replacement authenticator could not be started. Try again." };
   if (!(await setMfaRecoveryNewFactor(admin.user.id, recovery.id, data.id))) {
     await admin.client.auth.mfa.unenroll({ factorId: data.id });

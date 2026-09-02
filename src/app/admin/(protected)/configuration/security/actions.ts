@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { consumeRateLimit } from "@/lib/rate-limit";
-import { isSixDigitMfaCode } from "@/lib/auth/mfa";
+import { createMfaReplacementFriendlyName, isSixDigitMfaCode } from "@/lib/auth/mfa";
 import { isMandatoryAdminMfaEnabled } from "@/lib/auth/mfa-policy";
 import { createMfaRecoveryCodeSet, revokeMfaRecoveryMaterial } from "@/lib/auth/mfa-recovery-server";
 import { createAdminClient, getAdminUser } from "@/lib/supabase/server";
@@ -25,7 +25,10 @@ export async function startMfaReplacement(_: EnrollmentState, formData: FormData
     const { error } = await admin.client.auth.mfa.unenroll({ factorId: factor.id });
     if (error) return { message: "An incomplete replacement could not be cleared. Try again later." };
   }
-  const { data, error } = await admin.client.auth.mfa.enroll({ factorType: "totp", friendlyName: "SOB Autofix Admin Replacement" });
+  const { data, error } = await admin.client.auth.mfa.enroll({
+    factorType: "totp",
+    friendlyName: createMfaReplacementFriendlyName(),
+  });
   if (error || !data || data.type !== "totp") return { message: "The replacement authenticator could not be started. Try again." };
   return { message: "", enrollment: { factorId: data.id, qrCode: data.totp.qr_code, secret: data.totp.secret } };
 }
