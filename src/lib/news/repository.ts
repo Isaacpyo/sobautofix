@@ -2,12 +2,12 @@ import "server-only";
 
 import { mapContentEntry } from "@/lib/content/repository";
 import { calculateReadingMinutes, parseArticleMetadata, type NewsArticle } from "@/lib/news/article";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/server";
 
 type ContentRow = Parameters<typeof mapContentEntry>[0];
 
 export async function getPublishedArticles(limit?: number) {
-  const client = await createClient();
+  const client = createPublicClient();
   if (!client) return [] as NewsArticle[];
 
   let query = client
@@ -22,7 +22,7 @@ export async function getPublishedArticles(limit?: number) {
 }
 
 export async function getPublishedArticle(slug: string) {
-  const client = await createClient();
+  const client = createPublicClient();
   if (!client) return null;
   const { data } = await client
     .from("content_entries")
@@ -43,7 +43,7 @@ export async function getRelatedArticles(article: NewsArticle, limit = 3) {
 }
 
 async function hydrateArticles(
-  client: NonNullable<Awaited<ReturnType<typeof createClient>>>,
+  client: NonNullable<ReturnType<typeof createPublicClient>>,
   rows: ContentRow[],
 ): Promise<NewsArticle[]> {
   const entries = rows.map(mapContentEntry);

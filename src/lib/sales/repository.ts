@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/server";
 import { isPublicDeliveryListing } from "@/lib/sales/policy";
 export { isSoldPageExpired } from "@/lib/sales/policy";
 import type { SaleVehicle } from "@/types/domain";
@@ -23,7 +23,7 @@ function mapVehicle(row: VehicleRow): SaleVehicle {
 }
 
 export async function getPublicSaleVehicles(options: { throwOnError?: boolean } = {}) {
-  const client = await createClient();
+  const client = createPublicClient();
   if (!client) {
     if (options.throwOnError) throw new Error("Sitemap inventory source is not configured");
     return [] as SaleVehicle[];
@@ -34,7 +34,7 @@ export async function getPublicSaleVehicles(options: { throwOnError?: boolean } 
 }
 
 export async function getSaleVehicle(slug: string) {
-  const client = await createClient();
+  const client = createPublicClient();
   if (!client) return null;
   const { data } = await client.from("sale_vehicles").select("*, sale_vehicle_images(*)").eq("slug", slug).maybeSingle();
   if (!data) return null;

@@ -165,6 +165,8 @@ describe("administrator MFA recovery", () => {
     expect(migration).toContain("mandatory_mfa_enabled boolean not null default false");
     expect(migration).toContain("values (true, false)");
     expect(read("src", "proxy.ts")).toContain('enrollmentUrl.pathname = "/admin/mfa/enroll"');
-    expect(read("src", "app", "admin", "mfa", "enroll", "page.tsx")).toContain("No enquiries, invoices, bookings, inventory or configuration data is available here.");
+    const enrollmentPage = read("src", "app", "admin", "mfa", "enroll", "page.tsx");
+    expect(enrollmentPage).toContain('if (admin.mfaRequired) redirect("/admin/mfa")');
+    expect(enrollmentPage).toContain("<MfaSecurityPanel />");
   });
 });

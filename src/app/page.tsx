@@ -26,6 +26,8 @@ export const metadata = createMetadata(
   "/",
 );
 
+export const revalidate = 300;
+
 export default async function HomePage() {
   const [offer, articles, vehicles] = await Promise.all([getActiveOffer(), getPublishedArticles(3), getPublicSaleVehicles()]);
   return (
