@@ -24,9 +24,10 @@ The marketing site builds without external credentials so approved copy can be r
 1. Link the Supabase CLI to the intended staging project.
 2. Apply every migration in `supabase/migrations` in filename order.
 3. Apply `supabase/seed.sql` for the editable full-service offer.
-4. Invite each staff user through Supabase Auth.
-5. Insert the invited user ID into `public.admin_profiles` as shown in `supabase/seed.sql`.
-6. Configure the three storage buckets and policies through the migration; do not expose `SUPABASE_SECRET_KEY` to the browser.
+4. Invite each allowlisted staff user through Supabase Auth. The approved administrator emails are maintained in `src/config/admin.ts` and mirrored by a reviewed database migration.
+5. Insert each invited user ID into `public.admin_profiles` as shown in `supabase/seed.sql`; email registration alone does not grant CMS access.
+6. Require each administrator to enroll and verify their own TOTP factor and securely save their recovery codes before relying on the account.
+7. Configure the three storage buckets and policies through the migration; do not expose `SUPABASE_SECRET_KEY` to the browser.
 
 The CMS is available at `/admin/login`. There is no public staff signup. Administrators can manage structured content, authenticated previews, scheduled publication, revision rollback, search fields, offers, pricing, navigation, ordered stock galleries, enquiry statuses and notification retries, private attachment downloads, approved media, verified reviews and central business settings.
 

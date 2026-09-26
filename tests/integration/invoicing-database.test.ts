@@ -555,48 +555,9 @@ describe.sequential("local Supabase invoice settlement and email delivery", () =
     });
     expect(failed.error).toBeNull();
 
-    // Exercise attribution across an administrator handover: the deployment
-    // permits one authorised admin email at a time, so transfer that identity
-    // to the second authenticated user only for the retry claim.
-    const displacedAdminEmail = `invoice-displaced-${randomUUID()}@example.test`;
-    const retry = await (async () => {
-      executeLocalOwnerSql(
-        `
-          begin;
-          update auth.users set email = :'displaced_email' where id = :'original_admin_id'::uuid;
-          update auth.users set email = :'admin_email' where id = :'retry_admin_id'::uuid;
-          insert into public.admin_profiles (user_id, display_name)
-          values (:'retry_admin_id'::uuid, 'Replacement Invoice Test Admin')
-          on conflict (user_id) do update set display_name = excluded.display_name;
-          commit;
-        `,
-        {
-          displaced_email: displacedAdminEmail,
-          original_admin_id: users.adminIdentity.id,
-          admin_email: users.adminIdentity.email,
-          retry_admin_id: users.nonAdminIdentity.id,
-        },
-      );
-      try {
-        return await users.nonAdmin.rpc("claim_invoice_email_send", claimArgs);
-      } finally {
-        executeLocalOwnerSql(
-          `
-            begin;
-            delete from public.admin_profiles where user_id = :'retry_admin_id'::uuid;
-            update auth.users set email = :'retry_email' where id = :'retry_admin_id'::uuid;
-            update auth.users set email = :'admin_email' where id = :'original_admin_id'::uuid;
-            commit;
-          `,
-          {
-            retry_admin_id: users.nonAdminIdentity.id,
-            retry_email: users.nonAdminIdentity.email,
-            admin_email: users.adminIdentity.email,
-            original_admin_id: users.adminIdentity.id,
-          },
-        );
-      }
-    })();
+    // Exercise attribution with both explicitly authorised administrators
+    // active at the same time.
+    const retry = await users.secondaryAdmin.rpc("claim_invoice_email_send", claimArgs);
     expect(retry.error).toBeNull();
     expect(retry.data?.[0]).toMatchObject({
       disposition: "failed_retry",
@@ -627,7 +588,7 @@ describe.sequential("local Supabase invoice settlement and email delivery", () =
     expect(logicalSendActors.error).toBeNull();
     expect(retryAttemptActor.error).toBeNull();
     expect(logicalSendActors.data?.requested_by).toBe(users.adminIdentity.id);
-    expect(retryAttemptActor.data?.attempted_by).toBe(users.nonAdminIdentity.id);
+    expect(retryAttemptActor.data?.attempted_by).toBe(users.secondaryAdminIdentity.id);
 
     const sentAudit = await users.admin
       .from("admin_audit_log")
@@ -636,7 +597,7 @@ describe.sequential("local Supabase invoice settlement and email delivery", () =
       .eq("entity_id", invoiceId)
       .single();
     expect(sentAudit.error).toBeNull();
-    expect(sentAudit.data?.actor_id).toBe(users.nonAdminIdentity.id);
+    expect(sentAudit.data?.actor_id).toBe(users.secondaryAdminIdentity.id);
     expect(sentAudit.data?.detail).toMatchObject({ attemptId: retry.data![0].attempt_id });
 
     const alreadySent = await users.admin.rpc("claim_invoice_email_send", claimArgs);

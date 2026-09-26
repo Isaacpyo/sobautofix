@@ -81,7 +81,9 @@ Disabling the switch is a manual project-owner incident action, not an applicati
 9. Smoke-test no-factor restriction (with a controlled non-production fixture), enrolled AAL1 challenge, AAL2 access, sensitive step-up and the documented recovery route.
 10. Preserve deployment, migration and smoke-test evidence.
 
-Never enable mandatory MFA before steps 4-7 succeed for the sole production administrator.
+Never rely on a production administrator account until steps 4-7 succeed for
+that account. Complete the enrollment and recovery-code handoff separately for
+every allowlisted administrator.
 
 ## Authenticator ownership handover
 
