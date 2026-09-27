@@ -15,9 +15,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import type { BookingStatus, ProviderSyncState } from "@/lib/bookings/types";
+import { MarkBookingSeen } from "@/components/admin/mark-booking-seen";
 import { createAdminReadClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import { formatRegistration } from "@/lib/vehicle/registration-format";
+import { markBookingSeenAction } from "../actions";
 import { AdminBookingControls } from "./booking-controls";
 
 type Customer = { name: string; email: string | null; phone: string | null };
@@ -90,6 +92,7 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
 
   return (
     <>
+      <MarkBookingSeen bookingId={booking.id} action={markBookingSeenAction} />
       <Link href="/admin/bookings" className="inline-flex min-h-10 items-center gap-2 rounded-lg text-sm font-extrabold text-[#1974E2] hover:underline">
         <ArrowLeft size={17} aria-hidden="true" /> Back to bookings
       </Link>

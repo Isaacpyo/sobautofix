@@ -2,8 +2,8 @@
 
 import { RefreshCw, Search } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { AdminNavigation } from "@/components/admin/admin-navigation";
 import { NotificationMenu } from "@/components/admin/notification-menu";
 
@@ -16,7 +16,49 @@ type AdminShellProps = {
 export function AdminShell({ children, displayName, notificationCount }: AdminShellProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [liveNotificationCount, setLiveNotificationCount] = useState(notificationCount);
+  const [serverNotificationCount, setServerNotificationCount] = useState(notificationCount);
+  const notificationCountRef = useRef(notificationCount);
   const router = useRouter();
+  const pathname = usePathname();
+
+  if (serverNotificationCount !== notificationCount) {
+    setServerNotificationCount(notificationCount);
+    setLiveNotificationCount(notificationCount);
+  }
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function refreshNotificationCount() {
+      try {
+        const response = await fetch("/api/admin/notifications/count", { cache: "no-store" });
+        if (!response.ok) return;
+        const payload = await response.json() as { count?: unknown };
+        if (cancelled || typeof payload.count !== "number" || payload.count === notificationCountRef.current) return;
+        notificationCountRef.current = payload.count;
+        setLiveNotificationCount(payload.count);
+        router.refresh();
+      } catch {
+        // Keep the last known count; the manual refresh remains available.
+      }
+    }
+
+    function refreshWhenVisible() {
+      if (document.visibilityState === "visible") void refreshNotificationCount();
+    }
+
+    void refreshNotificationCount();
+    const timer = window.setInterval(() => { void refreshNotificationCount(); }, 20_000);
+    window.addEventListener("focus", refreshWhenVisible);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refreshWhenVisible);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
+  }, [pathname, router]);
 
   function searchAdmin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -44,7 +86,7 @@ export function AdminShell({ children, displayName, notificationCount }: AdminSh
 
   return (
     <div className={`min-h-screen bg-[#F4F7FA] lg:grid ${sidebarCollapsed ? "lg:grid-cols-[68px_minmax(0,1fr)]" : "lg:grid-cols-[232px_minmax(0,1fr)]"}`}>
-      <AdminNavigation displayName={displayName} notificationCount={notificationCount} collapsed={sidebarCollapsed} onToggleCollapsed={() => setSidebarCollapsed((value) => !value)} />
+      <AdminNavigation displayName={displayName} notificationCount={liveNotificationCount} collapsed={sidebarCollapsed} onToggleCollapsed={() => setSidebarCollapsed((value) => !value)} />
       <div className="min-w-0">
         <header className="sticky top-0 z-30 border-b border-[#E4EAF0] bg-white px-5 py-3 lg:px-8 xl:px-10">
           <div className="flex items-center justify-between gap-4">
@@ -63,7 +105,7 @@ export function AdminShell({ children, displayName, notificationCount }: AdminSh
               <button type="button" onClick={refreshPage} aria-label="Refresh admin data" title="Refresh" className="grid h-10 w-10 place-items-center rounded-full border border-[#D7E0E9] text-[#071127] transition-colors hover:border-[#1974E2] hover:text-[#1974E2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1974E2]">
                 <RefreshCw size={18} className={refreshing ? "animate-spin" : undefined} aria-hidden="true" />
               </button>
-              <NotificationMenu notificationCount={notificationCount} />
+              <NotificationMenu notificationCount={liveNotificationCount} />
               <Link href="/" className="whitespace-nowrap text-sm font-bold text-[#1974E2]">View website ↗</Link>
             </div>
           </div>

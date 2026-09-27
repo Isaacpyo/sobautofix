@@ -164,6 +164,27 @@ export async function startBookingEnquiryThreadAction(formData: FormData) {
   redirect(`/admin/enquiries/${enquiryId.data}`);
 }
 
+export async function markBookingSeenAction(bookingId: string) {
+  const admin = await getVerifiedAdmin();
+  if (!admin) throw new Error("Your admin session has expired.");
+
+  const parsed = uuidSchema.safeParse(bookingId);
+  if (!parsed.success) throw new Error("This booking could not be found.");
+  const client = createAdminClient();
+  if (!client) throw new Error("Booking notifications are temporarily unavailable.");
+
+  const { error } = await client
+    .from("bookings")
+    .update({ admin_seen_at: new Date().toISOString() })
+    .eq("id", parsed.data)
+    .is("admin_seen_at", null);
+  if (error) throw new Error("The booking notification could not be acknowledged.");
+
+  revalidatePath("/admin", "layout");
+  revalidatePath("/admin/notifications");
+  revalidatePath("/admin/bookings");
+}
+
 export async function saveBookingServiceMappingAction(
   _previousState: SafeActionResult,
   formData: FormData,

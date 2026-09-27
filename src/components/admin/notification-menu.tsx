@@ -80,7 +80,7 @@ export function NotificationMenu({ notificationCount }: { notificationCount: num
                 </span>
                 <div>
                   <p className="font-bold text-[#071127]">{notificationCount} {notificationCount === 1 ? "item needs" : "items need"} attention</p>
-                  <p className="mt-1 text-sm leading-5 text-[#586575]">Review new enquiries and any email delivery issues.</p>
+                  <p className="mt-1 text-sm leading-5 text-[#586575]">Review new bookings, new enquiries and delivery or calendar issues.</p>
                 </div>
               </div>
             ) : (
