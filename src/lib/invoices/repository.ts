@@ -26,7 +26,7 @@ export async function requireInvoiceAdmin() {
 
 export async function getInvoiceForAdmin(id: string): Promise<Invoice | null> {
   const { client } = await requireInvoiceAdmin();
-  const { data, error } = await client.from("invoices").select("*,invoice_items(id,description,quantity,unit_price_pence,line_total_pence,position)").eq("id", id).order("position", { referencedTable: "invoice_items", ascending: true }).maybeSingle();
+  const { data, error } = await client.from("invoices").select("*,invoice_items(id,description,quantity,unit_price_pence,line_total_pence,position),invoice_payments(id,amount_pence,paid_at,payment_method,payment_reference,created_at)").eq("id", id).order("position", { referencedTable: "invoice_items", ascending: true }).order("paid_at", { referencedTable: "invoice_payments", ascending: true }).maybeSingle();
   if (error) throw new Error("Invoice could not be loaded.");
   return data as unknown as Invoice | null;
 }
@@ -52,7 +52,10 @@ export async function saveInvoiceDraft(payload: Record<string, unknown>, invoice
 
 export async function issueInvoice(id: string) { const { client } = await requireInvoiceAdmin(); const { error } = await client.rpc("issue_invoice", { p_invoice_id: id }); if (error) throw new Error(error.message); }
 export async function markInvoicePaid(input: { invoiceId: string; paidAt: string; method: string; reference: string }) { const { client } = await requireInvoiceAdmin(); const { error } = await client.rpc("mark_invoice_paid", { p_invoice_id: input.invoiceId, p_paid_at: input.paidAt, p_method: input.method, p_reference: input.reference }); if (error) throw new Error(error.message); }
+export async function recordInvoicePayment(input: { invoiceId: string; amountPence: string; paidAt: string; method: string; reference: string }) { const { client } = await requireInvoiceAdmin(); const { data, error } = await client.rpc("record_invoice_payment", { p_invoice_id: input.invoiceId, p_amount_pence: input.amountPence, p_paid_at: input.paidAt, p_method: input.method, p_reference: input.reference }); if (error || !data) throw new Error(error?.message || "Payment could not be recorded."); return data as unknown as Invoice; }
 export async function voidInvoice(id: string) { const { client } = await requireInvoiceAdmin(); const { error } = await client.rpc("void_invoice", { p_invoice_id: id }); if (error) throw new Error(error.message); }
+
+export async function createInvoiceCorrection(id: string) { const { client } = await requireInvoiceAdmin(); const { data, error } = await client.rpc("create_invoice_correction", { p_invoice_id: id }); if (error || !data) throw new Error(error?.message || "A corrected draft could not be created."); return String(data); }
 
 export async function deleteDraftInvoice(id: string) {
   const { client } = await requireInvoiceAdmin();

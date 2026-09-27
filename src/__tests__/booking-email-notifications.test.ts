@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { bookingNotificationKey, type BookingNotificationDetails } from "@/lib/bookings/notifications";
+import { approvedInternalBookingRecipient, approvedInternalBookingSender } from "@/lib/email/identity";
 
 const booking: BookingNotificationDetails = {
   id: "70ca0b0b-1df7-42f4-8fe1-329c54ace42d",
@@ -18,6 +19,10 @@ const booking: BookingNotificationDetails = {
 };
 
 describe("booking email notification keys", () => {
+  it("uses the approved internal recipient and sender", () => {
+    expect(approvedInternalBookingSender).toBe("SOB Autofix <info@sobautofix.com>");
+    expect(approvedInternalBookingRecipient).toBe("sobautofix@gmail.com");
+  });
   it.each(["confirmed", "rescheduled", "cancelled"] as const)("is stable for %s retries", (type) => {
     expect(bookingNotificationKey(booking, type)).toBe(bookingNotificationKey({ ...booking }, type));
   });

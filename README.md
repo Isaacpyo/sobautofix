@@ -42,7 +42,7 @@ Copy `.env.example` into the hosting provider and supply all values. Launch is b
 - Service-to-Event-Type mappings in Admin Bookings, enabled only after availability is verified
 - A Cal.com webhook for `BOOKING_CREATED`, `BOOKING_RESCHEDULED`, and `BOOKING_CANCELLED` targeting `/api/webhooks/calcom`
 - An independent high-entropy `BOOKING_MANAGEMENT_SECRET`
-- Verified Resend sender domain and business notification recipient
+- Verified Resend sender domain, including `info@sobautofix.com` as the internal booking sender, and the business notification recipient `sobautofix@gmail.com`
 - DVLA, Google Places, Turnstile, Sentry, GA4 and tawk.to credentials
 - Approved privacy, cookie and website terms
 - Set `LEGAL_COPY_APPROVED=true` and `COOKIE_CONFIGURATION_APPROVED=true` only after that approval is recorded

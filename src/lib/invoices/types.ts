@@ -12,6 +12,15 @@ export type InvoiceItem = {
   position: number;
 };
 
+export type InvoicePayment = {
+  id: string;
+  amount_pence: number | string;
+  paid_at: string;
+  payment_method: PaymentMethod;
+  payment_reference: string | null;
+  created_at: string;
+};
+
 export type Invoice = {
   id: string; invoice_number: string | null; invoice_year: number | null; invoice_sequence: number | string | null; revision: number | string; status: InvoiceStatus; source_type: InvoiceSourceType;
   booking_id: string | null; enquiry_id: string | null; customer_id: string | null; vehicle_id: string | null;
@@ -24,7 +33,7 @@ export type Invoice = {
   subtotal_pence: number | string; discount_pence: number | string; tax_pence: number | string; total_pence: number | string;
   notes: string | null; payment_terms: string | null; issued_at: string | null; paid_at: string | null;
   payment_method: PaymentMethod | null; payment_reference: string | null; voided_at: string | null;
-  created_by: string | null; updated_by: string | null; created_at: string; updated_at: string; invoice_items: InvoiceItem[];
+  created_by: string | null; updated_by: string | null; created_at: string; updated_at: string; invoice_items: InvoiceItem[]; invoice_payments?: InvoicePayment[];
 };
 
 export function invoiceStatusLabel(status: InvoiceStatus) {

@@ -1,9 +1,9 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
-import { approvedBookingReplyTo } from "@/lib/email/identity";
+import { approvedBookingReplyTo, approvedInternalBookingRecipient, approvedInternalBookingSender } from "@/lib/email/identity";
 import { sendTransactionalEmail } from "@/lib/email/resend";
-import { renderBookingEmail } from "@/lib/email/templates/bookings";
+import { renderBookingEmail, renderInternalBookingEmail } from "@/lib/email/templates/bookings";
 import { createAdminClient } from "@/lib/supabase/server";
 import { formatRegistration } from "@/lib/vehicle/registration-format";
 import { bookingCalendarDownloadUrl, buildBookingCalendar, buildGoogleCalendarUrl } from "./calendar";
@@ -15,6 +15,7 @@ export type BookingNotificationDetails = {
   reference: string;
   customerName: string;
   customerEmail: string;
+  customerPhone?: string;
   registration: string;
   vehicleName?: string;
   service: string;
@@ -26,6 +27,7 @@ export type BookingNotificationDetails = {
   previousAppointmentEnd?: string;
   calendarSequence: number;
   calendarTimestamp: string;
+  notes?: string;
 };
 
 function appointmentParts(startValue: string, endValue?: string) {
@@ -64,15 +66,6 @@ export async function sendBookingNotification(booking: BookingNotificationDetail
   const admin = createAdminClient();
   if (!admin) return false;
   const key = bookingNotificationKey(booking, type);
-  const { error: reservationError } = await admin.from("booking_notification_events").insert({
-    notification_key: key,
-    booking_id: booking.id,
-    notification_type: type,
-    status: "pending",
-  });
-  if (reservationError?.code === "23505") return true;
-  if (reservationError) return false;
-
   const appointment = appointmentParts(booking.appointmentStart, booking.appointmentEnd);
   const vehicle = [formatRegistration(booking.registration), booking.vehicleName].filter(Boolean).join(" · ");
   const calendarDetails = booking.appointmentEnd ? {
@@ -106,9 +99,25 @@ export async function sendBookingNotification(booking: BookingNotificationDetail
     googleCalendarUrl: calendarDetails && type !== "cancelled" ? buildGoogleCalendarUrl(calendarDetails) : undefined,
     calendarUrl: calendarUrl || undefined,
   });
+  const internalRendered = renderInternalBookingEmail({
+    type,
+    customerName: booking.customerName,
+    customerEmail: booking.customerEmail,
+    customerPhone: booking.customerPhone,
+    notes: booking.notes,
+    reference: booking.reference,
+    service: booking.service,
+    vehicle,
+    date: appointment.date,
+    startTime: appointment.startTime,
+    endTime: appointment.endTime,
+    duration: appointment.duration,
+    timezone: `${booking.timezone} (UK time)`,
+    location: booking.location,
+  });
 
-  try {
-    await sendTransactionalEmail({
+  const [customerSent, internalSent] = await Promise.all([
+    reserveAndSend(admin, booking, type, key, {
       to: booking.customerEmail,
       subject: subjectFor(type, booking.reference),
       text: rendered.text,
@@ -116,13 +125,34 @@ export async function sendBookingNotification(booking: BookingNotificationDetail
       replyTo: approvedBookingReplyTo,
       idempotencyKey: `booking-${createHash("sha256").update(key).digest("hex")}`,
       attachments: calendarDetails ? [{ filename: `${booking.reference}.ics`, content: Buffer.from(buildBookingCalendar(calendarDetails), "utf8") }] : undefined,
-    });
-    await admin.from("booking_notification_events").update({ status: "sent", sent_at: new Date().toISOString(), last_error_code: null }).eq("notification_key", key);
+    }, `${type}_email_failed`),
+    reserveAndSend(admin, booking, type, `${key}:internal`, {
+      from: approvedInternalBookingSender,
+      to: approvedInternalBookingRecipient,
+      subject: `${type === "confirmed" ? "New" : type === "rescheduled" ? "Updated" : "Cancelled"} SOB Autofix booking ${booking.reference}`,
+      text: internalRendered.text,
+      html: internalRendered.html,
+      replyTo: booking.customerEmail,
+      idempotencyKey: `booking-internal-${createHash("sha256").update(key).digest("hex")}`,
+    }, `${type}_internal_email_failed`),
+  ]);
+  return customerSent && internalSent;
+}
+
+type BookingAdminClient = NonNullable<ReturnType<typeof createAdminClient>>;
+
+async function reserveAndSend(admin: BookingAdminClient, booking: BookingNotificationDetails, type: BookingNotificationType, notificationKey: string, message: Parameters<typeof sendTransactionalEmail>[0], failureAction: string) {
+  const { error: reservationError } = await admin.from("booking_notification_events").insert({ notification_key: notificationKey, booking_id: booking.id, notification_type: type, status: "pending" });
+  if (reservationError?.code === "23505") return true;
+  if (reservationError) return false;
+  try {
+    await sendTransactionalEmail(message);
+    await admin.from("booking_notification_events").update({ status: "sent", sent_at: new Date().toISOString(), last_error_code: null }).eq("notification_key", notificationKey);
     return true;
   } catch {
     await Promise.all([
-      admin.from("booking_notification_events").update({ status: "failed", last_error_code: "delivery_failed" }).eq("notification_key", key),
-      admin.from("booking_audit_log").insert({ booking_id: booking.id, action: `${type}_email_failed`, actor_type: "system", detail: {} }),
+      admin.from("booking_notification_events").update({ status: "failed", last_error_code: "delivery_failed" }).eq("notification_key", notificationKey),
+      admin.from("booking_audit_log").insert({ booking_id: booking.id, action: failureAction, actor_type: "system", detail: { channel: notificationKey.endsWith(":internal") ? "internal" : "customer" } }),
     ]);
     return false;
   }

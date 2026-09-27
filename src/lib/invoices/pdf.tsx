@@ -5,7 +5,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import React from "react";
 import { Document, Image, Page, Text, View, StyleSheet, renderToBuffer } from "@react-pdf/renderer";
-import { formatPence } from "./money";
+import { invoicePaymentDetails } from "@/config/invoicing";
+import { formatPence, invoicePaymentSummary } from "./money";
 import { invoiceStatusLabel, type Invoice, type InvoiceStatus } from "./types";
 
 export const invoiceLogoPath = join("public", "email", "sob-autofix-logo-white.png");
@@ -47,19 +48,20 @@ const s = StyleSheet.create({
   summaryStrip: { flexDirection: "row", backgroundColor: c.softGrey, borderBottomWidth: 1, borderBottomColor: c.border, marginHorizontal: -38, paddingHorizontal: 38, paddingVertical: 13 },
   summaryCell: { width: "33.333%", paddingRight: 12 }, label: { fontSize: 7.4, fontFamily: "Helvetica-Bold", color: c.secondary, letterSpacing: 0.8, textTransform: "uppercase" },
   value: { marginTop: 4, fontFamily: "Helvetica-Bold", color: c.navy, fontSize: 10 }, bodyValue: { marginTop: 4, color: c.text },
-  details: { flexDirection: "row", marginTop: 21, gap: 25 }, detailColumn: { flexGrow: 1, flexBasis: 0 },
+  details: { flexDirection: "row", marginTop: 16, gap: 25 }, detailColumn: { flexGrow: 1, flexBasis: 0 },
   sectionRule: { marginTop: 5, height: 1, backgroundColor: c.border }, customerName: { marginTop: 9, fontFamily: "Helvetica-Bold", fontSize: 11.2, color: c.navy },
   detailLine: { marginTop: 3, color: c.secondary }, registrationPanel: { alignSelf: "flex-start", marginTop: 9, paddingVertical: 6, paddingHorizontal: 9, backgroundColor: "#EAF3FF", borderLeftWidth: 3, borderLeftColor: c.blue },
   registration: { fontFamily: "Helvetica-Bold", fontSize: 14, color: c.navy, letterSpacing: 0.7 }, vehicleName: { marginTop: 7, fontFamily: "Helvetica-Bold", fontSize: 10.2, color: c.navy }, service: { marginTop: 5, color: c.blue, fontFamily: "Helvetica-Bold" },
-  issuer: { marginTop: 18, paddingTop: 11, borderTopWidth: 1, borderTopColor: c.border, flexDirection: "row", justifyContent: "space-between" },
+  issuer: { marginTop: 13, paddingTop: 8, borderTopWidth: 1, borderTopColor: c.border, flexDirection: "row", justifyContent: "space-between" },
   issuerBlock: { width: "48%" }, issuerDetails: { marginTop: 5, color: c.secondary, fontSize: 8.2 },
-  table: { marginTop: 16 }, tableHead: { flexDirection: "row", backgroundColor: c.navy, color: c.white, paddingVertical: 8.5, paddingHorizontal: 9, fontFamily: "Helvetica-Bold", fontSize: 7.6, letterSpacing: 0.35 },
-  row: { flexDirection: "row", paddingVertical: 9, paddingHorizontal: 9, borderBottomWidth: 1, borderBottomColor: c.border, minHeight: 31 }, rowAlt: { backgroundColor: "#FAFCFE" },
+  table: { marginTop: 12 }, tableHead: { flexDirection: "row", backgroundColor: c.navy, color: c.white, paddingVertical: 7, paddingHorizontal: 9, fontFamily: "Helvetica-Bold", fontSize: 7.6, letterSpacing: 0.35 },
+  row: { flexDirection: "row", paddingVertical: 7, paddingHorizontal: 9, borderBottomWidth: 1, borderBottomColor: c.border, minHeight: 27 }, rowAlt: { backgroundColor: "#FAFCFE" },
   description: { width: "55%", paddingRight: 9 }, qty: { width: "11%", textAlign: "right" }, unit: { width: "17%", textAlign: "right" }, amount: { width: "17%", textAlign: "right", fontFamily: "Helvetica-Bold" },
-  totalsWrap: { flexDirection: "row", justifyContent: "flex-end", marginTop: 12 }, totals: { width: 232 }, totalRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 4, color: c.secondary },
+  settlement: { flexDirection: "row", gap: 25, marginTop: 10, paddingTop: 7, borderTopWidth: 1, borderTopColor: c.border }, settlementLeft: { flexGrow: 1, flexBasis: 0 }, totals: { width: 232 }, totalRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 3, color: c.secondary },
   paidMarker: { marginTop: 7, paddingTop: 8, borderTopWidth: 1, borderTopColor: c.border, color: c.green, fontFamily: "Helvetica-Bold", textAlign: "right", fontSize: 8 },
-  grand: { marginTop: 4, paddingTop: 9, borderTopWidth: 2, borderTopColor: c.blue, fontSize: 18, fontFamily: "Helvetica-Bold", color: c.navy },
-  lower: { marginTop: 12, paddingTop: 8, borderTopWidth: 1, borderTopColor: c.border, flexDirection: "row", gap: 25 }, lowerColumn: { flexGrow: 1, flexBasis: 0 },
+  grand: { marginTop: 3, paddingTop: 6, borderTopWidth: 2, borderTopColor: c.blue, fontSize: 14, fontFamily: "Helvetica-Bold", color: c.navy },
+  balance: { marginTop: 3, paddingTop: 6, borderTopWidth: 2, borderTopColor: c.blue, fontSize: 14, fontFamily: "Helvetica-Bold", color: c.navy },
+  lower: { marginTop: 8 }, lowerColumn: { flexGrow: 1, flexBasis: 0 },
   paymentStatus: { marginTop: 7, fontFamily: "Helvetica-Bold", color: c.navy, fontSize: 10 }, paymentGrid: { marginTop: 6, flexDirection: "row", gap: 15 }, paymentItem: { flexGrow: 1, flexBasis: 0 },
   notes: { marginTop: 7, color: c.secondary }, watermark: { position: "absolute", top: 330, left: 115, transform: "rotate(-35deg)", fontSize: 60, fontFamily: "Helvetica-Bold", color: c.border, opacity: 0.28 },
   footer: { position: "absolute", top: 786, left: 38, right: 38, paddingTop: 8, borderTopWidth: 1, borderTopColor: c.border, flexDirection: "row", justifyContent: "space-between" },
@@ -76,6 +78,7 @@ export function InvoiceDocument({ invoice }: { invoice: Invoice }) {
   const status = invoiceStatusLabel(invoice.status).toUpperCase();
   const reference = invoice.invoice_number || "DRAFT - NOT ISSUED";
   const displayNumber = invoice.invoice_number || "No invoice number";
+  const payment = invoicePaymentSummary(invoice);
 
   return <Document title={`${invoice.issuer_trading_name} invoice ${displayNumber}`} author={invoice.issuer_legal_name} creationDate={new Date(invoice.created_at)} modificationDate={new Date(invoice.updated_at)}>
     <Page size="A4" style={s.page} wrap>
@@ -101,9 +104,9 @@ export function InvoiceDocument({ invoice }: { invoice: Invoice }) {
         {invoice.invoice_items.map((item, index) => <View key={item.id} style={[s.row, index % 2 ? s.rowAlt : {}]} wrap={false}><Text style={s.description}>{item.description}</Text><Text style={s.qty}>{trimQuantity(String(item.quantity))}</Text><Text style={s.unit}>{formatPence(item.unit_price_pence)}</Text><Text style={s.amount}>{formatPence(item.line_total_pence)}</Text></View>)}
       </View>
 
-      <View wrap={false}>
-        <View style={s.totalsWrap}><View style={s.totals}><Total label="Subtotal" value={invoice.subtotal_pence} />{BigInt(invoice.discount_pence) > 0n && <Total label="Discount" value={-BigInt(invoice.discount_pence)} />}{invoice.status === "paid" && <Text style={s.paidMarker}>PAID / SETTLED</Text>}<View style={[s.totalRow, s.grand]}><Text>TOTAL GBP</Text><Text>{formatPence(invoice.total_pence)}</Text></View></View></View>
-        {(hasPaymentContent(invoice) || invoice.notes) && <View style={s.lower}><PaymentSection invoice={invoice} status={status} />{invoice.notes && <View style={s.lowerColumn}><SectionHeading>Notes</SectionHeading><Text style={s.notes}>{invoice.notes}</Text></View>}</View>}
+      <View style={s.settlement} wrap={false}>
+        <View style={s.settlementLeft}><PaymentSection invoice={invoice} status={status} />{invoice.notes && <View style={s.lower}><SectionHeading>Notes</SectionHeading><Text style={s.notes}>{invoice.notes}</Text></View>}</View>
+        <View style={s.totals}><Total label="Subtotal" value={invoice.subtotal_pence} />{BigInt(invoice.discount_pence) > 0n && <Total label="Discount" value={-BigInt(invoice.discount_pence)} />}<View style={[s.totalRow, s.grand]}><Text>TOTAL GBP</Text><Text>{formatPence(payment.totalPence)}</Text></View><Total label="AMOUNT PAID" value={payment.amountPaidPence} /><View style={[s.totalRow, s.balance]}><Text>BALANCE DUE</Text><Text>{formatPence(payment.balancePence)}</Text></View>{invoice.status === "paid" && <Text style={s.paidMarker}>PAID / SETTLED</Text>}</View>
       </View>
     </Page>
   </Document>;
@@ -123,9 +126,7 @@ function SummaryStrip({ invoice, status }: { invoice: Invoice; status: string })
 }
 
 function PaymentSection({ invoice, status }: { invoice: Invoice; status: string }) {
-  if (!hasPaymentContent(invoice)) return <View style={s.lowerColumn} />;
-  if (invoice.paid_at) return <View style={s.lowerColumn}><SectionHeading>Payment</SectionHeading><Text style={s.paymentStatus}>{status} · {formatDate(invoice.paid_at.slice(0, 10))}</Text>{(invoice.payment_method || invoice.payment_reference) && <View style={s.paymentGrid}>{invoice.payment_method && <View style={s.paymentItem}><Text style={s.label}>Method</Text><Text style={s.bodyValue}>{paymentMethodLabel(invoice.payment_method)}</Text></View>}{invoice.payment_reference && <View style={s.paymentItem}><Text style={s.label}>Reference</Text><Text style={s.bodyValue}>{invoice.payment_reference}</Text></View>}</View>}</View>;
-  return <View style={s.lowerColumn}><SectionHeading>Payment terms</SectionHeading>{invoice.due_date && <Text style={s.paymentStatus}>Payment due by {formatDate(invoice.due_date)}.</Text>}{invoice.payment_terms && <Text style={s.notes}>{invoice.payment_terms}</Text>}</View>;
+  return <View style={s.lowerColumn}><SectionHeading>Payment details</SectionHeading><Text style={s.paymentStatus}>Pay to: {invoicePaymentDetails.accountName}</Text><Text style={s.notes}>Sort code: {invoicePaymentDetails.sortCode} · Account no: {invoicePaymentDetails.accountNumber}</Text>{invoice.paid_at ? <><Text style={s.paymentStatus}>{status} · {formatDate(invoice.paid_at.slice(0, 10))}</Text>{invoice.payment_method && <Text style={s.notes}>{paymentMethodLabel(invoice.payment_method)}{invoice.payment_reference ? ` · ${invoice.payment_reference}` : ""}</Text>}</> : <>{invoice.due_date && <Text style={s.paymentStatus}>Payment due by {formatDate(invoice.due_date)}.</Text>}{invoice.payment_terms && <Text style={s.notes}>{invoice.payment_terms}</Text>}</>}</View>;
 }
 
 function SectionHeading({ children }: { children: React.ReactNode }) { return <><Text style={s.label}>{children}</Text><View style={s.sectionRule} /></>; }
@@ -138,5 +139,4 @@ function formatDateTime(value: string) { return new Intl.DateTimeFormat("en-GB",
 function trimQuantity(value: string) { return value.replace(/\.0+$/, "").replace(/(\.\d*?)0+$/, "$1"); }
 function formatPhone(value: string) { const digits = value.replace(/\s+/g, ""); return digits.length === 11 ? `${digits.slice(0, 5)} ${digits.slice(5)}` : value; }
 function paymentMethodLabel(value: NonNullable<Invoice["payment_method"]>) { return value === "bank_transfer" ? "Bank transfer" : value.charAt(0).toUpperCase() + value.slice(1); }
-function hasPaymentContent(invoice: Invoice) { return Boolean(invoice.paid_at || invoice.payment_terms || invoice.due_date); }
 function statusStyle(status: InvoiceStatus) { return status === "draft" ? s.badgeDraft : status === "issued" ? s.badgeIssued : status === "paid" ? s.badgePaid : s.badgeVoid; }

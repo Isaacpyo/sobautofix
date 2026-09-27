@@ -10,6 +10,7 @@ Audited 13 August 2026 by searching application, worker, migration, test, and Su
 | Booking confirmation | Customer | Resend | `src/lib/bookings/notifications.ts` | No |
 | Booking rescheduled | Customer | Resend | `src/lib/bookings/notifications.ts` | No |
 | Booking cancellation | Customer | Resend | `src/lib/bookings/notifications.ts` | No |
+| Internal booking lifecycle notification | `sobautofix@gmail.com` | Resend | `src/lib/bookings/notifications.ts` | No |
 | Issued invoice | Customer-selected recipient | Resend + persisted claim/reconciliation | `src/lib/invoices/repository.ts`, `email-delivery.ts` | No |
 | Paid invoice copy | Customer-selected recipient | Resend + persisted claim/reconciliation | `src/lib/invoices/repository.ts`, `email-delivery.ts` | No |
 | Admin password recovery | Authorised admin | Supabase Auth | `src/app/admin/login/actions.ts` (`resetPasswordForEmail`) | Dashboard-managed; not deployable from existing source |
@@ -19,12 +20,13 @@ No application calls were found for sign-up confirmation, invite-user, magic-lin
 
 ## Preserved delivery rules
 
-- From: `SOB Autofix <notifications@sobautofix.com>`.
+- Customer and general transactional From: `SOB Autofix <notifications@sobautofix.com>`.
+- Internal booking notification From: `SOB Autofix <info@sobautofix.com>`; this identity must be verified in Resend for the `sobautofix.com` domain.
 - Enquiry acknowledgement Reply-To: configured approved business address.
 - Internal enquiry Reply-To: validated customer email when supplied, otherwise configured approved business address.
 - Staff reply Reply-To: existing opaque `enquiry+<token>@reply.sobautofix.com` address when inbound configuration is available; existing business fallback otherwise.
 - Booking Reply-To: configured approved business address.
 - Invoice Reply-To: pinned to `info@sobautofix.com` independently of the application-wide fallback.
 - Thread subjects, `In-Reply-To`, `References`, provider message IDs, reply tokens, and Cloudflare routing are unchanged.
-- Booking database reservation keys and provider idempotency keys are unchanged.
+- Customer and internal booking messages use separate database reservation keys and provider idempotency keys, so an internal failure cannot duplicate the customer confirmation.
 - Invoice logical send IDs, claims, revision checks, attachment bytes/hash, retry reconciliation, and Send Copy semantics are unchanged. The payload hash now also covers final HTML.

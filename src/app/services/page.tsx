@@ -4,6 +4,7 @@ import { PageHero } from "@/components/marketing/page-hero";
 import { ServiceRegistrationCta } from "@/components/marketing/service-registration-cta";
 import { SectionIntro } from "@/components/marketing/experience";
 import { ServiceCategoryNavigation } from "@/components/services/category-hub";
+import { PublicServiceCatalogue } from "@/components/services/service-catalogue";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Container, Eyebrow } from "@/components/ui/container";
 import { createMetadata, serviceJsonLd } from "@/lib/seo";
@@ -77,6 +78,8 @@ export default function ServicesPage() {
           </div>
         </Container>
       </section>
+
+      <PublicServiceCatalogue />
 
       <section className="bg-[#F4F7FA] py-20 sm:py-24">
         <Container className="grid gap-12 lg:grid-cols-[.8fr_1.2fr]">

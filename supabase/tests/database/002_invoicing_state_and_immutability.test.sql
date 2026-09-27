@@ -5,6 +5,12 @@ set local search_path = public, extensions;
 
 select plan(31);
 
+-- The fixture has no Auth-managed TOTP factor; isolate invoice state-machine
+-- coverage from MFA enrollment while retaining all is_admin() checks.
+update public.admin_mfa_policy
+set mandatory_mfa_enabled = false
+where singleton;
+
 insert into auth.users (id, email, raw_user_meta_data)
 select '11000000-0000-4000-8000-000000000001', 'sobautofix@gmail.com', '{}'::jsonb
 where not exists (select 1 from auth.users where lower(email) = 'sobautofix@gmail.com');

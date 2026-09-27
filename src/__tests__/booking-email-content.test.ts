@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderBookingEmail } from "@/lib/email/templates/bookings";
+import { renderBookingEmail, renderInternalBookingEmail } from "@/lib/email/templates/bookings";
 
 const booking = {
   customerName: "Test Customer",
@@ -44,5 +44,11 @@ describe("SOB Autofix booking email content", () => {
     expect(rendered.html).not.toContain(">Manage booking<");
     expect(rendered.html).not.toContain("Add to Google Calendar");
     expect(rendered.html).not.toContain(">Add to Calendar<");
+  });
+
+  it("renders the internal booking notification with customer contact and notes", () => {
+    const rendered = renderInternalBookingEmail({ ...booking, type: "confirmed", customerEmail: "customer@example.com", customerPhone: "07000 000000", notes: "Intermittent warning light" });
+    for (const value of ["NEW BOOKING", "customer@example.com", "07000 000000", "Intermittent warning light", "SOB-123456"]) expect(rendered.text).toContain(value);
+    expect(rendered.html).toContain("View admin bookings");
   });
 });

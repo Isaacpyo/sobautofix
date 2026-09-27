@@ -592,8 +592,8 @@ describe("Cal.com booking repository workflows", () => {
     await sendBookingNotification(details, "rescheduled");
     await sendBookingNotification({ ...details, appointmentStart: "2026-08-20T08:00:00.000Z" }, "rescheduled");
 
-    expect(harness.state.notificationEvents).toHaveLength(1);
-    expect(harness.sendEmail).toHaveBeenCalledTimes(1);
+    expect(harness.state.notificationEvents).toHaveLength(2);
+    expect(harness.sendEmail).toHaveBeenCalledTimes(2);
     const message = harness.sendEmail.mock.calls[0]?.[0];
     expect(message.attachments).toHaveLength(1);
     expect(message.replyTo).toBe("info@sobautofix.com");

@@ -5,6 +5,13 @@ set local search_path = public, extensions;
 
 select plan(64);
 
+-- These tests exercise invoice authorization, not MFA enrollment. Keep the
+-- production-default policy intact outside this transaction while allowing
+-- the synthetic admin fixture to authenticate at AAL1.
+update public.admin_mfa_policy
+set mandatory_mfa_enabled = false
+where singleton;
+
 select ok((select relrowsecurity from pg_class where oid = 'public.invoices'::regclass), 'invoices has RLS enabled');
 select ok((select relrowsecurity from pg_class where oid = 'public.invoice_items'::regclass), 'invoice_items has RLS enabled');
 select ok((select relrowsecurity from pg_class where oid = 'public.invoice_email_sends'::regclass), 'invoice_email_sends has RLS enabled');

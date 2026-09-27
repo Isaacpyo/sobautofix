@@ -72,7 +72,7 @@ After applying the booking migrations and deploying the environment variables:
 4. Reschedule inside SOB Autofix and verify local history, email, and calendar change.
 5. Cancel inside SOB Autofix and verify local status, email, and calendar change.
 6. Confirm there are no third-party booking iframes, scripts, redirects, or browser-side API credentials.
-7. Count lifecycle messages in an external mailbox: one SOB Autofix email and zero Cal.com emails for create, reschedule, and cancel.
+7. Count lifecycle messages in external mailboxes: one customer-facing SOB Autofix email, one internal message to `sobautofix@gmail.com`, and zero Cal.com emails for create, reschedule, and cancel. Verify the internal message is accepted by Resend from `SOB Autofix <info@sobautofix.com>`.
 8. Confirm the attached calendar uses the same UID across all three messages, reschedule updates the existing customer event, cancellation cancels that event, and the connected SOB Autofix business calendar still blocks and updates the appointment.
 
-Payments and deposits are deliberately out of scope. Add them only as a separately approved phase.
+Booking deposits remain out of scope. Invoice payment records are managed separately in the authenticated invoice area.

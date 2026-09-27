@@ -72,6 +72,8 @@ describe.sequential("local Supabase invoice authorization", () => {
       }],
       ["issue_invoice", { p_invoice_id: invoiceId }],
       ["mark_invoice_paid", { p_invoice_id: invoiceId, p_paid_at: new Date().toISOString(), p_method: "cash", p_reference: "" }],
+      ["record_invoice_payment", { p_invoice_id: invoiceId, p_amount_pence: 100, p_paid_at: new Date().toISOString(), p_method: "cash", p_reference: "" }],
+      ["create_invoice_correction", { p_invoice_id: invoiceId }],
       ["void_invoice", { p_invoice_id: invoiceId }],
       ["delete_invoice_draft", { p_invoice_id: invoiceId }],
       ["duplicate_invoice_to_draft", { p_invoice_id: invoiceId }],
@@ -133,6 +135,63 @@ describe.sequential("local Supabase invoice authorization", () => {
     const results = await Promise.all(invoiceMutations);
     expect(results).toHaveLength(7);
     for (const result of results) expect(result.error?.code).toBe("42501");
+  });
+
+  it("records part payments exactly and creates safe editable corrections", async () => {
+    const draftId = await saveDraft(users.admin, "2090-09-12", "payments");
+    const issue = await users.admin.rpc("issue_invoice", { p_invoice_id: draftId });
+    expect(issue.error).toBeNull();
+
+    const excessive = await users.admin.rpc("record_invoice_payment", {
+      p_invoice_id: draftId,
+      p_amount_pence: 1000,
+      p_paid_at: "2090-09-12T12:00:00.000Z",
+      p_method: "card",
+      p_reference: "too-much",
+    });
+    expect(excessive.error?.message).toContain("PAYMENT_EXCEEDS_BALANCE");
+
+    const partPayment = await users.admin.rpc("record_invoice_payment", {
+      p_invoice_id: draftId,
+      p_amount_pence: 300,
+      p_paid_at: "2090-09-12T12:00:00.000Z",
+      p_method: "card",
+      p_reference: "part-payment",
+    });
+    expect(partPayment.error).toBeNull();
+    expect(partPayment.data).toMatchObject({ status: "issued", total_pence: 999 });
+
+    const afterPartPayment = await users.admin
+      .from("invoices")
+      .select("status,total_pence,invoice_payments(amount_pence,payment_reference)")
+      .eq("id", draftId)
+      .single();
+    expect(afterPartPayment.error).toBeNull();
+    expect(afterPartPayment.data).toMatchObject({ status: "issued", total_pence: 999, invoice_payments: [{ amount_pence: 300, payment_reference: "part-payment" }] });
+
+    const settlement = await users.secondaryAdmin.rpc("record_invoice_payment", {
+      p_invoice_id: draftId,
+      p_amount_pence: 699,
+      p_paid_at: "2090-09-13T12:00:00.000Z",
+      p_method: "bank_transfer",
+      p_reference: "settlement",
+    });
+    expect(settlement.error).toBeNull();
+    expect(settlement.data).toMatchObject({ status: "paid", total_pence: 999 });
+
+    const correctionSourceId = await saveDraft(users.admin, "2090-09-14", "correction");
+    expect((await users.admin.rpc("issue_invoice", { p_invoice_id: correctionSourceId })).error).toBeNull();
+    const correction = await users.admin.rpc("create_invoice_correction", { p_invoice_id: correctionSourceId });
+    expect(correction.error).toBeNull();
+    expect(correction.data).toBeTruthy();
+
+    const [source, replacement] = await Promise.all([
+      users.admin.from("invoices").select("status,invoice_number").eq("id", correctionSourceId).single(),
+      users.admin.from("invoices").select("status,invoice_number,replaces_invoice_id").eq("id", correction.data).single(),
+    ]);
+    expect(source.data?.status).toBe("void");
+    expect(source.data?.invoice_number).toBeTruthy();
+    expect(replacement.data).toMatchObject({ status: "draft", invoice_number: null, replaces_invoice_id: correctionSourceId });
   });
 
   it("requires deliberate confirmation before duplicating a persisted booking invoice", async () => {

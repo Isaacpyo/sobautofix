@@ -36,3 +36,13 @@ export function formatPence(value: bigint | number | string) {
   const absolute = pence < 0n ? -pence : pence;
   return `${sign}£${String(absolute / 100n).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}.${String(absolute % 100n).padStart(2, "0")}`;
 }
+import type { Invoice } from "./types";
+
+
+export function invoicePaymentSummary(invoice: Pick<Invoice, "status" | "total_pence" | "invoice_payments">) {
+  const totalPence = BigInt(invoice.total_pence);
+  const recordedPence = (invoice.invoice_payments || []).reduce((total, payment) => total + BigInt(payment.amount_pence), 0n);
+  const amountPaidPence = invoice.status === "paid" && recordedPence === 0n ? totalPence : recordedPence;
+  const balancePence = totalPence > amountPaidPence ? totalPence - amountPaidPence : 0n;
+  return { totalPence, amountPaidPence, balancePence };
+}

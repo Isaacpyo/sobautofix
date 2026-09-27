@@ -5,6 +5,12 @@ set local search_path = public, extensions;
 
 select plan(18);
 
+-- The fixture has no Auth-managed TOTP factor; isolate monetary calculations
+-- from MFA enrollment while retaining all is_admin() checks.
+update public.admin_mfa_policy
+set mandatory_mfa_enabled = false
+where singleton;
+
 select col_type_is('public', 'invoice_items', 'unit_price_pence', 'bigint', 'unit prices are stored as integer pence');
 select col_type_is('public', 'invoice_items', 'line_total_pence', 'bigint', 'line totals are stored as integer pence');
 select col_type_is('public', 'invoices', 'subtotal_pence', 'bigint', 'subtotals are stored as integer pence');

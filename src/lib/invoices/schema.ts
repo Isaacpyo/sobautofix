@@ -28,6 +28,7 @@ export const invoiceDraftSchema = z.object({
 });
 
 export const paymentSchema = z.object({ invoiceId: z.string().uuid(), paidAt: z.iso.datetime({ offset: true }), method: z.enum(["cash", "card", "bank_transfer", "other"]), reference: z.string().trim().max(300).default("") });
+export const invoicePaymentSchema = paymentSchema.extend({ amountPence: z.string().regex(/^\d+$/, "Enter a valid payment amount.").refine((value) => BigInt(value) > 0n, "Payment amount must be greater than zero.") });
 export const sendInvoiceSchema = z.object({
   invoiceId: z.string().uuid(),
   recipient: z.email(),
@@ -48,6 +49,8 @@ export function friendlyInvoiceError(error: unknown) {
     VAT_NOT_CONFIGURED: "VAT is not configured and cannot be added to this invoice.",
     PAYMENT_DATE_REQUIRED: "Enter the payment date.",
     PAYMENT_METHOD_REQUIRED: "Choose the payment method.",
+    INVALID_PAYMENT_AMOUNT: "Enter a payment amount greater than zero.",
+    PAYMENT_EXCEEDS_BALANCE: "The payment cannot be greater than the outstanding balance.",
   };
   const knownMessage = known[error.message];
   if (knownMessage) return knownMessage;

@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 export const productionEmailSender = "SOB Autofix <notifications@sobautofix.com>";
+export const approvedInternalBookingSender = "SOB Autofix <info@sobautofix.com>";
+export const approvedInternalBookingRecipient = "sobautofix@gmail.com";
 export const approvedBookingReplyTo = "info@sobautofix.com";
 export const approvedEnquiryFallbackReplyTo = "info@sobautofix.com";
 export const approvedInvoiceReplyTo = "info@sobautofix.com";

@@ -2,6 +2,7 @@ import "server-only";
 
 import { Resend } from "resend";
 import {
+  approvedInternalBookingSender,
   approvedInvoiceReplyTo,
   isValidEmailAddress,
   parseEmailAddress,
@@ -11,6 +12,7 @@ import {
 import { getEnquiryReplyDomain } from "@/lib/enquiries/inbound-config";
 
 export type TransactionalEmail = {
+  from?: string;
   to: string;
   subject: string;
   text: string;
@@ -87,12 +89,13 @@ async function sendWithConfig(config: ResendConfiguration, message: Transactiona
   try {
     to = parseEmailAddress(message.to);
     replyTo = resolveReplyTo(config.replyTo, message.replyTo);
+    if (message.from && message.from !== approvedInternalBookingSender) throw new Error("invalid sender");
   } catch {
-    throw new TransactionalEmailDeliveryError("rejected", "invalid_recipient", false);
+    throw new TransactionalEmailDeliveryError("rejected", "invalid_recipient_or_sender", false);
   }
 
   const result = await new Resend(config.apiKey).emails.send({
-    from: config.from,
+    from: message.from || config.from,
     to,
     subject: message.subject,
     text: message.text,

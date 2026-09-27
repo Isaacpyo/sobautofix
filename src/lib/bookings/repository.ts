@@ -162,6 +162,7 @@ function notificationDetails(row: BookingRow): BookingNotificationDetails | null
     reference: row.booking_reference,
     customerName: customer.name,
     customerEmail: customer.email,
+    customerPhone: customer.phone || undefined,
     registration: vehicle?.registration || "",
     vehicleName: [vehicle?.make, vehicle?.model].filter(Boolean).join(" ") || undefined,
     service: row.service_name,
@@ -173,6 +174,7 @@ function notificationDetails(row: BookingRow): BookingNotificationDetails | null
     previousAppointmentEnd: previousAppointment?.previousAppointmentEnd,
     calendarSequence,
     calendarTimestamp: latestCalendarEvent?.createdAt || row.provider_event_updated_at || row.appointment_start,
+    notes: row.problem_description || row.notes || undefined,
   };
 }
 

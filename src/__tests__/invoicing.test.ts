@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { getDocument, OPS } from "pdfjs-dist/legacy/build/pdf.mjs";
 import { describe, expect, it } from "vitest";
-import { calculateInvoiceTotals, calculateLineTotalPence, formatPence, poundsToPence } from "@/lib/invoices/money";
+import { calculateInvoiceTotals, calculateLineTotalPence, formatPence, invoicePaymentSummary, poundsToPence } from "@/lib/invoices/money";
 import { invoiceDraftSchema, paymentSchema } from "@/lib/invoices/schema";
 import { renderInvoicePdf } from "@/lib/invoices/pdf";
 import type { Invoice } from "@/lib/invoices/types";
@@ -21,6 +21,11 @@ describe("garage invoicing", () => {
   it("calculates quantities and totals exactly", () => {
     expect(calculateLineTotalPence("1.250", 799n)).toBe(999n);
     expect(calculateInvoiceTotals([{ quantity: "1", unitPricePence: 8500n }, { quantity: "2", unitPricePence: 4500n }], 500n)).toEqual({ subtotalPence: 17500n, discountPence: 500n, taxPence: 0n, totalPence: 17000n });
+  });
+
+  it("separates total, part payments and balance in integer pence", () => {
+    expect(invoicePaymentSummary({ status: "issued", total_pence: 100000, invoice_payments: [{ id: "payment-1", amount_pence: 30000, paid_at: "2026-08-11T12:00:00Z", payment_method: "card", payment_reference: null, created_at: "2026-08-11T12:00:00Z" }] })).toEqual({ totalPence: 100000n, amountPaidPence: 30000n, balancePence: 70000n });
+    expect(invoicePaymentSummary({ status: "paid", total_pence: 100000, invoice_payments: [] }).balancePence).toBe(0n);
   });
 
   it("validates manual and booking draft creation", () => {
@@ -120,6 +125,18 @@ describe("garage invoicing", () => {
     expect(parsed.pageTexts[0]).toContain("Controlled verification");
     expect(parsed.pageTexts[0]).toContain("Controlled internal test invoice retained as production verification evidence.");
     expect(parsed.pageTexts[0]).toContain("Page 1 of 1");
+  }, 20_000);
+
+  it("renders total, part payment, balance and bank details on an issued invoice", async () => {
+    const invoice = {
+      ...representativeInvoice("issued", 1),
+      total_pence: 100000,
+      subtotal_pence: 100000,
+      invoice_items: [{ id: "item-0", description: "Engine repair", quantity: "1.000", unit_price_pence: 100000, line_total_pence: 100000, position: 0 }],
+      invoice_payments: [{ id: "payment-1", amount_pence: 30000, paid_at: "2026-08-12T12:00:00Z", payment_method: "bank_transfer" as const, payment_reference: "PART-1", created_at: "2026-08-12T12:00:00Z" }],
+    };
+    const { text } = await parsePdf(await renderInvoicePdf(invoice));
+    for (const value of ["TOTAL GBP", "£1,000.00", "AMOUNT PAID", "£300.00", "BALANCE DUE", "£700.00", "30-54-66", "45-67-68 60"]) expect(text).toContain(value);
   }, 20_000);
 
   it("renders the immutable issuer snapshot instead of deploy-time business settings", async () => {
