@@ -27,6 +27,19 @@ describe("admin booking list", () => {
     expect(source).toContain('loadingTitle="Opening booking"');
   });
 
+  it("adds an email-thread action to every desktop and mobile booking item", () => {
+    const source = readFileSync(join(process.cwd(), "src/app/admin/(protected)/bookings/page.tsx"), "utf8");
+    const actions = readFileSync(join(process.cwd(), "src/app/admin/(protected)/bookings/actions.ts"), "utf8");
+    const button = readFileSync(join(process.cwd(), "src/components/admin/booking-email-thread-button.tsx"), "utf8");
+    expect(source).toContain("startBookingEnquiryThreadAction");
+    expect(source.match(/<BookingEmailAction/g)).toHaveLength(2);
+    expect(source).toContain("Email ${customerName} about booking ${bookingReference}");
+    expect(button).toContain("Email customer");
+    expect(button).toContain("useFormStatus");
+    expect(actions).toContain('.rpc("create_booking_enquiry_thread"');
+    expect(actions).toContain('redirect(`/admin/enquiries/${enquiryId.data}`)');
+  });
+
   it("orders by date booked and keeps location details off list views", () => {
     const source = readFileSync(join(process.cwd(), "src/app/admin/(protected)/bookings/page.tsx"), "utf8");
     expect(source).toContain('.order("created_at", { ascending: false })');

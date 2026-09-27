@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { AdminBookingListFrame } from "@/components/admin/admin-booking-list-frame";
+import { BookingEmailThreadButton } from "@/components/admin/booking-email-thread-button";
 import { AdminLoadingLink } from "@/components/admin/admin-loading-link";
 import { AdminListFilters, AdminPagination } from "@/components/admin/admin-list-controls";
 import { ADMIN_LIST_PAGE_SIZE, positiveAdminPage } from "@/lib/admin/pagination";
@@ -16,6 +17,7 @@ import type { BookingStatus, ProviderSyncState } from "@/lib/bookings/types";
 import { createAdminReadClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import { formatRegistration } from "@/lib/vehicle/registration-format";
+import { startBookingEnquiryThreadAction } from "./actions";
 
 type AdminBookingListRow = {
   id: string;
@@ -142,12 +144,12 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
             <thead className="sticky top-0 z-10 bg-[#F4F7FA] text-xs font-extrabold tracking-wide text-[#586575] uppercase shadow-[0_1px_0_#E4EAF0]">
               <tr>
                 <th className="w-[11%] py-4 pl-4 pr-2">Booking ref</th>
-                <th className="w-[21%] py-4 pl-2 pr-4">Customer</th>
-                <th className="w-[18%] px-4 py-4">Vehicle</th>
-                <th className="w-[18%] px-4 py-4">Service</th>
+                <th className="w-[19%] py-4 pl-2 pr-4">Customer</th>
+                <th className="w-[17%] px-4 py-4">Vehicle</th>
+                <th className="w-[16%] px-4 py-4">Service</th>
                 <th className="w-[12%] px-4 py-4">Status</th>
                 <th className="w-[15%] px-4 py-4">Date booked</th>
-                <th className="w-[5%] px-4 py-4"><span className="sr-only">Action</span></th>
+                <th className="w-[10%] px-4 py-4"><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
             <tbody>
@@ -168,7 +170,12 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
                         <span className="mt-1 block text-xs font-semibold text-[#667586]">{bookedAt.time}</span>
                       </time>
                     </td>
-                    <td className="px-4 py-4"><BookingOpenLink href={`/admin/bookings/${booking.id}`} className="inline-flex min-h-10 items-center rounded-lg border border-[#BCD6F6] px-3 text-xs font-extrabold text-[#1446A5] hover:bg-[#F1F7FF]">View</BookingOpenLink></td>
+                    <td className="px-4 py-4">
+                      <div className="flex items-center gap-2">
+                        <BookingEmailAction bookingId={booking.id} bookingReference={booking.booking_reference} customerName={customer?.name || "customer"} />
+                        <BookingOpenLink href={`/admin/bookings/${booking.id}`} className="inline-flex min-h-10 items-center rounded-lg border border-[#BCD6F6] px-3 text-xs font-extrabold text-[#1446A5] hover:bg-[#F1F7FF]">View</BookingOpenLink>
+                      </div>
+                    </td>
                   </tr>
                 );
               })}
@@ -203,6 +210,9 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
                   <div className="mt-5 border-t border-[#E4EAF0] pt-4"><SyncStateBadge state={booking.provider_sync_state} /></div>
                   <span className="sr-only">Open booking {booking.booking_reference}</span>
                 </BookingOpenLink>
+                <div className="mt-4 flex justify-end border-t border-[#E4EAF0] pt-4">
+                  <BookingEmailAction bookingId={booking.id} bookingReference={booking.booking_reference} customerName={customer?.name || "customer"} showLabel />
+                </div>
               </article>
             );
           })}
@@ -236,6 +246,16 @@ function ListDetail({ label, value }: { label: string; value: string }) {
 
 function BookingOpenLink({ href, className, children }: { href: string; className: string; children: React.ReactNode }) {
   return <AdminLoadingLink href={href} className={className} loadingTitle="Opening booking" loadingDescription="Please wait while the booking details open.">{children}</AdminLoadingLink>;
+}
+
+function BookingEmailAction({ bookingId, bookingReference, customerName, showLabel = false }: { bookingId: string; bookingReference: string; customerName: string; showLabel?: boolean }) {
+  const label = `Email ${customerName} about booking ${bookingReference}`;
+  return (
+    <form action={startBookingEnquiryThreadAction}>
+      <input type="hidden" name="bookingId" value={bookingId} />
+      <BookingEmailThreadButton label={label} showLabel={showLabel} />
+    </form>
+  );
 }
 
 function BookingStatusBadge({ status }: { status: BookingStatus }) {

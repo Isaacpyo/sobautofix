@@ -139,6 +139,31 @@ export async function cancelAdminBookingAction(bookingId: string): Promise<SafeA
   }
 }
 
+export async function startBookingEnquiryThreadAction(formData: FormData) {
+  const admin = await getVerifiedAdmin();
+  if (!admin) redirect("/admin/login?returnTo=%2Fadmin%2Fbookings");
+
+  const bookingId = uuidSchema.parse(formData.get("bookingId"));
+  const client = createAdminClient();
+  if (!client) throw new Error("Enquiry conversations are temporarily unavailable.");
+
+  const { data, error } = await client.rpc("create_booking_enquiry_thread", {
+    target_booking_id: bookingId,
+    actor_id_value: admin.user.id,
+  });
+  const enquiryId = uuidSchema.safeParse(data);
+  if (error || !enquiryId.success) {
+    throw new Error("The booking email thread could not be opened. Please try again.");
+  }
+
+  revalidatePath("/admin/bookings");
+  revalidatePath(`/admin/bookings/${bookingId}`);
+  revalidatePath("/admin/enquiries");
+  revalidatePath("/admin/notifications");
+  revalidatePath("/admin", "layout");
+  redirect(`/admin/enquiries/${enquiryId.data}`);
+}
+
 export async function saveBookingServiceMappingAction(
   _previousState: SafeActionResult,
   formData: FormData,
