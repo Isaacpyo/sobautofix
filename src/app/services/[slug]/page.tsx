@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ContentRenderer } from "@/components/content/content-renderer";
+import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { PageHero } from "@/components/marketing/page-hero";
 import { ProcessFlow } from "@/components/marketing/experience";
 import { ServiceRegistrationCta } from "@/components/marketing/service-registration-cta";
@@ -107,7 +108,7 @@ export default async function ServiceDetail({
 }) {
   const { slug } = await params;
   const cms = await getPublishedContent("service", slug);
-  if (cms) return <><ContentRenderer entry={cms} /><ServiceRegistrationCta source={`service-${slug}`} /></>;
+  if (cms) return <><section className="py-7"><Container><Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Services", href: "/services" }, { label: cms.title, href: `/services/${slug}` }]} /></Container></section><ContentRenderer entry={cms} /><ServiceRegistrationCta source={`service-${slug}`} /></>;
   const item = services.find(
     (candidate) => candidate.slug === slug && candidate.published,
   );
@@ -124,6 +125,11 @@ export default async function ServiceDetail({
         showTrustFacts={false}
       />
       <ServiceCategoryNavigation />
+      <section className="py-7">
+        <Container>
+          <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Services", href: "/services" }, { label: "Repairs & Maintenance", href: "/services/repairs-maintenance" }, { label: item.name, href: `/services/${slug}` }]} />
+        </Container>
+      </section>
       <section className="pb-20 pt-8">
         <Container className="grid gap-12 lg:grid-cols-[1fr_1fr]">
           <div>

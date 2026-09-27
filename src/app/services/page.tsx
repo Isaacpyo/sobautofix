@@ -1,6 +1,7 @@
 import { ArrowRight, CircuitBoard, MapPin, Wrench } from "lucide-react";
 import Link from "next/link";
 import { PageHero } from "@/components/marketing/page-hero";
+import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { ServiceRegistrationCta } from "@/components/marketing/service-registration-cta";
 import { SectionIntro } from "@/components/marketing/experience";
 import { ServiceCategoryNavigation } from "@/components/services/category-hub";
@@ -32,6 +33,8 @@ export default function ServicesPage() {
         cta={false}
         showTrustFacts={false}
       />
+
+      <section className="py-7"><Container><Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Services", href: "/services" }]} /></Container></section>
 
       <ServiceCategoryNavigation />
 
