@@ -50,7 +50,7 @@ describe("sitemap generation", () => {
   it("emits unique canonical URLs and lets CMS dates replace seeded-route metadata", () => {
     const entries = build({ content: [content({ kind: "service", slug: "vehicle-servicing" })] });
     const urls = entries.map((entry) => entry.url);
-    const service = entries.filter((entry) => entry.url === "https://sobautofix.com/services/vehicle-servicing");
+    const service = entries.filter((entry) => entry.url === "https://sobautofix.com/services/repairs-maintenance/vehicle-servicing");
 
     expect(new Set(urls).size).toBe(urls.length);
     expect(service).toHaveLength(1);

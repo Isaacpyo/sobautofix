@@ -44,16 +44,16 @@ const serviceGroups: NavigationGroupData[] = [
     href: "/services/repairs-maintenance",
     links: services
       .filter((item) => item.published)
-      .map((item) => ({ label: item.name, href: `/services/${item.slug}` })),
+      .map((item) => ({ label: item.name, href: `/services/repairs-maintenance/${item.slug}` })),
   },
   {
     title: "Mobile & Specialist",
     href: "/services/mobile-specialist",
     links: [
-      { label: "Mobile Mechanic", href: "/mobile-mechanic" },
-      { label: "Vehicle Recovery", href: "/vehicle-recovery" },
-      { label: "Pre-Purchase Inspection", href: "/vehicle-inspections" },
-      { label: "Fleet Servicing", href: "/fleet" },
+      { label: "Mobile Mechanic", href: "/services/mobile-specialist/mobile-mechanic" },
+      { label: "Vehicle Recovery", href: "/services/mobile-specialist/vehicle-recovery" },
+      { label: "Pre-Purchase Inspection", href: "/services/mobile-specialist/vehicle-inspections" },
+      { label: "Fleet Servicing", href: "/services/mobile-specialist/fleet" },
     ],
   },
 ];

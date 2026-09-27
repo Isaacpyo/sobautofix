@@ -41,7 +41,8 @@ describe("service category hub architecture", () => {
     expect(diagnosticCarousel).toContain("items.map");
     expect(diagnosticCarousel).toContain('href={`/diagnostics/${item.slug}`}');
     expect(repairs).toContain("coreServices.map");
+    expect(repairs).toContain('href={`/services/repairs-maintenance/${item.slug}`}');
     for (const slug of ["vehicle-servicing", "engine-repair", "brake-repair"]) expect(serviceConfig).toContain(`slug: "${slug}"`);
-    for (const route of ["/mobile-mechanic", "/vehicle-recovery", "/vehicle-inspections", "/fleet"]) expect(mobile).toContain(route);
+    for (const route of ["/services/mobile-specialist/mobile-mechanic", "/services/mobile-specialist/vehicle-recovery", "/services/mobile-specialist/vehicle-inspections", "/services/mobile-specialist/fleet"]) expect(mobile).toContain(route);
   });
 });

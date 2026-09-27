@@ -7,9 +7,11 @@ import { getPublicSaleVehicles } from "@/lib/sales/repository";
 import type { ContentEntry, SaleVehicle } from "@/types/domain";
 
 const CORE_PATHS = [
-  "", "/about", "/contact", "/book", "/get-a-quote", "/faqs", "/fleet", "/mobile-mechanic",
-  "/vehicle-check", "/vehicle-inspections", "/vehicle-recovery", "/services", "/diagnostics",
+  "", "/about", "/contact", "/book", "/get-a-quote", "/faqs",
+  "/vehicle-check", "/services", "/diagnostics",
   "/services/repairs-maintenance", "/services/mobile-specialist", "/areas", "/areas/doncaster",
+  "/services/mobile-specialist/mobile-mechanic", "/services/mobile-specialist/vehicle-inspections",
+  "/services/mobile-specialist/vehicle-recovery", "/services/mobile-specialist/fleet",
   "/cars-for-sale", "/news", "/privacy", "/cookies", "/terms",
 ] as const;
 
@@ -40,10 +42,12 @@ function validLastModified(value: string, label: string) {
 
 function contentPath(entry: ContentEntry) {
   switch (entry.kind) {
-    case "core_page": return `/${entry.slug}`;
+    case "core_page": return ["mobile-mechanic", "vehicle-inspections", "vehicle-recovery", "fleet"].includes(entry.slug)
+      ? `/services/mobile-specialist/${entry.slug}`
+      : `/${entry.slug}`;
     case "article": return `/news/${entry.slug}`;
     case "area": return `/areas/${entry.slug}`;
-    case "service": return `/services/${entry.slug}`;
+    case "service": return `/services/repairs-maintenance/${entry.slug}`;
     case "diagnostic": return `/diagnostics/${entry.slug}`;
     case "faq": return null;
   }
@@ -58,7 +62,7 @@ export function buildSitemap({ baseUrl, content, vehicles, hasReviews, hasMedia 
   };
 
   for (const path of CORE_PATHS) add(path, { changeFrequency: path === "" ? "weekly" : "monthly", priority: path === "" ? 1 : 0.7 });
-  for (const item of services.filter((candidate) => candidate.published)) add(`/services/${item.slug}`, { changeFrequency: "monthly", priority: 0.7 });
+  for (const item of services.filter((candidate) => candidate.published)) add(`/services/repairs-maintenance/${item.slug}`, { changeFrequency: "monthly", priority: 0.7 });
   for (const item of diagnostics.filter((candidate) => candidate.published)) add(`/diagnostics/${item.slug}`, { changeFrequency: "monthly", priority: 0.7 });
   if (hasReviews) add("/reviews", { changeFrequency: "monthly", priority: 0.7 });
   if (hasMedia) add("/gallery", { changeFrequency: "monthly", priority: 0.7 });

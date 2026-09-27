@@ -33,7 +33,7 @@ test("homepage exposes the primary vehicle journey", async ({ page }) => {
 });
 
 test("priority landing pages have one clear heading", async ({ page }) => {
-  for (const path of ["/diagnostics", "/mobile-mechanic", "/services/vehicle-servicing", "/areas/doncaster", "/cars-for-sale"]) {
+  for (const path of ["/diagnostics", "/services/mobile-specialist/mobile-mechanic", "/services/repairs-maintenance/vehicle-servicing", "/areas/doncaster", "/cars-for-sale"]) {
     await page.goto(path);
     await expect(page.locator("h1")).toHaveCount(1);
     await expect(page).toHaveTitle(/SOB Autofix/);
@@ -85,18 +85,18 @@ test("service category hubs expose complete cards, breadcrumbs, canonicals and s
       route: "/services/repairs-maintenance",
       title: "Vehicle Repairs & Maintenance in Doncaster",
       cards: [
-        ["Vehicle Servicing", "/services/vehicle-servicing"],
-        ["Engine Repairs", "/services/engine-repair"],
-        ["Brake Repairs", "/services/brake-repair"],
+        ["Vehicle Servicing", "/services/repairs-maintenance/vehicle-servicing"],
+        ["Engine Repairs", "/services/repairs-maintenance/engine-repair"],
+        ["Brake Repairs", "/services/repairs-maintenance/brake-repair"],
       ],
     },
     {
       route: "/services/mobile-specialist",
       title: "Mobile & Specialist Vehicle Services in Doncaster",
       cards: [
-        ["Mobile Mechanic", "/mobile-mechanic"],
-        ["Vehicle Recovery", "/vehicle-recovery"],
-        ["Pre-Purchase Inspection", "/vehicle-inspections"],
+        ["Mobile Mechanic", "/services/mobile-specialist/mobile-mechanic"],
+        ["Vehicle Recovery", "/services/mobile-specialist/vehicle-recovery"],
+        ["Pre-Purchase Inspection", "/services/mobile-specialist/vehicle-inspections"],
         ["Fleet Servicing", "/fleet"],
       ],
     },

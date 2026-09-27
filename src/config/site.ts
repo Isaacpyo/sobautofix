@@ -128,9 +128,9 @@ export const specialOffer = {
 export const mainNavigation = [
   { label: "Services", href: "/services" },
   { label: "Diagnostics", href: "/diagnostics" },
-  { label: "Mobile Mechanic", href: "/mobile-mechanic" },
-  { label: "Vehicle Inspections", href: "/vehicle-inspections" },
-  { label: "Fleet", href: "/fleet" },
+  { label: "Mobile Mechanic", href: "/services/mobile-specialist/mobile-mechanic" },
+  { label: "Vehicle Inspections", href: "/services/mobile-specialist/vehicle-inspections" },
+  { label: "Fleet", href: "/services/mobile-specialist/fleet" },
   { label: "Cars for Sale", href: "/cars-for-sale" },
   { label: "Manage a Booking", href: "/manage-booking" },
   { label: "Areas", href: "/areas" },

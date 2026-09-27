@@ -6,7 +6,6 @@ import {
   Wrench,
 } from "lucide-react";
 import { PageHero } from "@/components/marketing/page-hero";
-import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { ServiceRegistrationCta } from "@/components/marketing/service-registration-cta";
 import { ServiceCard } from "@/components/marketing/service-card";
 import {
@@ -100,8 +99,6 @@ export default function RepairsMaintenancePage() {
 
       <ServiceCategoryNavigation current="repairs" />
 
-      <section className="py-7"><Container><Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Services", href: "/services" }, { label: "Repairs & Maintenance", href: "/services/repairs-maintenance" }]} /></Container></section>
-
       <section className="py-20 sm:py-24">
         <Container>
           <div className="grid gap-10 lg:grid-cols-[.8fr_1.2fr] lg:items-end">
@@ -125,7 +122,7 @@ export default function RepairsMaintenancePage() {
                 key={item.slug}
                 title={item.name}
                 body={item.summary}
-                href={`/services/${item.slug}`}
+                href={`/services/repairs-maintenance/${item.slug}`}
                 icon={item.category === "servicing" ? "service" : "repair"}
                 image={serviceCardImages[item.slug as keyof typeof serviceCardImages]}
                 mobileSeparator={index > 0}

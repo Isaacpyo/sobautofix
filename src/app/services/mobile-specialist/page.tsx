@@ -1,6 +1,5 @@
 import { Building2, CheckCircle2, Smartphone } from "lucide-react";
 import { PageHero } from "@/components/marketing/page-hero";
-import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { ServiceRegistrationCta } from "@/components/marketing/service-registration-cta";
 import { ServiceCard } from "@/components/marketing/service-card";
 import {
@@ -26,28 +25,28 @@ const specialistServices = [
   {
     title: "Mobile Mechanic",
     body: "Diagnostics and suitable repair work at the vehicle's location, with a workshop or recovery recommendation when that is the better route.",
-    href: "/mobile-mechanic",
+    href: "/services/mobile-specialist/mobile-mechanic",
     icon: "repair" as const,
     image: mobileMechanicImage,
   },
   {
     title: "Vehicle Recovery",
     body: "Request recovery availability with accurate vehicle, location and condition information so the appropriate option can be reviewed.",
-    href: "/vehicle-recovery",
+    href: "/services/mobile-specialist/vehicle-recovery",
     icon: "repair" as const,
     image: recoveryImage,
   },
   {
     title: "Pre-Purchase Inspection",
     body: "A visual mechanical assessment and diagnostic health review to provide more information before a vehicle purchase decision.",
-    href: "/vehicle-inspections",
+    href: "/services/mobile-specialist/vehicle-inspections",
     icon: "inspection" as const,
     image: inspectionImage,
   },
   {
     title: "Fleet Servicing",
     body: "Discuss diagnostics, preventative maintenance and repair coordination for the vehicles your organisation relies on.",
-    href: "/fleet",
+    href: "/services/mobile-specialist/fleet",
     icon: "service" as const,
     image: fleetImage,
   },
@@ -110,8 +109,6 @@ export default function MobileSpecialistPage() {
       />
 
       <ServiceCategoryNavigation current="mobile" />
-
-      <section className="py-7"><Container><Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Services", href: "/services" }, { label: "Mobile & Specialist", href: "/services/mobile-specialist" }]} /></Container></section>
 
       <section className="py-20 sm:py-24">
         <Container>

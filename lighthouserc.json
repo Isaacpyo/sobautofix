@@ -6,7 +6,7 @@
       "url": [
         "http://localhost:3000/",
         "http://localhost:3000/diagnostics",
-        "http://localhost:3000/mobile-mechanic"
+        "http://localhost:3000/services/mobile-specialist/mobile-mechanic"
       ],
       "numberOfRuns": 1,
       "settings": {

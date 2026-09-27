@@ -62,7 +62,7 @@ export default async function HomePage() {
         </Container>
       </section>
 
-      {offer && <section className="bg-[#EAF3FF] py-14"><Container className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center"><div><Eyebrow>Current service offer</Eyebrow><h2 className="text-3xl font-extrabold text-[#071127]">{offer.title}</h2><p className="mt-2 max-w-3xl leading-7 text-[#586575]">{offer.description}</p></div><ButtonLink href="/services/vehicle-servicing">View servicing</ButtonLink></Container></section>}
+      {offer && <section className="bg-[#EAF3FF] py-14"><Container className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center"><div><Eyebrow>Current service offer</Eyebrow><h2 className="text-3xl font-extrabold text-[#071127]">{offer.title}</h2><p className="mt-2 max-w-3xl leading-7 text-[#586575]">{offer.description}</p></div><ButtonLink href="/services/repairs-maintenance/vehicle-servicing">View servicing</ButtonLink></Container></section>}
 
       <section className="deferred-section diagnostic-panel py-20 text-white sm:py-28">
         <Container>
@@ -76,7 +76,7 @@ export default async function HomePage() {
       <section className="deferred-section py-20 sm:py-28">
         <Container>
           <div className="grid gap-8 lg:grid-cols-[1fr_.75fr] lg:items-end"><div className="flex flex-col justify-between gap-6"><div className="max-w-2xl"><Eyebrow>Repairs & servicing</Eyebrow><h2 className="text-5xl font-extrabold text-[#071127]">Approved work, clearly explained.</h2></div><Link className="font-bold text-[#1974E2]" href="/services">View all verified services →</Link></div><ContextualServiceImage id="service" className="min-h-72" /></div>
-          <div className="mt-10 grid gap-5 md:grid-cols-3">{services.filter((item) => item.published).map((item) => <ServiceCard key={item.slug} mobileCompact tight title={item.name} body={item.summary} href={`/services/${item.slug}`} icon={item.slug === "vehicle-servicing" ? "service" : "repair"} />)}</div>
+          <div className="mt-10 grid gap-5 md:grid-cols-3">{services.filter((item) => item.published).map((item) => <ServiceCard key={item.slug} mobileCompact tight title={item.name} body={item.summary} href={`/services/repairs-maintenance/${item.slug}`} icon={item.slug === "vehicle-servicing" ? "service" : "repair"} />)}</div>
         </Container>
       </section>
 

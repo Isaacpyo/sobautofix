@@ -142,7 +142,7 @@ Replacing pads on one side only is not normal practice because braking must rema
 
 The pedal should be made firm before moving the car, fluid level checked and the system verified for leaks and balanced operation. New friction surfaces may need a controlled bedding procedure specified by the parts or vehicle manufacturer. Avoid assuming maximum performance is available immediately.
 
-SOB Autofix provides [brake repair](/services/brake-repair) in Doncaster, starting with an inspection rather than a diagnosis from noise alone. If you are unsure whether the vehicle is safe to bring in, describe the pedal, warning lights, heat and sound when requesting a quote.
+SOB Autofix provides [brake repair](/services/repairs-maintenance/brake-repair) in Doncaster, starting with an inspection rather than a diagnosis from noise alone. If you are unsure whether the vehicle is safe to bring in, describe the pedal, warning lights, heat and sound when requesting a quote.
     $body$,
     $faqs$[
       {"question":"How long can I drive once brakes start grinding?","answer":"Do not plan further driving. Grinding may indicate metal contact and compromised braking. Stop safely and arrange inspection or recovery before more damage occurs."},
@@ -151,7 +151,7 @@ SOB Autofix provides [brake repair](/services/brake-repair) in Doncaster, starti
       {"question":"Does a brake warning always mean worn pads?","answer":"No. Depending on the car it can indicate wear, low fluid, parking-brake status, hydraulic trouble or an electronic fault. Consult the handbook and arrange checks promptly."}
     ]$faqs$::jsonb,
     $links$[
-      {"label":"Brake repairs","href":"/services/brake-repair"},
+      {"label":"Brake repairs","href":"/services/repairs-maintenance/brake-repair"},
       {"label":"Why a car pulls under braking","href":"/news/car-pulling-to-one-side"},
       {"label":"Book a vehicle check","href":"/book"}
     ]$links$::jsonb,
@@ -296,7 +296,7 @@ The inspection starts with tyres and pressures, then wheel condition, bearings, 
 
 The result should explain both the direction and the conditions. For example, a left pull under braking supported by unequal pad wear and a restricted slider is different from a constant left drift supported by tyre conicity. Evidence avoids paying for alignment when the real problem is a brake or tyre.
 
-SOB Autofix offers [brake repair](/services/brake-repair) and broader [repairs and maintenance](/services/repairs-maintenance) in Doncaster. Describe whether the pull is constant, braking-related or acceleration-related so the right checks can be planned.
+SOB Autofix offers [brake repair](/services/repairs-maintenance/brake-repair) and broader [repairs and maintenance](/services/repairs-maintenance) in Doncaster. Describe whether the pull is constant, braking-related or acceleration-related so the right checks can be planned.
     $body$,
     $faqs$[
       {"question":"Why does my car pull left on some roads but not others?","answer":"Road camber can create gentle drift, but pressure, tyres and alignment also matter. A strong or increasing pull on level roads should be inspected."},
@@ -305,7 +305,7 @@ SOB Autofix offers [brake repair](/services/brake-repair) and broader [repairs a
       {"question":"Can low tyre pressure make steering pull?","answer":"Yes. Unequal pressure changes rolling resistance and tyre shape. Correct cold pressures, then investigate any tyre that loses pressure again."}
     ]$faqs$::jsonb,
     $links$[
-      {"label":"Brake repairs","href":"/services/brake-repair"},
+      {"label":"Brake repairs","href":"/services/repairs-maintenance/brake-repair"},
       {"label":"Squeaking and grinding brakes","href":"/news/squeaking-grinding-brakes"},
       {"label":"Car vibration causes","href":"/news/car-shaking-vibrating-when-driving"}
     ]$links$::jsonb,

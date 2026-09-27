@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { EnquiryForm } from "@/components/forms/enquiry-form";
 import { ContentRenderer } from "@/components/content/content-renderer";
 import { ContextualServiceImage, type ContextualImageId } from "@/components/marketing/contextual-service-image";
@@ -27,6 +27,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function TopLevelPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  if (["mobile-mechanic", "vehicle-inspections", "vehicle-recovery", "fleet"].includes(slug)) {
+    permanentRedirect(`/services/mobile-specialist/${slug}`);
+  }
   const cms = await getPublishedContent("core_page", slug);
   if (cms) return <ContentRenderer entry={cms} />;
   const content = topLevelContent[slug];

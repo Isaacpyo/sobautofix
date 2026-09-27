@@ -228,9 +228,9 @@ function tokenSimilarity(left: string, right: string) {
 }
 
 const publicPaths = new Set([
-  "/", "/book", "/contact", "/diagnostics", "/get-a-quote", "/mobile-mechanic", "/news", "/services",
+  "/", "/book", "/contact", "/diagnostics", "/get-a-quote", "/services/mobile-specialist/mobile-mechanic", "/news", "/services",
   "/services/mobile-specialist", "/services/repairs-maintenance",
-  ...services.filter((service) => service.published).map((service) => `/services/${service.slug}`),
+  ...services.filter((service) => service.published).map((service) => `/services/repairs-maintenance/${service.slug}`),
   ...diagnostics.filter((diagnostic) => diagnostic.published).map((diagnostic) => `/diagnostics/${diagnostic.slug}`),
 ]);
 

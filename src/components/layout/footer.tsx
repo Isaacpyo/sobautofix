@@ -15,11 +15,11 @@ const diagnosticLinks: FooterLink[] = diagnostics
 const serviceLinks: FooterLink[] = [
   ...services
     .filter((item) => item.published)
-    .map((item) => ({ label: item.name, href: `/services/${item.slug}` })),
-  { label: "Mobile Mechanic", href: "/mobile-mechanic" },
-  { label: "Vehicle Recovery", href: "/vehicle-recovery" },
-  { label: "Pre-Purchase Inspection", href: "/vehicle-inspections" },
-  { label: "Fleet Servicing", href: "/fleet" },
+    .map((item) => ({ label: item.name, href: `/services/repairs-maintenance/${item.slug}` })),
+  { label: "Mobile Mechanic", href: "/services/mobile-specialist/mobile-mechanic" },
+  { label: "Vehicle Recovery", href: "/services/mobile-specialist/vehicle-recovery" },
+  { label: "Pre-Purchase Inspection", href: "/services/mobile-specialist/vehicle-inspections" },
+  { label: "Fleet Servicing", href: "/services/mobile-specialist/fleet" },
 ];
 
 const exploreLinks: FooterLink[] = [

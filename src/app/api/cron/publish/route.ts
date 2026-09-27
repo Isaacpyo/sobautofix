@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 
 function publicPath(kind: string, slug: string) {
-  if (kind === "service") return `/services/${slug}`;
+  if (kind === "service") return `/services/repairs-maintenance/${slug}`;
   if (kind === "diagnostic") return `/diagnostics/${slug}`;
   if (kind === "area") return `/areas/${slug}`;
   if (kind === "article") return `/news/${slug}`;

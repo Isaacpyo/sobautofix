@@ -4,7 +4,7 @@ export const articleCtaPresets = [
   { id: "book", label: "Book an Appointment", heading: "Need help with your vehicle?", body: "Book an appointment with SOB Autofix.", buttonLabel: "Book an appointment", href: "/book" },
   { id: "quote", label: "Get a Quote", heading: "Need a clear next step?", body: "Send the vehicle details and what is happening for an informed response.", buttonLabel: "Get a quote", href: "/get-a-quote" },
   { id: "diagnostics", label: "Vehicle Diagnostics", heading: "Need help identifying a vehicle fault?", body: "Explore evidence-led vehicle diagnostics from SOB Autofix.", buttonLabel: "Explore diagnostics", href: "/diagnostics" },
-  { id: "mobile", label: "Mobile Mechanic", heading: "Need help at your location?", body: "Tell us where the vehicle is and what is happening.", buttonLabel: "Request mobile assistance", href: "/mobile-mechanic" },
+  { id: "mobile", label: "Mobile Mechanic", heading: "Need help at your location?", body: "Tell us where the vehicle is and what is happening.", buttonLabel: "Request mobile assistance", href: "/services/mobile-specialist/mobile-mechanic" },
   { id: "contact", label: "Contact SOB Autofix", heading: "Want to discuss the next step?", body: "Contact SOB Autofix with the vehicle and problem details.", buttonLabel: "Contact SOB Autofix", href: "/contact" },
 ] as const;
 
