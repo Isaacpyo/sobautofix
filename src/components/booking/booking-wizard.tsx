@@ -875,8 +875,7 @@ function ServiceStep({ services, state, selectedKeys, otherSelected, error, onCh
       .sort((left, right) => left.name.localeCompare(right.name, "en-GB"));
   }, [services]);
   const otherService = services.find((service) => service.key === "diagnostics-electrical-vehicle-diagnostic-assessment") || services[0];
-  const allSystems = [...systems, { key: "other", name: "Other / Fault not listed", services: [] as BookingService[] }]
-    .sort((left, right) => left.name.localeCompare(right.name, "en-GB"));
+  const allSystems = [...systems, { key: "other", name: "Other / Fault not listed", services: [] as BookingService[] }];
   const [systemKey, setSystemKey] = useState(otherSelected ? "other" : selectedService?.systemKey || "");
   const [view, setView] = useState<"systems" | "services">(selectedService ? "services" : "systems");
   const activeSystem = view === "services" ? allSystems.find((system) => system.key === systemKey) : undefined;

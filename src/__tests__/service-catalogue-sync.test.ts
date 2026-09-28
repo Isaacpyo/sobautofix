@@ -38,6 +38,7 @@ describe("shared service catalogue", () => {
     expect(wizard).toContain("Clear selection");
     expect(wizard).toContain('services: [...system.services].sort((left, right) => left.name.localeCompare(right.name, "en-GB"))');
     expect(wizard).toContain('.sort((left, right) => left.name.localeCompare(right.name, "en-GB"));');
+    expect(wizard).toContain('const allSystems = [...systems, { key: "other", name: "Other / Fault not listed", services: [] as BookingService[] }];');
     expect(wizard).not.toContain("{system.description}");
     expect(wizard).not.toContain("{system.services.length} services");
     expect(wizard).not.toContain("{service.description}");
