@@ -831,16 +831,16 @@ function VehicleStep({ activeVehicle, view, registration, setRegistration, manua
 function ServiceStep({ services, state, selectedKey, error, onChoose, onChooseSystem, onRetry }: { services: BookingService[]; state: LoadState; selectedKey: string; error?: string; onChoose: (service: BookingService) => void; onChooseSystem: () => void; onRetry: () => void }) {
   const selectedService = services.find((service) => service.key === selectedKey);
   const systems = useMemo(() => {
-    const grouped = new Map<string, { key: string; name: string; description: string; services: BookingService[] }>();
+    const grouped = new Map<string, { key: string; name: string; services: BookingService[] }>();
     for (const service of services) {
-      const system = grouped.get(service.systemKey) || { key: service.systemKey, name: service.systemName, description: service.systemDescription, services: [] };
+      const system = grouped.get(service.systemKey) || { key: service.systemKey, name: service.systemName, services: [] };
       system.services.push(service);
       grouped.set(service.systemKey, system);
     }
     return [...grouped.values()];
   }, [services]);
   const [systemKey, setSystemKey] = useState("");
-  const activeSystemKey = systemKey || selectedService?.systemKey || systems[0]?.key || "";
+  const activeSystemKey = systemKey || selectedService?.systemKey || "";
   const activeSystem = systems.find((system) => system.key === activeSystemKey);
 
   if (state === "loading") return <LoadingPanel message="Loading the services available to book…" />;
@@ -854,9 +854,8 @@ function ServiceStep({ services, state, selectedKey, error, onChoose, onChooseSy
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         {systems.map((system) => {
           const selected = activeSystemKey === system.key;
-          return <button key={system.key} type="button" aria-pressed={selected} onClick={() => { if (activeSystemKey !== system.key) onChooseSystem(); setSystemKey(system.key); }} className={cn("flex min-h-28 items-start gap-4 rounded-2xl border p-4 text-left transition focus-visible:ring-4 focus-visible:ring-[#168BFF]/20", selected ? "border-[#1974E2] bg-[#EAF3FF] shadow-sm" : "border-[#D7E0E9] bg-white hover:border-[#79AFE9] hover:bg-[#F8FBFF]")}>
-            <span className={cn("mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-xl", selected ? "bg-[#1974E2] text-white" : "bg-[#EAF3FF] text-[#1974E2]")}><Wrench size={20} aria-hidden="true" /></span>
-            <span className="min-w-0"><strong className="block text-base text-[#071127]">{system.name}</strong><span className="mt-1 block text-sm leading-5 text-[#586575]">{system.description}</span><span className="mt-2 block text-xs font-bold text-[#145CAD]">{system.services.length} services</span></span>
+          return <button key={system.key} type="button" aria-pressed={selected} onClick={() => { if (activeSystemKey !== system.key) onChooseSystem(); setSystemKey(system.key); }} className={cn("flex min-h-16 items-center gap-4 rounded-2xl border px-5 py-4 text-left transition focus-visible:ring-4 focus-visible:ring-[#168BFF]/20", selected ? "border-[#1974E2] bg-[#EAF3FF] shadow-sm" : "border-[#D7E0E9] bg-white hover:border-[#79AFE9] hover:bg-[#F8FBFF]")}>
+            <strong className="min-w-0 flex-1 text-base text-[#071127]">{system.name}</strong>
             {selected && <CheckCircle2 className="ml-auto shrink-0 text-[#1974E2]" size={20} aria-hidden="true" />}
           </button>;
         })}
