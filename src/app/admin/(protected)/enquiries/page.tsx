@@ -1,10 +1,12 @@
 import { AdminLoadingLink } from "@/components/admin/admin-loading-link";
+import { AdminBulkActions, AdminItemCheckbox } from "@/components/admin/admin-bulk-actions";
 import { AdminListFilters, AdminPagination } from "@/components/admin/admin-list-controls";
 import { EmailDeliveryDrawer, type EmailDeliveryAttempt } from "@/components/admin/email-delivery-drawer";
 import { UnmatchedInboundDrawer, type UnmatchedInboundEmail } from "@/components/admin/unmatched-inbound-drawer";
 import { ADMIN_LIST_PAGE_SIZE, positiveAdminPage } from "@/lib/admin/pagination";
 import { ignoreUnmatchedInboundAction, linkUnmatchedInboundAction, resendEnquiryNotifications } from "../actions";
 import { createAdminReadClient } from "@/lib/supabase/server";
+import { manageTrashAction } from "../trash/actions";
 
 type EnquiryRow = {
   id: string; type: string; description: string | null; status: string; notification_status: string; created_at: string;
@@ -22,7 +24,7 @@ export default async function EnquiriesPage({ searchParams }: { searchParams: Pr
   const requestedPage = positiveAdminPage(params.page);
   const client = await createAdminReadClient();
   const [enquiriesResult, conversationsResult, messagesResult, attemptsResult, unmatchedResult] = client ? await Promise.all([
-    client.from("enquiries").select("id,type,description,status,notification_status,created_at,customers(name,email,phone),vehicles(registration,make,model)").order("created_at", { ascending: false }).limit(250),
+    client.from("enquiries").select("id,type,description,status,notification_status,created_at,customers(name,email,phone),vehicles(registration,make,model)").is("deleted_at", null).order("created_at", { ascending: false }).limit(250),
     client.from("enquiry_conversations").select("enquiry_id,unread_count,last_activity_at").order("last_activity_at", { ascending: false }).limit(250),
     client.from("enquiry_messages").select("enquiry_id,text_body,direction,created_at").order("created_at", { ascending: false }).limit(1000),
     client.from("notification_attempts").select("id,enquiry_id,recipient_type,status,error_code,attempted_at").order("attempted_at", { ascending: false }).limit(100),
@@ -52,12 +54,14 @@ export default async function EnquiriesPage({ searchParams }: { searchParams: Pr
 
       <AdminListFilters action="/admin/enquiries" query={query} status={status} placeholder="Customer, email, phone, vehicle or message…" statusOptions={[{ value: "new", label: "New" }, { value: "contacted", label: "Contacted" }, { value: "booked", label: "Booked" }, { value: "closed", label: "Closed" }, { value: "unread", label: "Unread replies" }, { value: "notification-failed", label: "Email failed" }]} />
 
+      <AdminBulkActions entity="enquiries" action={manageTrashAction}>
       <div className="mt-5 hidden max-h-[60vh] overflow-auto rounded-2xl border border-[#E4EAF0] bg-white md:block">
         <table className="w-full table-fixed text-left">
-          <thead className="sticky top-0 z-10 bg-[#F4F7FA] text-xs font-extrabold tracking-wide text-[#586575] uppercase shadow-[0_1px_0_#E4EAF0]"><tr><th className="w-[28%] px-5 py-4">Customer</th><th className="w-[30%] px-5 py-4">Enquiry</th><th className="w-[15%] px-5 py-4">Status</th><th className="w-[20%] px-5 py-4">Last activity</th><th className="w-[7%] px-5 py-4"><span className="sr-only">Open</span></th></tr></thead>
+          <thead className="sticky top-0 z-10 bg-[#F4F7FA] text-xs font-extrabold tracking-wide text-[#586575] uppercase shadow-[0_1px_0_#E4EAF0]"><tr><th className="w-[4%] px-2 py-4"><span className="sr-only">Select</span></th><th className="w-[26%] px-5 py-4">Customer</th><th className="w-[29%] px-5 py-4">Enquiry</th><th className="w-[14%] px-5 py-4">Status</th><th className="w-[20%] px-5 py-4">Last activity</th><th className="w-[7%] px-5 py-4"><span className="sr-only">Open</span></th></tr></thead>
           <tbody>{visibleEnquiries.map((enquiry) => {
             const conversation = conversations.get(enquiry.id); const latest = latestMessages.get(enquiry.id);
             return <tr key={enquiry.id} className={`border-t border-[#E4EAF0] ${conversation?.unread_count ? "bg-[#F1F7FF]" : ""}`}>
+              <td className="px-2 py-2"><AdminItemCheckbox id={enquiry.id} label={`Select enquiry from ${enquiry.customers?.name || "customer"}`} /></td>
               <td className="px-5 py-4"><EnquiryOpenLink href={`/admin/enquiries/${enquiry.id}`} className="font-extrabold text-[#071127] hover:text-[#1974E2]">{conversation?.unread_count ? <span className="mr-2 text-[#1974E2]" aria-label="New customer reply">●</span> : null}{enquiry.customers?.name || "Customer enquiry"}</EnquiryOpenLink><p className="mt-1 truncate text-xs text-[#667586]">{enquiry.customers?.email || enquiry.customers?.phone}</p></td>
               <td className="px-5 py-4"><p className="font-bold capitalize text-[#071127]">{enquiry.type.replaceAll("_", " ")}</p><p className="mt-1 truncate text-sm text-[#667586]">{latest?.text_body || enquiry.description || "No message preview"}</p>{enquiry.vehicles && <p className="mt-1 truncate text-xs font-semibold text-[#586575]">{[enquiry.vehicles.make, enquiry.vehicles.model, enquiry.vehicles.registration].filter(Boolean).join(" · ")}</p>}</td>
               <td className="px-5 py-4"><Status status={enquiry.status} />{enquiry.notification_status === "failed" && <p className="mt-2 text-xs font-bold text-red-700">Notification failed</p>}</td>
@@ -70,7 +74,8 @@ export default async function EnquiriesPage({ searchParams }: { searchParams: Pr
 
       <div className="mt-5 grid max-h-[65vh] gap-4 overflow-y-auto pr-1 md:hidden">{visibleEnquiries.map((enquiry) => {
         const conversation = conversations.get(enquiry.id); const latest = latestMessages.get(enquiry.id);
-        return <article key={enquiry.id} className={`rounded-2xl border p-5 ${conversation?.unread_count ? "border-[#8EBEF5] bg-[#F1F7FF]" : "border-[#E4EAF0] bg-white"}`}>
+        return <article key={enquiry.id} className={`relative rounded-2xl border p-5 pl-14 ${conversation?.unread_count ? "border-[#8EBEF5] bg-[#F1F7FF]" : "border-[#E4EAF0] bg-white"}`}>
+          <div className="absolute left-2 top-3"><AdminItemCheckbox id={enquiry.id} label={`Select enquiry from ${enquiry.customers?.name || "customer"}`} /></div>
           <EnquiryOpenLink href={`/admin/enquiries/${enquiry.id}`} className="block">
             <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-extrabold tracking-widest text-[#1974E2] uppercase">{enquiry.type.replaceAll("_", " ")}</p><h2 className="mt-2 text-xl font-extrabold text-[#071127]">{enquiry.customers?.name || "Customer enquiry"}</h2></div>{conversation?.unread_count ? <span className="rounded-full bg-[#1974E2] px-2.5 py-1 text-xs font-bold text-white">New reply</span> : <Status status={enquiry.status} />}</div>
             <p className="mt-3 line-clamp-2 text-sm leading-6 text-[#586575]">{latest?.text_body || enquiry.description || "No message preview"}</p>
@@ -81,6 +86,7 @@ export default async function EnquiriesPage({ searchParams }: { searchParams: Pr
       })}</div>
       {!visibleEnquiries.length && <p className="mt-5 rounded-2xl border border-[#E4EAF0] bg-white p-8 text-center text-[#667586]">No enquiries match the current filters.</p>}
       <AdminPagination path="/admin/enquiries" page={page} pageSize={pageSize} totalItems={filteredEnquiries.length} query={query} status={status} />
+      </AdminBulkActions>
     </>
   );
 }

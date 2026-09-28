@@ -10,7 +10,7 @@ const icons = [KeyRound, Database, Clock3, ListChecks, Eye, CheckCircle2];
 export default async function ReviewHealthPage() {
   const client = await createAdminReadClient();
   const result = client
-    ? await client.from("reviews").select("provider,rating,text,source_uri,visible,fetched_at").order("fetched_at", { ascending: false })
+    ? await client.from("reviews").select("provider,rating,text,source_uri,visible,fetched_at").is("deleted_at", null).order("fetched_at", { ascending: false })
     : { data: [], error: new Error("Database client unavailable") };
   const reviews = (result.data || []) as ReviewHealthRow[];
   const checks = createReviewHealthChecks({

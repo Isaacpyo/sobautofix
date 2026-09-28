@@ -41,12 +41,12 @@ export default async function NotificationsPage({ searchParams }: { searchParams
   const client = await createAdminReadClient();
   const [alertsResult, unreadResult, unmatchedResult, repliedResult, bookingResult, bookingDeliveryResult] = client
     ? await Promise.all([
-        client.from("enquiries").select("id,type,status,notification_status,created_at,customers(name,email,phone)").or("status.eq.new,notification_status.in.(pending,failed)").order("created_at", { ascending: false }).limit(100),
-        client.from("enquiry_conversations").select("enquiry_id,unread_count").gt("unread_count", 0),
+        client.from("enquiries").select("id,type,status,notification_status,created_at,customers(name,email,phone)").is("deleted_at", null).or("status.eq.new,notification_status.in.(pending,failed)").order("created_at", { ascending: false }).limit(100),
+        client.from("enquiry_conversations").select("enquiry_id,unread_count,enquiries!inner(deleted_at)").is("enquiries.deleted_at", null).gt("unread_count", 0),
         client.from("unmatched_inbound_emails").select("id", { count: "exact", head: true }).is("linked_enquiry_id", null).is("ignored_at", null).neq("reason", "automated_ignored"),
         client.from("enquiry_messages").select("enquiry_id").eq("direction", "outbound").eq("message_type", "email").in("delivery_status", ["sent", "delivered"]),
-        client.from("bookings").select("id,booking_reference,status,provider_sync_state,admin_seen_at,service_name,created_at,customers(name,email,phone)").or("admin_seen_at.is.null,provider_sync_state.in.(pending,failed)").order("created_at", { ascending: false }).limit(100),
-        client.from("booking_notification_events").select("booking_id,status").in("status", ["pending", "failed"]),
+        client.from("bookings").select("id,booking_reference,status,provider_sync_state,admin_seen_at,service_name,created_at,customers(name,email,phone)").is("deleted_at", null).or("admin_seen_at.is.null,provider_sync_state.in.(pending,failed)").order("created_at", { ascending: false }).limit(100),
+        client.from("booking_notification_events").select("booking_id,status,bookings!inner(deleted_at)").is("bookings.deleted_at", null).in("status", ["pending", "failed"]),
       ])
     : [{ data: [], error: new Error("Database unavailable") }, { data: [] }, { count: 0 }, { data: [] }, { data: [], error: new Error("Database unavailable") }, { data: [], error: new Error("Database unavailable") }];
 
@@ -56,7 +56,7 @@ export default async function NotificationsPage({ searchParams }: { searchParams
   const unreadIds = new Set((unreadResult.data || []).map((item) => item.enquiry_id));
   const missingUnreadIds = [...unreadIds].filter((id) => !alerts.some((alert) => alert.id === id));
   if (client && missingUnreadIds.length) {
-    const { data: unreadEnquiries } = await client.from("enquiries").select("id,type,status,notification_status,created_at,customers(name,email,phone)").in("id", missingUnreadIds);
+    const { data: unreadEnquiries } = await client.from("enquiries").select("id,type,status,notification_status,created_at,customers(name,email,phone)").in("id", missingUnreadIds).is("deleted_at", null);
     alerts = [...alerts, ...((unreadEnquiries || []) as unknown as AlertRow[])];
   }
   const bookingDeliveryStates = new Map<string, Set<string>>();
@@ -68,7 +68,7 @@ export default async function NotificationsPage({ searchParams }: { searchParams
   let bookingAlerts = (bookingResult.data || []) as unknown as BookingAlertRow[];
   const missingBookingIds = [...bookingDeliveryStates.keys()].filter((id) => !bookingAlerts.some((booking) => booking.id === id));
   if (client && missingBookingIds.length) {
-    const { data: deliveryBookings } = await client.from("bookings").select("id,booking_reference,status,provider_sync_state,admin_seen_at,service_name,created_at,customers(name,email,phone)").in("id", missingBookingIds);
+    const { data: deliveryBookings } = await client.from("bookings").select("id,booking_reference,status,provider_sync_state,admin_seen_at,service_name,created_at,customers(name,email,phone)").in("id", missingBookingIds).is("deleted_at", null);
     bookingAlerts = [...bookingAlerts, ...((deliveryBookings || []) as unknown as BookingAlertRow[])];
   }
 

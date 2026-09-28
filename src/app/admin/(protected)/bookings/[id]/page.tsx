@@ -14,12 +14,13 @@ import {
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
+import { BookingEmailThreadButton } from "@/components/admin/booking-email-thread-button";
 import type { BookingStatus, ProviderSyncState } from "@/lib/bookings/types";
 import { MarkBookingSeen } from "@/components/admin/mark-booking-seen";
 import { createAdminReadClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import { formatRegistration } from "@/lib/vehicle/registration-format";
-import { markBookingSeenAction } from "../actions";
+import { markBookingSeenAction, startBookingEnquiryThreadAction } from "../actions";
 import { AdminBookingControls } from "./booking-controls";
 
 type Customer = { name: string; email: string | null; phone: string | null };
@@ -80,6 +81,7 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
     .from("bookings")
     .select("id,booking_reference,status,service_key,service_name,problem_description,symptoms,conditional_answers,appointment_start,appointment_end,original_appointment_start,original_appointment_end,timezone,location_mode,location,service_address,service_postcode,notes,cancellation_reason,cancelled_at,provider_sync_state,provider_event_updated_at,created_at,updated_at,last_modified_at,customers(name,email,phone),vehicles(registration,make,model,year,colour,fuel_type,transmission),booking_audit_log(id,action,actor_type,detail,created_at)")
     .eq("id", id)
+    .is("deleted_at", null)
     .maybeSingle();
   if (error || !data) notFound();
 
@@ -104,6 +106,10 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
           <p className="mt-2 text-[#667586]">{booking.service_name} · {formatAppointmentRange(booking.appointment_start, booking.appointment_end)}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <form action={startBookingEnquiryThreadAction}>
+            <input type="hidden" name="bookingId" value={booking.id} />
+            <BookingEmailThreadButton label={`Email ${customer?.name || "customer"} about booking ${booking.booking_reference}`} showLabel />
+          </form>
           <BookingStatusBadge status={booking.status} />
           <SyncStateBadge state={booking.provider_sync_state} />
         </div>

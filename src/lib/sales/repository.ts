@@ -28,7 +28,7 @@ export async function getPublicSaleVehicles(options: { throwOnError?: boolean } 
     if (options.throwOnError) throw new Error("Sitemap inventory source is not configured");
     return [] as SaleVehicle[];
   }
-  const { data, error } = await client.from("sale_vehicles").select("*, sale_vehicle_images(*)").in("status", ["available", "reserved"]).order("created_at", { ascending: false });
+  const { data, error } = await client.from("sale_vehicles").select("*, sale_vehicle_images(*)").in("status", ["available", "reserved"]).is("deleted_at", null).order("created_at", { ascending: false });
   if (error && options.throwOnError) throw new Error("Sitemap inventory query failed", { cause: error });
   return ((data || []) as VehicleRow[]).map(mapVehicle).filter(isPublicDeliveryListing);
 }
@@ -36,7 +36,7 @@ export async function getPublicSaleVehicles(options: { throwOnError?: boolean } 
 export async function getSaleVehicle(slug: string) {
   const client = createPublicClient();
   if (!client) return null;
-  const { data } = await client.from("sale_vehicles").select("*, sale_vehicle_images(*)").eq("slug", slug).maybeSingle();
+  const { data } = await client.from("sale_vehicles").select("*, sale_vehicle_images(*)").eq("slug", slug).is("deleted_at", null).maybeSingle();
   if (!data) return null;
   const vehicle = mapVehicle(data as VehicleRow);
   return isPublicDeliveryListing(vehicle) ? vehicle : null;

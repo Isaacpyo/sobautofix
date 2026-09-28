@@ -46,7 +46,9 @@ function queryHarness(options: {
   messagesData?: Array<{ id: string; direction: "inbound" | "outbound"; message_type: "email"; sender_name: string | null; text_body: string; delivery_status: string; created_at: string }>;
 } = {}) {
   const enquiryEq = vi.fn(() => ({
-    maybeSingle: async () => ({ data: options.enquiryData === undefined ? enquiry : options.enquiryData, error: options.enquiryError || null }),
+    is: () => ({
+      maybeSingle: async () => ({ data: options.enquiryData === undefined ? enquiry : options.enquiryData, error: options.enquiryError || null }),
+    }),
   }));
   const enquirySelect = vi.fn((columns: string) => {
     void columns;
@@ -61,9 +63,11 @@ function queryHarness(options: {
   });
   const invoiceSelect = vi.fn(() => ({
     eq: () => ({
-      neq: () => ({
-        order: () => ({
-          limit: () => ({ maybeSingle: async () => ({ data: null, error: null }) }),
+      is: () => ({
+        neq: () => ({
+          order: () => ({
+            limit: () => ({ maybeSingle: async () => ({ data: null, error: null }) }),
+          }),
         }),
       }),
     }),

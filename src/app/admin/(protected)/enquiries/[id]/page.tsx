@@ -38,9 +38,9 @@ export default async function EnquiryConversationPage({ params }: { params: Prom
   const client = await createAdminReadClient();
   if (!client) notFound();
   const [{ data: enquiryData, error: enquiryError }, { data: messagesData, error: messagesError }, { data: linkedInvoiceData }] = await Promise.all([
-    client.from("enquiries").select("id,type,service_slug,description,location_postcode,status,notification_status,created_at,customers(name,email,phone),vehicles(registration,make,model,colour,year),enquiry_attachments(id,object_path,file_name)").eq("id", id).maybeSingle(),
+    client.from("enquiries").select("id,type,service_slug,description,location_postcode,status,notification_status,created_at,customers(name,email,phone),vehicles(registration,make,model,colour,year),enquiry_attachments(id,object_path,file_name)").eq("id", id).is("deleted_at", null).maybeSingle(),
     client.from("enquiry_messages").select("id,direction,message_type,sender_name,text_body,delivery_status,created_at").eq("enquiry_id", id).order("created_at", { ascending: true }).order("id", { ascending: true }),
-    client.from("invoices").select("id,invoice_number,status").eq("enquiry_id", id).neq("status", "void").order("created_at", { ascending: false }).limit(1).maybeSingle(),
+    client.from("invoices").select("id,invoice_number,status").eq("enquiry_id", id).is("deleted_at", null).neq("status", "void").order("created_at", { ascending: false }).limit(1).maybeSingle(),
   ]);
   if (enquiryError) throw new Error("Could not load the enquiry");
   if (messagesError) throw new Error("Could not load the enquiry conversation");

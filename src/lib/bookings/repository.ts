@@ -181,7 +181,7 @@ function notificationDetails(row: BookingRow): BookingNotificationDetails | null
 export async function getBookingCalendarNotification(reference: string) {
   const admin = createAdminClient();
   if (!admin) return null;
-  const { data, error } = await admin.from("bookings").select(bookingSelect).eq("booking_reference", reference).maybeSingle();
+  const { data, error } = await admin.from("bookings").select(bookingSelect).eq("booking_reference", reference).is("deleted_at", null).maybeSingle();
   if (error || !data) return null;
   const row = data as unknown as BookingRow;
   if (!(["confirmed", "rescheduled", "cancelled"] as BookingStatus[]).includes(row.status)) return null;
@@ -207,7 +207,7 @@ function toConfirmation(row: BookingRow): BookingConfirmation {
 async function getBookingById(id: string) {
   const admin = createAdminClient();
   if (!admin) return null;
-  const { data, error } = await admin.from("bookings").select(bookingSelect).eq("id", id).maybeSingle();
+  const { data, error } = await admin.from("bookings").select(bookingSelect).eq("id", id).is("deleted_at", null).maybeSingle();
   return error || !data ? null : data as unknown as BookingRow;
 }
 
@@ -225,6 +225,7 @@ export async function findBooking(input: BookingLookupInput) {
     .from("bookings")
     .select(bookingSelect)
     .eq("booking_reference", input.bookingReference)
+    .is("deleted_at", null)
     .eq("vehicles.registration", input.registration)
     .maybeSingle();
   if (error || !data) return null;
@@ -472,18 +473,18 @@ async function findWebhookBooking(event: CalComWebhook) {
   if (!admin) return null;
   const providerUids = [event.payload.uid, event.payload.rescheduleUid].filter((value): value is string => Boolean(value));
   for (const uid of providerUids) {
-    const { data } = await admin.from("bookings").select(bookingSelect).eq("provider", "calcom").eq("provider_booking_uid", uid).maybeSingle();
+    const { data } = await admin.from("bookings").select(bookingSelect).eq("provider", "calcom").eq("provider_booking_uid", uid).is("deleted_at", null).maybeSingle();
     if (data) return data as unknown as BookingRow;
   }
   const metadata = webhookMetadata(event);
   const bookingId = typeof metadata.sobBookingId === "string" ? metadata.sobBookingId : null;
   const reference = typeof metadata.sobBookingReference === "string" ? metadata.sobBookingReference : null;
   if (bookingId) {
-    const { data } = await admin.from("bookings").select(bookingSelect).eq("id", bookingId).maybeSingle();
+    const { data } = await admin.from("bookings").select(bookingSelect).eq("id", bookingId).is("deleted_at", null).maybeSingle();
     if (data) return data as unknown as BookingRow;
   }
   if (reference) {
-    const { data } = await admin.from("bookings").select(bookingSelect).eq("booking_reference", reference).maybeSingle();
+    const { data } = await admin.from("bookings").select(bookingSelect).eq("booking_reference", reference).is("deleted_at", null).maybeSingle();
     if (data) return data as unknown as BookingRow;
   }
   return null;

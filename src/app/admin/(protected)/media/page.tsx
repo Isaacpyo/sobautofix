@@ -1,6 +1,8 @@
 import Image from "next/image";
+import { AdminBulkActions, AdminItemCheckbox } from "@/components/admin/admin-bulk-actions";
 import { toggleMediaPublication, updateMediaDetails, uploadMedia } from "../actions";
 import { createAdminReadClient } from "@/lib/supabase/server";
+import { manageTrashAction } from "../trash/actions";
 
 const categories = [
   ["news", "News & Blog"],
@@ -17,7 +19,7 @@ const categoryLabel = new Map<string, string>(categories);
 export default async function MediaPage() {
   const client = await createAdminReadClient();
   const { data } = client
-    ? await client.from("media_assets").select("id,object_path,alt_text,category,published,created_at").order("created_at", { ascending: false })
+    ? await client.from("media_assets").select("id,object_path,alt_text,category,published,created_at").is("deleted_at", null).order("created_at", { ascending: false })
     : { data: [] };
   const storageBase = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
@@ -33,10 +35,12 @@ export default async function MediaPage() {
       <button className="min-h-11 rounded-lg bg-[#1974E2] px-4 font-bold text-white md:col-span-2">Upload as draft</button>
     </form>
 
+    <AdminBulkActions entity="media" action={manageTrashAction}>
     <div className="mt-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
       {(data || []).map((asset) => {
         const imageUrl = storageBase ? `${storageBase}/storage/v1/object/public/public-media/${asset.object_path}` : null;
-        return <article key={asset.id} className="overflow-hidden rounded-2xl border border-[#E4EAF0] bg-white shadow-sm">
+        return <article key={asset.id} className="relative overflow-hidden rounded-2xl border border-[#E4EAF0] bg-white shadow-sm">
+          <div className="absolute left-2 top-2 z-10 rounded-lg bg-white/95 shadow"><AdminItemCheckbox id={asset.id} label={`Select media ${asset.alt_text}`} /></div>
           <a href={imageUrl || undefined} target={imageUrl ? "_blank" : undefined} rel={imageUrl ? "noreferrer" : undefined} className="relative block aspect-[4/3] bg-[#E9EEF3]">
             {imageUrl
               ? <Image src={imageUrl} alt={asset.alt_text} fill sizes="(min-width: 1280px) 33vw, (min-width: 640px) 50vw, 100vw" className="object-cover transition-transform duration-200 hover:scale-[1.02]" />
@@ -72,5 +76,6 @@ export default async function MediaPage() {
       })}
       {!data?.length && <p className="rounded-2xl bg-white p-8 text-center text-[#667586] sm:col-span-2 xl:col-span-3">No client media uploaded.</p>}
     </div>
+    </AdminBulkActions>
   </>;
 }

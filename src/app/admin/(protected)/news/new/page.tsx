@@ -6,7 +6,7 @@ import { saveContent, uploadArticleCover } from "../../actions";
 export default async function NewArticlePage({ searchParams }: { searchParams: Promise<{ template?: string }> }) {
   const { template: requestedTemplate } = await searchParams;
   const client = await createAdminReadClient();
-  const { data } = client ? await client.from("media_assets").select("id,object_path,alt_text,category,published").order("created_at", { ascending: false }) : { data: [] };
+  const { data } = client ? await client.from("media_assets").select("id,object_path,alt_text,category,published").is("deleted_at", null).order("created_at", { ascending: false }) : { data: [] };
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const media = (data || []).map((item) => ({ id: item.id, alt: item.alt_text, category: item.category || undefined, published: item.published, url: base ? `${base}/storage/v1/object/public/public-media/${item.object_path}` : undefined }));
   const template = requestedTemplate === "automotive-advice" ? automotiveAdviceArticleTemplate : undefined;

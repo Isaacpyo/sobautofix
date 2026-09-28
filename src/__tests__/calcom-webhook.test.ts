@@ -21,6 +21,7 @@ const harness = vi.hoisted(() => {
     const query: Record<string, unknown> & PromiseLike<unknown> = {
       select() { operation = "select"; return query; },
       eq(key: string, value: unknown) { filters.push([key, value]); return query; },
+      is(key: string, value: unknown) { if (value !== null) filters.push([key, value]); return query; },
       update(value: Row) { operation = "update"; payload = value; return query; },
       delete() { operation = "delete"; return query; },
       async insert(value: Row) {

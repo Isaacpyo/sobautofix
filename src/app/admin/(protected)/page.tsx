@@ -64,13 +64,13 @@ export default async function DashboardPage() {
 
   const [newEnquiriesResult, recentEnquiriesResult, stockResult, contentResult, failedEmailsResult, activityResult, bookingsResult, bookingServicesResult, invoicesResult] = client
     ? await Promise.all([
-        client.from("enquiries").select("id", { count: "exact", head: true }).eq("status", "new"),
-        client.from("enquiries").select("id,type,service_slug,status,created_at,customers(name),vehicles(registration,make,model)").order("created_at", { ascending: false }).limit(5),
-        client.from("sale_vehicles").select("id,status"),
-        client.from("content_entries").select("id,status,kind"),
-        client.from("enquiries").select("id", { count: "exact", head: true }).eq("notification_status", "failed"),
+        client.from("enquiries").select("id", { count: "exact", head: true }).is("deleted_at", null).eq("status", "new"),
+        client.from("enquiries").select("id,type,service_slug,status,created_at,customers(name),vehicles(registration,make,model)").is("deleted_at", null).order("created_at", { ascending: false }).limit(5),
+        client.from("sale_vehicles").select("id,status").is("deleted_at", null),
+        client.from("content_entries").select("id,status,kind").is("deleted_at", null),
+        client.from("enquiries").select("id", { count: "exact", head: true }).is("deleted_at", null).eq("notification_status", "failed"),
         client.from("admin_audit_log").select("id,actor_id,action,entity_type,entity_id,detail,created_at").order("created_at", { ascending: false }).limit(6),
-        client.from("bookings").select("id,status,appointment_start,provider_sync_state").order("appointment_start", { ascending: true }).limit(500),
+        client.from("bookings").select("id,status,appointment_start,provider_sync_state").is("deleted_at", null).order("appointment_start", { ascending: true }).limit(500),
         client.from("booking_service_types").select("id", { count: "exact", head: true }).eq("online_booking_enabled", true).not("provider_event_type_id", "is", null),
         admin
           ? loadInvoiceDashboard(admin.client, normalizeInvoiceDashboardFilters({}))

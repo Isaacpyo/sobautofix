@@ -27,13 +27,14 @@ describe("admin booking list", () => {
     expect(source).toContain('loadingTitle="Opening booking"');
   });
 
-  it("adds an email-thread action to every desktop and mobile booking item", () => {
+  it("keeps the email-thread action on booking details instead of every list row", () => {
     const source = readFileSync(join(process.cwd(), "src/app/admin/(protected)/bookings/page.tsx"), "utf8");
+    const detail = readFileSync(join(process.cwd(), "src/app/admin/(protected)/bookings/[id]/page.tsx"), "utf8");
     const actions = readFileSync(join(process.cwd(), "src/app/admin/(protected)/bookings/actions.ts"), "utf8");
     const button = readFileSync(join(process.cwd(), "src/components/admin/booking-email-thread-button.tsx"), "utf8");
-    expect(source).toContain("startBookingEnquiryThreadAction");
-    expect(source.match(/<BookingEmailAction/g)).toHaveLength(2);
-    expect(source).toContain("Email ${customerName} about booking ${bookingReference}");
+    expect(source).not.toContain("startBookingEnquiryThreadAction");
+    expect(detail).toContain("startBookingEnquiryThreadAction");
+    expect(detail).toContain("<BookingEmailThreadButton");
     expect(button).toContain("Email customer");
     expect(button).toContain("useFormStatus");
     expect(actions).toContain('.rpc("create_booking_enquiry_thread"');

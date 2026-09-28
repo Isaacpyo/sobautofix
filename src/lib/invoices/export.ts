@@ -101,7 +101,7 @@ export async function loadInvoiceExportRows(client: SupabaseClient, filters: Inv
   const rows: InvoiceExportRow[] = [];
   const pageSize = 1000;
   for (let from = 0; ; from += pageSize) {
-    let query = client.from("invoices").select("id,invoice_number,status,source_type,customer_name,customer_email,customer_phone,vehicle_registration,vehicle_make,vehicle_model,service_name,issue_date,due_date,subtotal_pence,discount_pence,total_pence,paid_at,payment_method,payment_reference,created_at");
+    let query = client.from("invoices").select("id,invoice_number,status,source_type,customer_name,customer_email,customer_phone,vehicle_registration,vehicle_make,vehicle_model,service_name,issue_date,due_date,subtotal_pence,discount_pence,total_pence,paid_at,payment_method,payment_reference,created_at").is("deleted_at", null);
     if (filters.status) query = query.eq("status", filters.status);
     if (filters.source) query = query.eq("source_type", filters.source);
     const { data, error } = await query.order("created_at", { ascending: false }).range(from, from + pageSize - 1);

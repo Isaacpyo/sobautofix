@@ -15,6 +15,7 @@ export async function getPublishedArticles(limit?: number) {
     .select("*")
     .eq("kind", "article")
     .eq("status", "published")
+    .is("deleted_at", null)
     .order("published_at", { ascending: false });
   if (limit) query = query.limit(limit);
   const { data } = await query;
@@ -30,6 +31,7 @@ export async function getPublishedArticle(slug: string) {
     .eq("kind", "article")
     .eq("slug", slug)
     .eq("status", "published")
+    .is("deleted_at", null)
     .maybeSingle();
   if (!data) return null;
   return (await hydrateArticles(client, [data as ContentRow]))[0] || null;
@@ -49,7 +51,7 @@ async function hydrateArticles(
   const entries = rows.map(mapContentEntry);
   const mediaIds = [...new Set(entries.map((entry) => parseArticleMetadata(entry.metadata).coverImageId).filter((id): id is string => Boolean(id)))];
   const { data: media } = mediaIds.length
-    ? await client.from("media_assets").select("id,object_path,alt_text").in("id", mediaIds).eq("published", true)
+    ? await client.from("media_assets").select("id,object_path,alt_text").in("id", mediaIds).eq("published", true).is("deleted_at", null)
     : { data: [] };
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const covers = new Map((media || []).map((asset) => [asset.id, {

@@ -51,7 +51,7 @@ export async function getEnquiryReplyAddress(enquiryId: string, enquiryType: str
 export async function sendEnquiryReply(input: { enquiryId: string; body: string; clientRequestId: string; actorId: string; actorName: string }) {
   const parsed = z.object({ enquiryId: z.string().uuid(), body: z.string().trim().min(1).max(20000), clientRequestId: z.string().uuid(), actorId: z.string().uuid(), actorName: z.string().trim().min(1).max(100) }).parse(input);
   const admin = requireServiceClient();
-  const { data, error } = await admin.from("enquiries").select("id,type,status,customers(name,email)").eq("id", parsed.enquiryId).single();
+  const { data, error } = await admin.from("enquiries").select("id,type,status,customers(name,email)").eq("id", parsed.enquiryId).is("deleted_at", null).single();
   if (error || !data) throw new Error("Enquiry could not be loaded");
   const enquiry = data as unknown as { id: string; type: string; status: string; customers: { name: string; email: string | null } | null };
   if (!enquiry.customers?.email) throw new Error("This customer does not have an email address");

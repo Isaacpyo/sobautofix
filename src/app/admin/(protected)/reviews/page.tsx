@@ -1,11 +1,13 @@
 import { createAdminReadClient as createClient } from "@/lib/supabase/server";
+import { AdminBulkActions } from "@/components/admin/admin-bulk-actions";
 import { ReviewCard } from "./review-card";
 import { ReviewSyncButton } from "./review-sync-button";
+import { manageTrashAction } from "../trash/actions";
 
 export default async function ReviewsAdminPage() {
   const client = await createClient();
   const { data } = client
-    ? await client.from("reviews").select("id,author_name,rating,text,visible,fetched_at,source_uri").order("fetched_at", { ascending: false })
+    ? await client.from("reviews").select("id,author_name,rating,text,visible,fetched_at,source_uri").is("deleted_at", null).order("fetched_at", { ascending: false })
     : { data: [] };
 
   return <>
@@ -17,9 +19,11 @@ export default async function ReviewsAdminPage() {
       <ReviewSyncButton />
     </div>
     <p className="mt-4 max-w-2xl text-sm leading-6 text-[#667586]">Google Places supplies at most five relevant reviews. Each remains hidden until a staff member explicitly publishes it.</p>
+    <AdminBulkActions entity="reviews" action={manageTrashAction}>
     <div className="mt-8 grid max-w-5xl gap-4 md:grid-cols-2 xl:grid-cols-3">
       {(data || []).map((review) => <ReviewCard key={review.id} review={review} />)}
       {!data?.length && <p className="rounded-2xl bg-white p-8 text-center text-[#667586]">No reviews synced.</p>}
     </div>
+    </AdminBulkActions>
   </>;
 }

@@ -45,6 +45,10 @@ const harness = vi.hoisted(() => {
         filters.push({ kind: "eq", field, value });
         return query;
       },
+      is(field: string, value: unknown) {
+        if (value !== null) filters.push({ kind: "eq", field, value });
+        return query;
+      },
       in(field: string, values: unknown[]) {
         filters.push({ kind: "in", field, values });
         return query;

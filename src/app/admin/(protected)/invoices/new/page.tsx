@@ -27,8 +27,8 @@ export default async function NewInvoicePage({ searchParams }: { searchParams: P
   if (client && source === "booking") {
     if (params.bookingId) {
       const [{ data: booking, error: bookingError }, { data: existing, error: existingError }] = await Promise.all([
-        client.from("bookings").select("id,booking_reference,status,service_name,appointment_start,customer_id,vehicle_id,customers(name,email,phone),vehicles(registration,make,model)").eq("id", params.bookingId).neq("status", "cancelled").maybeSingle(),
-        client.from("invoices").select("id,invoice_number,status").eq("booking_id", params.bookingId).order("created_at", { ascending: false }),
+        client.from("bookings").select("id,booking_reference,status,service_name,appointment_start,customer_id,vehicle_id,customers(name,email,phone),vehicles(registration,make,model)").eq("id", params.bookingId).is("deleted_at", null).neq("status", "cancelled").maybeSingle(),
+        client.from("invoices").select("id,invoice_number,status").eq("booking_id", params.bookingId).is("deleted_at", null).order("created_at", { ascending: false }),
       ]);
       if (bookingError || existingError) throw new Error("Invoice source history could not be loaded safely.");
       if (!booking) notFound();
@@ -36,9 +36,9 @@ export default async function NewInvoicePage({ searchParams }: { searchParams: P
       existingSourceInvoices = (existing || []).map((invoice) => ({ id: invoice.id, reference: invoice.invoice_number || "Draft invoice", status: invoice.status }));
     } else {
       const [{ data, error: bookingError }, { data: existing, error: existingError }, { data: drafts, error: draftsError }] = await Promise.all([
-        client.from("bookings").select("id,booking_reference,status,service_name,appointment_start,customer_id,vehicle_id,customers(name,email,phone),vehicles(registration,make,model)").neq("status", "cancelled").order("appointment_start", { ascending: false }).limit(250),
-        client.from("invoices").select("booking_id").not("booking_id", "is", null),
-        client.from("invoices").select("id,customer_name,service_name,vehicle_registration,vehicle_make,vehicle_model,updated_at").eq("status", "draft").order("updated_at", { ascending: false }),
+        client.from("bookings").select("id,booking_reference,status,service_name,appointment_start,customer_id,vehicle_id,customers(name,email,phone),vehicles(registration,make,model)").is("deleted_at", null).neq("status", "cancelled").order("appointment_start", { ascending: false }).limit(250),
+        client.from("invoices").select("booking_id").is("deleted_at", null).not("booking_id", "is", null),
+        client.from("invoices").select("id,customer_name,service_name,vehicle_registration,vehicle_make,vehicle_model,updated_at").eq("status", "draft").is("deleted_at", null).order("updated_at", { ascending: false }),
       ]);
       if (bookingError || existingError || draftsError) throw new Error("Invoice source history could not be loaded safely.");
       bookingRows = (data || []) as unknown as Booking[];
@@ -56,8 +56,8 @@ export default async function NewInvoicePage({ searchParams }: { searchParams: P
   if (client && source === "enquiry") {
     if (params.enquiryId) {
       const [{ data: enquiry, error: enquiryError }, { data: existing, error: existingError }] = await Promise.all([
-        client.from("enquiries").select("id,type,service_slug,description,created_at,customer_id,vehicle_id,customers(name,email,phone),vehicles(registration,make,model)").eq("id", params.enquiryId).maybeSingle(),
-        client.from("invoices").select("id,invoice_number,status").eq("enquiry_id", params.enquiryId).order("created_at", { ascending: false }),
+        client.from("enquiries").select("id,type,service_slug,description,created_at,customer_id,vehicle_id,customers(name,email,phone),vehicles(registration,make,model)").eq("id", params.enquiryId).is("deleted_at", null).maybeSingle(),
+        client.from("invoices").select("id,invoice_number,status").eq("enquiry_id", params.enquiryId).is("deleted_at", null).order("created_at", { ascending: false }),
       ]);
       if (enquiryError || existingError) throw new Error("Invoice source history could not be loaded safely.");
       if (!enquiry) notFound();
@@ -65,8 +65,8 @@ export default async function NewInvoicePage({ searchParams }: { searchParams: P
       existingSourceInvoices = (existing || []).map((invoice) => ({ id: invoice.id, reference: invoice.invoice_number || "Draft invoice", status: invoice.status }));
     } else {
       const [{ data, error: enquiryError }, { data: existing, error: existingError }] = await Promise.all([
-        client.from("enquiries").select("id,type,service_slug,description,created_at,customer_id,vehicle_id,customers(name,email,phone),vehicles(registration,make,model)").order("created_at", { ascending: false }).limit(250),
-        client.from("invoices").select("enquiry_id").not("enquiry_id", "is", null),
+        client.from("enquiries").select("id,type,service_slug,description,created_at,customer_id,vehicle_id,customers(name,email,phone),vehicles(registration,make,model)").is("deleted_at", null).order("created_at", { ascending: false }).limit(250),
+        client.from("invoices").select("enquiry_id").is("deleted_at", null).not("enquiry_id", "is", null),
       ]);
       if (enquiryError || existingError) throw new Error("Invoice source history could not be loaded safely.");
       enquiryRows = (data || []) as unknown as Enquiry[];

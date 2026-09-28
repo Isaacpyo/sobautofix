@@ -9,9 +9,9 @@ export default async function EditArticlePage({ params }: { params: Promise<{ id
   if (!client) notFound();
   const id = (await params).id;
   const [{ data }, { data: revisions }, { data: mediaRows }] = await Promise.all([
-    client.from("content_entries").select("*").eq("id", id).eq("kind", "article").maybeSingle(),
+    client.from("content_entries").select("*").eq("id", id).eq("kind", "article").is("deleted_at", null).maybeSingle(),
     client.from("content_revisions").select("id,created_at").eq("content_entry_id", id).order("created_at", { ascending: false }).limit(20),
-    client.from("media_assets").select("id,object_path,alt_text,category,published").order("created_at", { ascending: false }),
+    client.from("media_assets").select("id,object_path,alt_text,category,published").is("deleted_at", null).order("created_at", { ascending: false }),
   ]);
   if (!data) notFound();
   const entry = mapContentEntry(data as Parameters<typeof mapContentEntry>[0]);

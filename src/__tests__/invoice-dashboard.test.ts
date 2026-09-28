@@ -103,6 +103,6 @@ describe("invoice dashboard query", () => {
       "utf8",
     );
     expect(source).toContain('min-w-[1100px] table-fixed');
-    expect(source).toContain('<col className="w-[10%]" /><col className="w-[17%]" /><col className="w-[18%]" />');
+    expect(source).toContain('<col className="w-[4%]" /><col className="w-[9%]" /><col className="w-[16%]" /><col className="w-[17%]" />');
   });
 });

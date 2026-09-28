@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { AdminBookingListFrame } from "@/components/admin/admin-booking-list-frame";
-import { BookingEmailThreadButton } from "@/components/admin/booking-email-thread-button";
+import { AdminBulkActions, AdminItemCheckbox } from "@/components/admin/admin-bulk-actions";
 import { AdminLoadingLink } from "@/components/admin/admin-loading-link";
 import { AdminListFilters, AdminPagination } from "@/components/admin/admin-list-controls";
 import { ADMIN_LIST_PAGE_SIZE, positiveAdminPage } from "@/lib/admin/pagination";
@@ -17,7 +17,7 @@ import type { BookingStatus, ProviderSyncState } from "@/lib/bookings/types";
 import { createAdminReadClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import { formatRegistration } from "@/lib/vehicle/registration-format";
-import { startBookingEnquiryThreadAction } from "./actions";
+import { manageTrashAction } from "../trash/actions";
 
 type AdminBookingListRow = {
   id: string;
@@ -55,14 +55,15 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
     client
       .from("bookings")
       .select("id,booking_reference,status,service_name,appointment_start,created_at,location_mode,location,provider_sync_state,customers(name,email),vehicles(registration,make,model)")
+      .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
       .limit(250),
-    client.from("bookings").select("id", { count: "exact", head: true }).gte("appointment_start", todayStart).lt("appointment_start", tomorrowStart).neq("status", "cancelled"),
-    client.from("bookings").select("id", { count: "exact", head: true }).gte("appointment_start", now.toISOString()).in("status", activeStatuses),
-    client.from("bookings").select("id", { count: "exact", head: true }).or("status.eq.pending,provider_sync_state.in.(pending,failed)"),
-    client.from("bookings").select("id", { count: "exact", head: true }).eq("status", "completed"),
-    client.from("bookings").select("id", { count: "exact", head: true }).eq("status", "cancelled"),
+    client.from("bookings").select("id", { count: "exact", head: true }).is("deleted_at", null).gte("appointment_start", todayStart).lt("appointment_start", tomorrowStart).neq("status", "cancelled"),
+    client.from("bookings").select("id", { count: "exact", head: true }).is("deleted_at", null).gte("appointment_start", now.toISOString()).in("status", activeStatuses),
+    client.from("bookings").select("id", { count: "exact", head: true }).is("deleted_at", null).or("status.eq.pending,provider_sync_state.in.(pending,failed)"),
+    client.from("bookings").select("id", { count: "exact", head: true }).is("deleted_at", null).eq("status", "completed"),
+    client.from("bookings").select("id", { count: "exact", head: true }).is("deleted_at", null).eq("status", "cancelled"),
   ]) : null;
 
   const allBookings = (results?.[0].data || []) as unknown as AdminBookingListRow[];
@@ -126,6 +127,7 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
 
       <AdminListFilters action="/admin/bookings" query={query} status={status} additionalParams={{ view }} placeholder="Reference, customer, vehicle or service…" statusOptions={[{ value: "pending", label: "Pending" }, { value: "confirmed", label: "Confirmed" }, { value: "rescheduled", label: "Rescheduled" }, { value: "completed", label: "Completed" }, { value: "cancelled", label: "Cancelled" }]} />
 
+      <AdminBulkActions entity="bookings" action={manageTrashAction}>
       <section className="mt-8" aria-labelledby="booking-list-heading">
         <div className="flex items-end justify-between gap-4">
           <div>
@@ -143,7 +145,8 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
           <table className="w-full min-w-[1120px] table-fixed text-left">
             <thead className="sticky top-0 z-10 bg-[#F4F7FA] text-xs font-extrabold tracking-wide text-[#586575] uppercase shadow-[0_1px_0_#E4EAF0]">
               <tr>
-                <th className="w-[11%] py-4 pl-4 pr-2">Booking ref</th>
+                <th className="w-[4%] py-4 pl-3"><span className="sr-only">Select</span></th>
+                <th className="w-[11%] py-4 pl-2 pr-2">Booking ref</th>
                 <th className="w-[19%] py-4 pl-2 pr-4">Customer</th>
                 <th className="w-[17%] px-4 py-4">Vehicle</th>
                 <th className="w-[16%] px-4 py-4">Service</th>
@@ -159,7 +162,8 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
                 const bookedAt = formatBookedAt(booking.created_at);
                 return (
                   <tr key={booking.id} className={cn("border-t border-[#E4EAF0] align-top transition hover:bg-[#F8FAFC]", booking.provider_sync_state === "failed" && "bg-amber-50/60")}>
-                    <td className="py-4 pl-4 pr-2 font-mono text-sm font-black text-[#1974E2]">{booking.booking_reference}</td>
+                    <td className="py-2 pl-2"><AdminItemCheckbox id={booking.id} label={`Select booking ${booking.booking_reference}`} /></td>
+                    <td className="py-4 pl-2 pr-2 font-mono text-sm font-black text-[#1974E2]">{booking.booking_reference}</td>
                     <td className="py-4 pl-2 pr-4"><p className="truncate text-sm font-extrabold text-[#071127]">{customer?.name || "Customer"}</p><p className="mt-1 truncate text-xs text-[#667586]">{customer?.email || "No email"}</p></td>
                     <td className="px-4 py-4 text-sm text-[#586575]">{vehicleLabel(vehicle)}</td>
                     <td className="px-4 py-4 text-sm font-semibold text-[#071127]">{booking.service_name}</td>
@@ -171,10 +175,7 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
                       </time>
                     </td>
                     <td className="px-4 py-4">
-                      <div className="flex items-center gap-2">
-                        <BookingEmailAction bookingId={booking.id} bookingReference={booking.booking_reference} customerName={customer?.name || "customer"} />
-                        <BookingOpenLink href={`/admin/bookings/${booking.id}`} className="inline-flex min-h-10 items-center rounded-lg border border-[#BCD6F6] px-3 text-xs font-extrabold text-[#1446A5] hover:bg-[#F1F7FF]">View</BookingOpenLink>
-                      </div>
+                      <BookingOpenLink href={`/admin/bookings/${booking.id}`} className="inline-flex min-h-10 items-center rounded-lg border border-[#BCD6F6] px-3 text-xs font-extrabold text-[#1446A5] hover:bg-[#F1F7FF]">View</BookingOpenLink>
                     </td>
                   </tr>
                 );
@@ -189,7 +190,8 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
             const vehicle = relation(booking.vehicles);
             const bookedAt = formatBookedAt(booking.created_at);
             return (
-              <article key={booking.id} className={cn("rounded-2xl border bg-white p-5", booking.provider_sync_state === "failed" ? "border-amber-300" : "border-[#E4EAF0]")}>
+              <article key={booking.id} className={cn("relative rounded-2xl border bg-white p-5 pl-14", booking.provider_sync_state === "failed" ? "border-amber-300" : "border-[#E4EAF0]")}>
+                <div className="absolute left-2 top-3"><AdminItemCheckbox id={booking.id} label={`Select booking ${booking.booking_reference}`} /></div>
                 <BookingOpenLink href={`/admin/bookings/${booking.id}`} className="block rounded-lg outline-none focus-visible:ring-4 focus-visible:ring-[#1974E2]/20">
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
@@ -210,9 +212,6 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
                   <div className="mt-5 border-t border-[#E4EAF0] pt-4"><SyncStateBadge state={booking.provider_sync_state} /></div>
                   <span className="sr-only">Open booking {booking.booking_reference}</span>
                 </BookingOpenLink>
-                <div className="mt-4 flex justify-end border-t border-[#E4EAF0] pt-4">
-                  <BookingEmailAction bookingId={booking.id} bookingReference={booking.booking_reference} customerName={customer?.name || "customer"} showLabel />
-                </div>
               </article>
             );
           })}
@@ -227,6 +226,7 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
         )}
         </AdminBookingListFrame>
       </section>
+      </AdminBulkActions>
     </>
   );
 }
@@ -246,16 +246,6 @@ function ListDetail({ label, value }: { label: string; value: string }) {
 
 function BookingOpenLink({ href, className, children }: { href: string; className: string; children: React.ReactNode }) {
   return <AdminLoadingLink href={href} className={className} loadingTitle="Opening booking" loadingDescription="Please wait while the booking details open.">{children}</AdminLoadingLink>;
-}
-
-function BookingEmailAction({ bookingId, bookingReference, customerName, showLabel = false }: { bookingId: string; bookingReference: string; customerName: string; showLabel?: boolean }) {
-  const label = `Email ${customerName} about booking ${bookingReference}`;
-  return (
-    <form action={startBookingEnquiryThreadAction}>
-      <input type="hidden" name="bookingId" value={bookingId} />
-      <BookingEmailThreadButton label={label} showLabel={showLabel} />
-    </form>
-  );
 }
 
 function BookingStatusBadge({ status }: { status: BookingStatus }) {

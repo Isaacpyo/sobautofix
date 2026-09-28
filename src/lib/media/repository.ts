@@ -8,7 +8,7 @@ export async function getPublishedMedia(category?: string, options: { throwOnErr
     if (options.throwOnError) throw new Error("Sitemap media source is not configured");
     return [] as Array<{ id: string; url: string; alt: string; category?: string }>;
   }
-  let query = admin.from("media_assets").select("id,object_path,alt_text,category").eq("published", true);
+  let query = admin.from("media_assets").select("id,object_path,alt_text,category").eq("published", true).is("deleted_at", null);
   if (category) query = query.eq("category", category);
   const { data, error } = await query.order("created_at", { ascending: false });
   if (error && options.throwOnError) throw new Error("Sitemap media query failed", { cause: error });

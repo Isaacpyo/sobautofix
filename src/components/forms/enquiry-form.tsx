@@ -18,7 +18,7 @@ const schema = z.object({
   phone: z.string().min(7, "Enter a phone number").max(30),
   preferredContact: z.enum(["phone", "whatsapp", "email"]),
   serviceSlug: z.string().max(100).optional(),
-  description: z.string().min(10, "Tell us a little more about the problem").max(3000),
+  description: z.string().min(10, "Tell us a little more about your enquiry").max(3000),
   locationPostcode: z.string().max(12).optional(),
   driveable: z.enum(["yes", "no", "unknown"]).optional(),
   privacyAccepted: z.boolean().refine((value) => value, "Please confirm you have read the privacy notice"),
@@ -46,6 +46,10 @@ export function EnquiryForm({ type, title = "Tell us what you need", defaultServ
     defaultValues: { preferredContact: "phone", serviceSlug: defaultService || session.selectedService || "", privacyAccepted: false },
   });
   const handleToken = useCallback((token: string) => setTurnstileToken(token), []);
+  const descriptionLabel = type === "vehicle_sales" ? "What would you like to know?" : "What is happening?";
+  const descriptionPlaceholder = type === "vehicle_sales"
+    ? "Ask about availability, condition, part exchange or arranging a viewing."
+    : "Describe the symptoms, warning lights or work you need.";
 
   async function onSubmit(values: Fields) {
     setResult(null);
@@ -95,7 +99,7 @@ export function EnquiryForm({ type, title = "Tell us what you need", defaultServ
         {askLocation && <Field compact={compact} label="Current postcode" error={errors.locationPostcode?.message}><input {...register("locationPostcode")} autoComplete="postal-code" /></Field>}
         {askLocation && <Field compact={compact} label="Can the vehicle be driven?" error={errors.driveable?.message}><select {...register("driveable")} defaultValue="unknown"><option value="unknown">Not sure</option><option value="yes">Yes</option><option value="no">No</option></select></Field>}
       </div>
-      <div className={compact ? "mt-3" : "mt-5"}><Field compact={compact} label="What is happening?" error={errors.description?.message}><textarea {...register("description")} rows={compact ? 3 : 5} placeholder="Describe the symptoms, warning lights or work you need." /></Field></div>
+      <div className={compact ? "mt-3" : "mt-5"}><Field compact={compact} label={descriptionLabel} error={errors.description?.message}><textarea {...register("description")} rows={compact ? 3 : 5} placeholder={descriptionPlaceholder} /></Field></div>
       {allowUploads && <div className="mt-5"><label className="block text-sm font-bold text-[#071127]">Photos (optional)</label><input className="mt-2 block w-full rounded-xl border border-[#D7E0E9] p-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-[#EAF3FF] file:px-4 file:py-2 file:font-bold file:text-[#1446A5]" type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(event) => setFiles(Array.from(event.target.files || []).slice(0, 5))} /><p className="mt-1 text-xs text-[#667586]">Up to five JPG, PNG or WebP images, 8 MB each.</p></div>}
       <label className={`${compact ? "mt-3 gap-2 text-xs leading-5" : "mt-5 gap-3 text-sm leading-6"} flex items-start text-[#586575]`}><input {...register("privacyAccepted")} type="checkbox" className="mt-1 h-4 w-4 accent-[#1974E2]" /> <span>I have read the <a className="font-bold text-[#1974E2] underline" href="/privacy" target="_blank">privacy notice</a> and agree to be contacted about this request.</span></label>
       {errors.privacyAccepted && <p className="mt-2 text-sm text-red-700">{errors.privacyAccepted.message}</p>}

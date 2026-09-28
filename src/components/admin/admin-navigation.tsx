@@ -18,6 +18,7 @@ import {
   Settings,
   ShieldCheck,
   Star,
+  Trash2,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -60,6 +61,7 @@ const navigationGroups: Array<{ label: string; links: AdminLink[] }> = [
     label: "System",
     links: [
       { href: "/admin/notifications", label: "Notifications", icon: Bell },
+      { href: "/admin/trash", label: "Trash", icon: Trash2 },
       { href: "/admin/settings", label: "Settings", icon: Settings },
       { href: "/admin/configuration/security", label: "Security", icon: ShieldCheck },
     ],

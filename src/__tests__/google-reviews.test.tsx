@@ -76,9 +76,10 @@ describe("public Google review data path", () => {
   it("queries only visible reviews through the publishable public client", async () => {
     const limit = vi.fn().mockResolvedValue({ data: [{ id: "one", author_name: "Alex", author_uri: null, rating: 5, text: "Approved", source_uri: "https://maps.google.com", published_at: null }], error: null });
     const order = vi.fn(() => ({ limit }));
+    const is = vi.fn(() => ({ order }));
     const eq = vi.fn()
-      .mockReturnValueOnce({ eq: (...args: unknown[]) => { eq(...args); return { order }; } })
-      .mockReturnValue({ order });
+      .mockReturnValueOnce({ eq: (...args: unknown[]) => { eq(...args); return { is }; } })
+      .mockReturnValue({ is });
     const select = vi.fn(() => ({ eq }));
     const from = vi.fn(() => ({ select }));
     supabase.createPublicClient.mockReturnValue({ from });
@@ -89,6 +90,7 @@ describe("public Google review data path", () => {
     expect(select).toHaveBeenCalledWith("id,author_name,author_uri,rating,text,source_uri,published_at");
     expect(eq).toHaveBeenNthCalledWith(1, "provider", "google");
     expect(eq).toHaveBeenNthCalledWith(2, "visible", true);
+    expect(is).toHaveBeenCalledWith("deleted_at", null);
   });
 
   it("does not expose the Google API or Supabase secret to the client component", () => {

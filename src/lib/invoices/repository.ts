@@ -26,7 +26,7 @@ export async function requireInvoiceAdmin() {
 
 export async function getInvoiceForAdmin(id: string): Promise<Invoice | null> {
   const { client } = await requireInvoiceAdmin();
-  const { data, error } = await client.from("invoices").select("*,invoice_items(id,description,quantity,unit_price_pence,line_total_pence,position),invoice_payments(id,amount_pence,paid_at,payment_method,payment_reference,created_at)").eq("id", id).order("position", { referencedTable: "invoice_items", ascending: true }).order("paid_at", { referencedTable: "invoice_payments", ascending: true }).maybeSingle();
+  const { data, error } = await client.from("invoices").select("*,invoice_items(id,description,quantity,unit_price_pence,line_total_pence,position),invoice_payments(id,amount_pence,paid_at,payment_method,payment_reference,created_at)").eq("id", id).is("deleted_at", null).order("position", { referencedTable: "invoice_items", ascending: true }).order("paid_at", { referencedTable: "invoice_payments", ascending: true }).maybeSingle();
   if (error) throw new Error("Invoice could not be loaded.");
   return data as unknown as Invoice | null;
 }

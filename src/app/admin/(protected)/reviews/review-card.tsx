@@ -2,6 +2,7 @@
 
 import { Star } from "lucide-react";
 import { useId, useState } from "react";
+import { AdminItemCheckbox } from "@/components/admin/admin-bulk-actions";
 import { toggleReview } from "../actions";
 
 const REVIEW_PREVIEW_LENGTH = 180;
@@ -25,7 +26,8 @@ export function ReviewCard({ review }: ReviewCardProps) {
     ? `${review.text.slice(0, REVIEW_PREVIEW_LENGTH).trimEnd()}…`
     : review.text;
 
-  return <article className="flex h-[19rem] flex-col rounded-2xl border border-[#E4EAF0] bg-white p-5">
+  return <article className="relative flex h-[19rem] flex-col rounded-2xl border border-[#E4EAF0] bg-white p-5 pl-14">
+    <div className="absolute left-2 top-2"><AdminItemCheckbox id={review.id} label={`Select review by ${review.author_name}`} /></div>
     <div className="flex h-6 items-center justify-between gap-4">
       <strong className="min-w-0 truncate">{review.author_name}</strong>
       <span className="flex shrink-0 items-center gap-1 font-bold text-amber-600"><Star size={16} fill="currentColor" />{review.rating}</span>
