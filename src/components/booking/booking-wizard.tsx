@@ -870,10 +870,13 @@ function ServiceStep({ services, state, selectedKeys, otherSelected, error, onCh
       system.services.push(service);
       grouped.set(service.systemKey, system);
     }
-    return [...grouped.values()];
+    return [...grouped.values()]
+      .map((system) => ({ ...system, services: [...system.services].sort((left, right) => left.name.localeCompare(right.name, "en-GB")) }))
+      .sort((left, right) => left.name.localeCompare(right.name, "en-GB"));
   }, [services]);
   const otherService = services.find((service) => service.key === "diagnostics-electrical-vehicle-diagnostic-assessment") || services[0];
-  const allSystems = [...systems, { key: "other", name: "Other / Fault not listed", services: [] as BookingService[] }];
+  const allSystems = [...systems, { key: "other", name: "Other / Fault not listed", services: [] as BookingService[] }]
+    .sort((left, right) => left.name.localeCompare(right.name, "en-GB"));
   const [systemKey, setSystemKey] = useState(otherSelected ? "other" : selectedService?.systemKey || "");
   const [view, setView] = useState<"systems" | "services">(selectedService ? "services" : "systems");
   const activeSystem = view === "services" ? allSystems.find((system) => system.key === systemKey) : undefined;
