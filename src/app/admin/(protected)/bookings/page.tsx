@@ -100,8 +100,8 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
             <p className="mt-2 max-w-2xl text-[#667586]">Review appointment details, calendar sync and bookings that need attention.</p>
           </div>
         </div>
-        <Link href="/admin/bookings/services" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#C9D5E2] bg-white px-4 text-sm font-extrabold text-[#1446A5] transition hover:border-[#1974E2] hover:bg-[#F1F7FF]">
-          <Settings2 size={17} aria-hidden="true" /> Service mappings
+        <Link href="/admin/service-catalogue" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#C9D5E2] bg-white px-4 text-sm font-extrabold text-[#1446A5] transition hover:border-[#1974E2] hover:bg-[#F1F7FF]">
+          <Settings2 size={17} aria-hidden="true" /> Service catalogue
         </Link>
       </div>
 

@@ -3,6 +3,7 @@ import "server-only";
 import { getSchedulingProvider } from "@/lib/calcom/client";
 import type { BookingServiceOption } from "./types";
 import { createAdminClient } from "@/lib/supabase/server";
+import { listServiceCatalogue } from "@/lib/service-catalogue/repository";
 
 export type BookingServiceMapping = {
   id: string;
@@ -48,20 +49,16 @@ function mapService(row: BookingServiceRow): BookingServiceMapping | null {
 }
 
 export async function listPublicBookingServices(): Promise<BookingServiceOption[]> {
-  const admin = createAdminClient();
-  if (!admin) return [];
-  const { data, error } = await admin
-    .from("booking_service_types")
-    .select("id,service_key,display_name,description,provider,provider_event_type_id,location_mode")
-    .eq("online_booking_enabled", true)
-    .eq("provider", "calcom")
-    .not("provider_event_type_id", "is", null)
-    .order("sort_order", { ascending: true });
-  if (error || !data) return [];
-  return (data as BookingServiceRow[]).flatMap((row) => {
-    const mapped = mapService(row);
-    return mapped ? [{ key: mapped.key, name: mapped.name, description: mapped.description, locationMode: mapped.locationMode }] : [];
-  });
+  const catalogue = await listServiceCatalogue({ bookableOnly: true });
+  return catalogue.flatMap((system) => system.services.map((service) => ({
+    key: service.key,
+    name: service.name,
+    description: service.description,
+    locationMode: service.locationMode,
+    systemKey: system.key,
+    systemName: system.name,
+    systemDescription: system.description,
+  })));
 }
 
 export async function getBookableService(serviceKey: string, locationMode: "workshop" | "mobile") {
@@ -69,9 +66,11 @@ export async function getBookableService(serviceKey: string, locationMode: "work
   if (!admin) return null;
   const { data, error } = await admin
     .from("booking_service_types")
-    .select("id,service_key,display_name,description,provider,provider_event_type_id,location_mode")
+    .select("id,service_key,display_name,description,provider,provider_event_type_id,location_mode,service_catalogue_systems!inner(deleted_at)")
     .eq("service_key", serviceKey)
     .eq("online_booking_enabled", true)
+    .is("deleted_at", null)
+    .is("service_catalogue_systems.deleted_at", null)
     .maybeSingle();
   if (error || !data) return null;
   const service = mapService(data as BookingServiceRow);
@@ -117,6 +116,8 @@ export async function getBookingServiceReadiness() {
   const { count, error } = await admin
     .from("booking_service_types")
     .select("id", { count: "exact", head: true })
+    .not("system_id", "is", null)
+    .is("deleted_at", null)
     .eq("online_booking_enabled", true)
     .eq("provider", "calcom")
     .not("provider_event_type_id", "is", null);

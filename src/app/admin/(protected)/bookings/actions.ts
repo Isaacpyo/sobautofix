@@ -219,6 +219,7 @@ export async function saveBookingServiceMappingAction(
       location_mode: parsed.data.locationMode,
     })
     .eq("id", parsed.data.id)
+    .is("deleted_at", null)
     .select("id")
     .maybeSingle();
   if (error || !data) return { success: false, message: "The service mapping could not be saved." };

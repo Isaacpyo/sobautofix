@@ -17,7 +17,9 @@ export default async function AdminTrashPage() {
     client.from("media_assets").select("id,alt_text,object_path,deleted_at").not("deleted_at", "is", null).order("deleted_at", { ascending: false }),
     client.from("reviews").select("id,author_name,rating,deleted_at").not("deleted_at", "is", null).order("deleted_at", { ascending: false }),
     client.from("offers").select("id,title,active,deleted_at").not("deleted_at", "is", null).order("deleted_at", { ascending: false }),
-  ]) : Array.from({ length: 8 }, () => ({ data: [] }));
+    client.from("service_catalogue_systems").select("id,display_name,system_key,deleted_at").not("deleted_at", "is", null).order("deleted_at", { ascending: false }),
+    client.from("booking_service_types").select("id,display_name,service_key,deleted_at,service_catalogue_systems(display_name)").not("system_id", "is", null).not("deleted_at", "is", null).order("deleted_at", { ascending: false }),
+  ]) : Array.from({ length: 10 }, () => ({ data: [] }));
 
   const sections: TrashSection[] = [
     { entity: "enquiries", label: "Enquiries", items: (results[0].data || []).map((item) => ({ id: item.id, title: relation(item.customers)?.name || "Customer enquiry", detail: String(item.type).replaceAll("_", " "), deletedAt: item.deleted_at! })) },
@@ -28,6 +30,8 @@ export default async function AdminTrashPage() {
     { entity: "media", label: "Media", items: (results[5].data || []).map((item) => ({ id: item.id, title: item.alt_text, detail: item.object_path, deletedAt: item.deleted_at! })) },
     { entity: "reviews", label: "Reviews", items: (results[6].data || []).map((item) => ({ id: item.id, title: item.author_name, detail: `${item.rating}/5 review`, deletedAt: item.deleted_at! })) },
     { entity: "offers", label: "Offers", items: (results[7].data || []).map((item) => ({ id: item.id, title: item.title, detail: item.active ? "Previously active" : "Inactive", deletedAt: item.deleted_at! })) },
+    { entity: "catalogue_systems", label: "Service catalogue · Vehicle systems", note: "A vehicle system can only be deleted permanently after all of its services are removed.", items: (results[8].data || []).map((item) => ({ id: item.id, title: item.display_name, detail: item.system_key, deletedAt: item.deleted_at! })) },
+    { entity: "catalogue_services", label: "Service catalogue · Services", note: "Services already referenced by bookings remain protected from permanent deletion.", items: (results[9].data || []).map((item) => ({ id: item.id, title: item.display_name, detail: relation(item.service_catalogue_systems)?.display_name || item.service_key, deletedAt: item.deleted_at! })) },
   ];
   const total = sections.reduce((sum, section) => sum + section.items.length, 0);
 

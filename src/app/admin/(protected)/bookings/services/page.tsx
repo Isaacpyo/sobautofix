@@ -20,6 +20,8 @@ export default async function BookingServicesPage() {
     ? await client
       .from("booking_service_types")
       .select("id,service_key,display_name,description,provider_event_type_id,online_booking_enabled,location_mode,sort_order")
+      .not("system_id", "is", null)
+      .is("deleted_at", null)
       .order("sort_order", { ascending: true })
     : { data: [] };
   const services = (data || []) as ServiceMappingRow[];

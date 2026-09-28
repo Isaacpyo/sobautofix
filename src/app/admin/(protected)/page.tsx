@@ -71,7 +71,7 @@ export default async function DashboardPage() {
         client.from("enquiries").select("id", { count: "exact", head: true }).is("deleted_at", null).eq("notification_status", "failed"),
         client.from("admin_audit_log").select("id,actor_id,action,entity_type,entity_id,detail,created_at").order("created_at", { ascending: false }).limit(6),
         client.from("bookings").select("id,status,appointment_start,provider_sync_state").is("deleted_at", null).order("appointment_start", { ascending: true }).limit(500),
-        client.from("booking_service_types").select("id", { count: "exact", head: true }).eq("online_booking_enabled", true).not("provider_event_type_id", "is", null),
+        client.from("booking_service_types").select("id", { count: "exact", head: true }).not("system_id", "is", null).is("deleted_at", null).eq("online_booking_enabled", true).not("provider_event_type_id", "is", null),
         admin
           ? loadInvoiceDashboard(admin.client, normalizeInvoiceDashboardFilters({}))
           : { ...emptyInvoiceDashboard, error: new Error("Admin session is unavailable") },

@@ -4,8 +4,8 @@ import { Check, ChevronDown, Pencil, Plus, Save, Search, Trash2 } from "lucide-r
 import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
 import { saveInvoiceDraftAction, type InvoiceFormState } from "@/app/admin/(protected)/invoices/actions";
+import { serviceCatalogue } from "@/config/service-catalogue";
 import { calculateInvoiceTotals, formatPence, poundsToPence } from "@/lib/invoices/money";
-import { invoiceServiceCategories, invoiceServiceOptions } from "@/lib/invoices/service-options";
 import type { InvoiceSourceType } from "@/lib/invoices/types";
 import { formatRegistration, normalizeRegistration } from "@/lib/vehicle/registration-format";
 import type { VehicleDetails } from "@/types/domain";
@@ -19,13 +19,14 @@ export type InvoiceFormInitial = {
 };
 
 export type ExistingSourceInvoice = { id: string; reference: string; status: string };
+export type InvoiceServiceCategory = { id: string; name: string; services: readonly string[] };
 
 const baseState: InvoiceFormState = { error: "" };
 const input = "mt-2 block min-h-11 w-full rounded-xl border border-[#D7E0E9] bg-white px-4 text-sm font-medium text-[#071127] outline-none focus:border-[#1974E2] focus:ring-4 focus:ring-[#1974E2]/10";
 const label = "text-xs font-extrabold tracking-wide text-[#667586] uppercase";
 const quantityOptions = ["0.25", "0.5", "0.75", ...Array.from({ length: 20 }, (_, index) => String(index + 1))];
 
-export function InvoiceForm({ initial, existingSourceInvoices = [] }: { initial: InvoiceFormInitial; existingSourceInvoices?: ExistingSourceInvoice[] }) {
+export function InvoiceForm({ initial, existingSourceInvoices = [], serviceCategories = serviceCatalogue }: { initial: InvoiceFormInitial; existingSourceInvoices?: ExistingSourceInvoice[]; serviceCategories?: readonly InvoiceServiceCategory[] }) {
   const [state, action, pending] = useActionState(saveInvoiceDraftAction, baseState);
   const [items, setItems] = useState<EditableItem[]>(initial.items.map((item, index) => ({ ...item, key: `item-${index}`, locked: false })));
   const [activeItemKey, setActiveItemKey] = useState("item-0");
@@ -43,7 +44,7 @@ export function InvoiceForm({ initial, existingSourceInvoices = [] }: { initial:
       <label className="mt-4 flex items-start gap-3 text-sm font-bold"><input required type="checkbox" name="confirmDuplicateSource" value="true" className="mt-1 size-4" />I have reviewed the existing invoice and intend to create another draft.</label>
     </section>}
     <FormSection title="Customer"><div className="grid gap-4 sm:grid-cols-2"><Field name="customer_name" title="Customer name" value={initial.customerName} required /><Field name="customer_email" title="Email" value={initial.customerEmail} type="email" /><Field name="customer_phone" title="Phone" value={initial.customerPhone} /><TextField name="customer_address" title="Address" value={initial.customerAddress} /></div></FormSection>
-    <FormSection title="Vehicle and service"><VehicleAndServiceFields initial={initial} onServiceSelect={(service) => setItems((current) => {
+    <FormSection title="Vehicle and service"><VehicleAndServiceFields initial={initial} serviceCategories={serviceCategories} onServiceSelect={(service) => setItems((current) => {
       const target = current.find((item) => item.key === activeItemKey && !item.locked) || current.findLast((item) => !item.locked);
       return target ? current.map((item) => item.key === target.key ? { ...item, description: service } : item) : current;
     })} /></FormSection>
@@ -71,7 +72,7 @@ function FormSection({ title, aside, children }: { title: string; aside?: React.
 function Field({ name, title, value, type = "text", required = false, upper = false }: { name: string; title: string; value: string; type?: string; required?: boolean; upper?: boolean }) { return <label className={label}>{title}<input name={name} type={type} defaultValue={value} required={required} className={`${input} ${upper ? "uppercase" : ""}`} /></label>; }
 type LookupResponse = { success: true; vehicle: VehicleDetails } | { success: false; error: { message: string } };
 
-function VehicleAndServiceFields({ initial, onServiceSelect }: { initial: InvoiceFormInitial; onServiceSelect: (service: string) => void }) {
+function VehicleAndServiceFields({ initial, serviceCategories, onServiceSelect }: { initial: InvoiceFormInitial; serviceCategories: readonly InvoiceServiceCategory[]; onServiceSelect: (service: string) => void }) {
   const [registration, setRegistration] = useState(initial.vehicleRegistration);
   const [make, setMake] = useState(initial.vehicleMake);
   const [model, setModel] = useState(initial.vehicleModel);
@@ -81,10 +82,10 @@ function VehicleAndServiceFields({ initial, onServiceSelect }: { initial: Invoic
   const normalizedRegistration = normalizeRegistration(registration);
   const filteredCategories = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("en-GB");
-    if (!normalizedQuery) return invoiceServiceCategories;
-    return invoiceServiceCategories.map((category) => ({ ...category, services: category.services.filter((name) => `${category.name} ${name}`.toLocaleLowerCase("en-GB").includes(normalizedQuery)) })).filter((category) => category.services.length > 0);
-  }, [query]);
-  const canonical = invoiceServiceOptions.some((option) => option.toLocaleLowerCase("en-GB") === service.trim().toLocaleLowerCase("en-GB"));
+    if (!normalizedQuery) return serviceCategories;
+    return serviceCategories.map((category) => ({ ...category, services: category.services.filter((name) => `${category.name} ${name}`.toLocaleLowerCase("en-GB").includes(normalizedQuery)) })).filter((category) => category.services.length > 0);
+  }, [query, serviceCategories]);
+  const canonical = serviceCategories.some((category) => category.services.some((option) => option.toLocaleLowerCase("en-GB") === service.trim().toLocaleLowerCase("en-GB")));
 
   async function lookupVehicle() {
     if (normalizedRegistration.length < 2 || normalizedRegistration.length > 8) {

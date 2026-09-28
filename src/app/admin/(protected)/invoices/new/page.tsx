@@ -5,6 +5,7 @@ import { InvoiceForm, type ExistingSourceInvoice, type InvoiceFormInitial } from
 import { InvoiceDraftsWorkspace, type InvoiceDraftSummary } from "@/components/admin/invoice-drafts-workspace";
 import { BackLink } from "@/components/ui/back-link";
 import { createAdminReadClient } from "@/lib/supabase/server";
+import { listServiceCatalogue } from "@/lib/service-catalogue/repository";
 import { formatRegistration } from "@/lib/vehicle/registration-format";
 
 type Customer = { name: string; email: string | null; phone: string };
@@ -15,6 +16,7 @@ type InvoiceDraft = { id: string; customer_name: string; service_name: string | 
 
 export default async function NewInvoicePage({ searchParams }: { searchParams: Promise<{ source?: string; bookingId?: string; enquiryId?: string; q?: string }> }) {
   const params = await searchParams;
+  const serviceCategories = (await listServiceCatalogue()).map((system) => ({ id: system.key, name: system.name, services: system.services.map((service) => service.name) }));
   const client = await createAdminReadClient();
   const source = params.source;
   let selected: InvoiceFormInitial | null = source === "manual" ? emptyInvoice("manual") : null;
@@ -74,7 +76,7 @@ export default async function NewInvoicePage({ searchParams }: { searchParams: P
     }
   }
 
-  if (selected) return <><Back /><Header title={source === "manual" ? "Manual invoice" : source === "booking" ? "Invoice from booking" : "Invoice from enquiry"} description="Confirm the snapshot details, add prices and save a draft. No invoice number is consumed until issue." /><InvoiceForm initial={selected} existingSourceInvoices={existingSourceInvoices} /></>;
+  if (selected) return <><Back /><Header title={source === "manual" ? "Manual invoice" : source === "booking" ? "Invoice from booking" : "Invoice from enquiry"} description="Confirm the snapshot details, add prices and save a draft. No invoice number is consumed until issue." /><InvoiceForm initial={selected} existingSourceInvoices={existingSourceInvoices} serviceCategories={serviceCategories} /></>;
 
   if (source === "booking") return <><Back /><InvoiceDraftsWorkspace drafts={invoiceDrafts} header={<Header title="Choose a booking" description="Select a locally persisted appointment. Creating an invoice remains a deliberate admin action." />}><SourceSearch source="booking" query={params.q || ""} />
     <div className="mt-6 grid gap-4">{filterBookings(bookingRows, params.q).map((booking) => { const customer = relation(booking.customers); const vehicle = relation(booking.vehicles); return <article key={booking.id} className="rounded-2xl border border-[#E4EAF0] bg-white p-5"><div className="flex flex-wrap items-start justify-between gap-5"><div><p className="font-mono text-sm font-black text-[#1974E2]">{booking.booking_reference}</p><h2 className="mt-2 text-xl font-extrabold text-[#071127]">{customer?.name || "Customer"}</h2><p className="mt-2 font-semibold text-[#586575]">{booking.service_name}</p><p className="mt-1 text-sm text-[#667586]">{formatDateTime(booking.appointment_start)} · {vehicleLabel(vehicle)} · {customer?.email || customer?.phone || "No contact"}</p>{existingSourceIds.has(booking.id) && <p className="mt-3 text-sm font-bold text-amber-800">An invoice already exists for this booking. Continuing will deliberately create another draft.</p>}</div><Link href={`/admin/invoices/new?source=booking&bookingId=${booking.id}`} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#1974E2] px-4 text-sm font-extrabold text-white">Create invoice <ChevronRight size={17} /></Link></div></article>; })}{!bookingRows.length && <Empty text="No eligible persisted bookings are available. Manual invoicing is still available." />}</div></InvoiceDraftsWorkspace></>;

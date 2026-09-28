@@ -36,6 +36,9 @@ export type BookingServiceOption = {
   name: string;
   description: string;
   locationMode: "workshop" | "mobile" | "both";
+  systemKey: string;
+  systemName: string;
+  systemDescription: string;
 };
 
 export type BookingConfirmation = {

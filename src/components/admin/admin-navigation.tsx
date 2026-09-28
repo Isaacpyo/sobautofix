@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   Star,
   Trash2,
+  Wrench,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -39,6 +40,7 @@ const navigationGroups: Array<{ label: string; links: AdminLink[] }> = [
       { href: "/admin/enquiries", label: "Enquiries", icon: Inbox },
       { href: "/admin/bookings", label: "Bookings", icon: CalendarClock },
       { href: "/admin/invoices", label: "Invoices", icon: ReceiptText },
+      { href: "/admin/service-catalogue", label: "Service catalogue", icon: Wrench },
       { href: "/admin/inventory", label: "Vehicle stock", icon: CarFront },
     ],
   },

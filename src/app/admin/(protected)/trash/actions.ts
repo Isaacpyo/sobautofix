@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createAdminClient, getAdminUser } from "@/lib/supabase/server";
 
-const entitySchema = z.enum(["enquiries", "bookings", "invoices", "inventory", "news", "media", "reviews", "offers"]);
+const entitySchema = z.enum(["enquiries", "bookings", "invoices", "inventory", "news", "media", "reviews", "offers", "catalogue_systems", "catalogue_services"]);
 const actionSchema = z.enum(["trash", "restore", "delete"]);
 const idsSchema = z.array(z.string().uuid()).min(1).max(100);
 
@@ -72,9 +72,11 @@ function revalidateTrashPaths(entity: z.infer<typeof entitySchema>) {
     media: "/admin/media",
     reviews: "/admin/reviews",
     offers: "/admin/offers",
+    catalogue_systems: "/admin/service-catalogue",
+    catalogue_services: "/admin/service-catalogue",
   };
   revalidatePath(adminPath[entity]);
   revalidatePath("/admin/trash");
   revalidatePath("/admin", "layout");
-  for (const path of ["/", "/news", "/cars-for-sale", "/gallery", "/reviews"]) revalidatePath(path, "layout");
+  for (const path of ["/", "/news", "/cars-for-sale", "/gallery", "/reviews", "/book", "/services"]) revalidatePath(path, "layout");
 }
