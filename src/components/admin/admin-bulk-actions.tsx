@@ -3,6 +3,7 @@
 import { RotateCcw, Trash2 } from "lucide-react";
 import { startTransition, useRef, useState } from "react";
 import type { TrashActionResult } from "@/app/admin/(protected)/trash/actions";
+import { ConfirmActionDialog } from "@/components/admin/confirm-action-dialog";
 
 export function AdminBulkActions({ entity, children, mode = "active", action }: {
   entity: string;
@@ -14,6 +15,7 @@ export function AdminBulkActions({ entity, children, mode = "active", action }: 
   const selectAll = useRef<HTMLInputElement>(null);
   const [selected, setSelected] = useState(0);
   const [pending, setPending] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [result, setResult] = useState<TrashActionResult | null>(null);
 
   function itemCheckboxes() {
@@ -39,7 +41,6 @@ export function AdminBulkActions({ entity, children, mode = "active", action }: 
   function run(intent: "trash" | "restore" | "delete") {
     const ids = itemCheckboxes().filter((checkbox) => checkbox.checked).map((checkbox) => checkbox.value);
     if (!ids.length) return;
-    if (intent === "delete" && !window.confirm("Permanently delete the selected items? This cannot be undone. Issued or linked financial records will be kept.")) return;
     const formData = new FormData();
     formData.set("entity", entity);
     formData.set("intent", intent);
@@ -51,7 +52,10 @@ export function AdminBulkActions({ entity, children, mode = "active", action }: 
         setResult(next);
         setSelected(0);
         if (selectAll.current) selectAll.current.checked = false;
-      }).finally(() => setPending(false));
+      }).finally(() => {
+        setPending(false);
+        setConfirmDelete(false);
+      });
     });
   }
 
@@ -62,12 +66,13 @@ export function AdminBulkActions({ entity, children, mode = "active", action }: 
       <div className="ml-auto flex flex-wrap gap-2">
         {mode === "active" ? <button type="button" disabled={!selected || pending} onClick={() => run("trash")} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-red-200 px-3 text-sm font-extrabold text-red-700 disabled:opacity-40"><Trash2 size={16} /> Move to trash</button> : <>
           <button type="button" disabled={!selected || pending} onClick={() => run("restore")} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[#BCD6F6] px-3 text-sm font-extrabold text-[#1446A5] disabled:opacity-40"><RotateCcw size={16} /> Restore</button>
-          <button type="button" disabled={!selected || pending} onClick={() => run("delete")} className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-red-700 px-3 text-sm font-extrabold text-white disabled:opacity-40"><Trash2 size={16} /> Delete permanently</button>
+          <button type="button" disabled={!selected || pending} onClick={() => setConfirmDelete(true)} className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-red-700 px-3 text-sm font-extrabold text-white disabled:opacity-40"><Trash2 size={16} /> Delete permanently</button>
         </>}
       </div>
     </div>
     {result && <p role="status" className={`mt-3 rounded-lg px-4 py-3 text-sm font-bold ${result.success ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"}`}>{result.message}</p>}
     {children}
+    <ConfirmActionDialog open={confirmDelete} pending={pending} tone="danger" title="Permanently delete selected items?" message={`${selected} selected ${selected === 1 ? "item" : "items"} will be permanently deleted. This cannot be undone. Issued invoices and records protected by linked financial data will be kept.`} confirmLabel="Delete permanently" onCancel={() => setConfirmDelete(false)} onConfirm={() => run("delete")} />
   </div>;
 }
 
