@@ -13,6 +13,7 @@ import {
   LoaderCircle,
   MapPin,
   Phone,
+  Plus,
   Search,
   Smartphone,
   UserRound,
@@ -105,6 +106,8 @@ export function BookingWizard() {
   const [services, setServices] = useState<BookingService[]>([]);
   const [servicesState, setServicesState] = useState<LoadState>("loading");
   const [serviceKey, setServiceKey] = useState("");
+  const [additionalServiceKeys, setAdditionalServiceKeys] = useState<string[]>([]);
+  const [otherFaultSelected, setOtherFaultSelected] = useState(false);
   const [problemDescription, setProblemDescription] = useState("");
   const [symptoms, setSymptoms] = useState<string[]>([]);
   const [mileage, setMileage] = useState("");
@@ -136,13 +139,17 @@ export function BookingWizard() {
   const effectiveVehicleView = vehicleView === "input" && activeVehicle
     ? session.vehicleConfirmed === false ? "found" : "ready"
     : vehicleView;
-  const selectedService = services.find((service) => service.key === (serviceKey || session.selectedService));
+  const primaryServiceKey = serviceKey || session.selectedService || "";
+  const selectedServiceKeys = [primaryServiceKey, ...additionalServiceKeys].filter((key, index, keys) => key && keys.indexOf(key) === index);
+  const selectedServices = selectedServiceKeys.map((key) => services.find((service) => service.key === key)).filter((service): service is BookingService => Boolean(service));
+  const selectedService = selectedServices[0];
+  const selectedServiceNames = selectedServices.map((service) => otherFaultSelected && service.key === "diagnostics-electrical-vehicle-diagnostic-assessment" ? "Other / Fault not listed" : service.name);
   const effectiveLocationMode: LocationMode = selectedService?.locationMode === "mobile"
     ? "mobile"
     : selectedService?.locationMode === "workshop"
       ? "workshop"
       : locationMode;
-  const serviceSearchText = `${selectedService?.key ?? ""} ${selectedService?.name ?? ""}`.toLowerCase();
+  const serviceSearchText = selectedServices.map((service) => `${service.key} ${service.name}`).join(" ").toLowerCase();
   const asksMileage = serviceSearchText.includes("servic");
   const asksDiagnosticQuestions = /diagnostic|electrical|warning|fault/.test(serviceSearchText) || symptoms.includes("warning_light");
   const dateBounds = getDateBounds();
@@ -275,17 +282,38 @@ export function BookingWizard() {
   }
 
   function chooseService(service: BookingService) {
-    setServiceKey(service.key);
-    if (service.locationMode !== "both") setLocationMode(service.locationMode);
+    const alreadySelected = selectedServiceKeys.includes(service.key);
+    const remainingKeys = alreadySelected
+      ? selectedServiceKeys.filter((key) => key !== service.key)
+      : [...selectedServiceKeys, service.key];
+    const nextPrimaryKey = remainingKeys[0] || "";
+    const nextPrimary = services.find((option) => option.key === nextPrimaryKey);
+    setServiceKey(nextPrimaryKey);
+    setAdditionalServiceKeys(remainingKeys.slice(1));
+    if (nextPrimary?.locationMode && nextPrimary.locationMode !== "both") setLocationMode(nextPrimary.locationMode);
+    if (alreadySelected && otherFaultSelected && service.key === "diagnostics-electrical-vehicle-diagnostic-assessment") setOtherFaultSelected(false);
     setErrors((current) => ({ ...current, service: undefined }));
-    updateSession({ selectedService: service.key, source: "booking_wizard" });
-    track("booking_service_selected", { source: "booking_wizard", selection: service.key });
+    updateSession({ selectedService: nextPrimaryKey || undefined, source: "booking_wizard" });
+    setAppointmentStart("");
+    setSlots([]);
+    setSlotsState("idle");
+    track("booking_service_selected", { source: "booking_wizard", selection: service.key, action: alreadySelected ? "removed" : "added" });
   }
 
-  function chooseServiceSystem() {
+  function chooseOtherFault(service: BookingService) {
+    setOtherFaultSelected(true);
+    if (!selectedServiceKeys.includes(service.key)) chooseService(service);
+  }
+
+  function clearServiceSelection() {
     setServiceKey("");
+    setAdditionalServiceKeys([]);
+    setOtherFaultSelected(false);
     updateSession({ selectedService: undefined, source: "booking_wizard" });
     setErrors((current) => ({ ...current, service: undefined }));
+    setAppointmentStart("");
+    setSlots([]);
+    setSlotsState("idle");
   }
 
   function retryServices() {
@@ -400,6 +428,8 @@ export function BookingWizard() {
     setBookingError("");
     setSlotConflict(false);
     idempotencyKeyRef.current ??= createIdempotencyKey();
+    const repairsNote = selectedServiceNames.length > 1 || otherFaultSelected ? `Requested repairs: ${selectedServiceNames.join(", ")}` : "";
+    const submittedProblemDescription = [repairsNote, problemDescription.trim()].filter(Boolean).join("\n\n").slice(0, 2000);
     try {
       const response = await fetch("/api/bookings", {
         method: "POST",
@@ -407,7 +437,7 @@ export function BookingWizard() {
         body: JSON.stringify({
           vehicle: bookingVehicle(activeVehicle),
           serviceKey: selectedService.key,
-          problemDescription: problemDescription.trim(),
+          problemDescription: submittedProblemDescription,
           symptoms,
           conditionalAnswers: {
             ...(asksMileage && mileage ? { mileage } : {}),
@@ -460,6 +490,8 @@ export function BookingWizard() {
       setManualVehicle({ registration: "", make: "", model: "" });
       setVehicleLookupMessage("");
       setServiceKey("");
+      setAdditionalServiceKeys([]);
+      setOtherFaultSelected(false);
       setProblemDescription("");
       setSymptoms([]);
       setMileage("");
@@ -581,7 +613,7 @@ export function BookingWizard() {
 
         {step === 1 && (
           <StepShell headingRef={headingRef} icon={Wrench} eyebrow="Service" title="What does your vehicle need?" description="Choose the closest option. The technician will still assess the vehicle before any repair work is agreed.">
-            <ServiceStep services={services} state={servicesState} selectedKey={selectedService?.key ?? ""} error={errors.service} onChoose={chooseService} onChooseSystem={chooseServiceSystem} onRetry={retryServices} />
+            <ServiceStep services={services} state={servicesState} selectedKeys={selectedServiceKeys} otherSelected={otherFaultSelected} error={errors.service} onChoose={chooseService} onChooseOther={chooseOtherFault} onClear={clearServiceSelection} onRetry={retryServices} />
           </StepShell>
         )}
 
@@ -661,6 +693,7 @@ export function BookingWizard() {
             <ReviewStep
               vehicle={activeVehicle}
               service={selectedService}
+              serviceNames={selectedServiceNames}
               problemDescription={problemDescription}
               symptoms={symptoms}
               mileage={asksMileage ? mileage : ""}
@@ -828,8 +861,8 @@ function VehicleStep({ activeVehicle, view, registration, setRegistration, manua
   );
 }
 
-function ServiceStep({ services, state, selectedKey, error, onChoose, onChooseSystem, onRetry }: { services: BookingService[]; state: LoadState; selectedKey: string; error?: string; onChoose: (service: BookingService) => void; onChooseSystem: () => void; onRetry: () => void }) {
-  const selectedService = services.find((service) => service.key === selectedKey);
+function ServiceStep({ services, state, selectedKeys, otherSelected, error, onChoose, onChooseOther, onClear, onRetry }: { services: BookingService[]; state: LoadState; selectedKeys: string[]; otherSelected: boolean; error?: string; onChoose: (service: BookingService) => void; onChooseOther: (service: BookingService) => void; onClear: () => void; onRetry: () => void }) {
+  const selectedService = services.find((service) => service.key === selectedKeys[0]);
   const systems = useMemo(() => {
     const grouped = new Map<string, { key: string; name: string; services: BookingService[] }>();
     for (const service of services) {
@@ -839,9 +872,23 @@ function ServiceStep({ services, state, selectedKey, error, onChoose, onChooseSy
     }
     return [...grouped.values()];
   }, [services]);
-  const [systemKey, setSystemKey] = useState("");
-  const activeSystemKey = systemKey || selectedService?.systemKey || "";
-  const activeSystem = systems.find((system) => system.key === activeSystemKey);
+  const otherService = services.find((service) => service.key === "diagnostics-electrical-vehicle-diagnostic-assessment") || services[0];
+  const allSystems = [...systems, { key: "other", name: "Other / Fault not listed", services: [] as BookingService[] }];
+  const [systemKey, setSystemKey] = useState(otherSelected ? "other" : selectedService?.systemKey || "");
+  const [view, setView] = useState<"systems" | "services">(selectedService ? "services" : "systems");
+  const activeSystem = view === "services" ? allSystems.find((system) => system.key === systemKey) : undefined;
+
+  function chooseSystem(key: string) {
+    setSystemKey(key);
+    setView("services");
+    if (key === "other" && otherService) onChooseOther(otherService);
+  }
+
+  function clearSelection() {
+    onClear();
+    setSystemKey("");
+    setView("systems");
+  }
 
   if (state === "loading") return <LoadingPanel message="Loading the services available to book…" />;
   if (state === "error" || state === "empty") {
@@ -850,34 +897,32 @@ function ServiceStep({ services, state, selectedKey, error, onChoose, onChooseSy
   return (
     <fieldset aria-invalid={Boolean(error)} aria-describedby={error ? "booking-service-error" : undefined} tabIndex={error ? -1 : undefined}>
       <legend className="sr-only">Choose a vehicle system and service</legend>
-      <p className="text-sm font-extrabold text-[#071127]">1. Choose the vehicle system</p>
-      <div className="mt-3 grid gap-3 sm:grid-cols-2">
-        {systems.map((system) => {
-          const selected = activeSystemKey === system.key;
-          return <button key={system.key} type="button" aria-pressed={selected} onClick={() => { if (activeSystemKey !== system.key) onChooseSystem(); setSystemKey(system.key); }} className={cn("flex min-h-16 items-center gap-4 rounded-2xl border px-5 py-4 text-left transition focus-visible:ring-4 focus-visible:ring-[#168BFF]/20", selected ? "border-[#1974E2] bg-[#EAF3FF] shadow-sm" : "border-[#D7E0E9] bg-white hover:border-[#79AFE9] hover:bg-[#F8FBFF]")}>
+      {view === "systems" && <>
+        <p className="text-sm font-extrabold text-[#071127]">1. Choose the vehicle system</p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          {allSystems.map((system) => <button key={system.key} type="button" onClick={() => chooseSystem(system.key)} className="flex min-h-16 items-center rounded-2xl border border-[#D7E0E9] bg-white px-5 py-4 text-left transition hover:border-[#79AFE9] hover:bg-[#F8FBFF] focus-visible:ring-4 focus-visible:ring-[#168BFF]/20">
             <strong className="min-w-0 flex-1 text-base text-[#071127]">{system.name}</strong>
-            {selected && <CheckCircle2 className="ml-auto shrink-0 text-[#1974E2]" size={20} aria-hidden="true" />}
-          </button>;
-        })}
-      </div>
-      {activeSystem && <div className="mt-7 border-t border-[#E4EAF0] pt-6">
-        <p className="text-sm font-extrabold text-[#071127]">2. Choose a service under {activeSystem.name}</p>
-        <div className="mt-3 grid max-h-[32rem] gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
-        {activeSystem.services.map((service) => {
-          const selected = selectedKey === service.key;
-          return (
-            <label key={service.key} className={cn("relative flex min-h-24 cursor-pointer items-start gap-3 rounded-xl border p-4 transition focus-within:ring-4 focus-within:ring-[#168BFF]/20", selected ? "border-[#1974E2] bg-[#EAF3FF] shadow-sm" : "border-[#D7E0E9] bg-white hover:border-[#79AFE9] hover:bg-[#F8FBFF]")}>
-              <input type="radio" name="booking-service" value={service.key} checked={selected} onChange={() => onChoose(service)} className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0" aria-describedby={error ? "booking-service-error" : undefined} />
-              <span className="min-w-0 flex-1">
-                <strong className="block text-base text-[#071127]">{service.name}</strong>
-                <span className="mt-1 block text-sm leading-5 text-[#586575]">{service.description}</span>
-                <span className="mt-3 inline-block rounded-full bg-white px-2.5 py-1 text-[10px] font-extrabold tracking-[.08em] text-[#145CAD] uppercase">{locationModeLabel(service.locationMode)}</span>
-              </span>
-              {selected && <CheckCircle2 className="shrink-0 text-[#1974E2]" size={20} aria-hidden="true" />}
-            </label>
-          );
-        })}
+          </button>)}
         </div>
+      </>}
+      {activeSystem && <div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm font-extrabold text-[#071127]">{activeSystem.key === "other" ? "2. Other / Fault not listed" : `2. Choose a service under ${activeSystem.name}`}</p>
+          <button type="button" onClick={clearSelection} className="min-h-10 rounded-lg border border-[#C9D5E2] px-3 text-sm font-extrabold text-[#145CAD] hover:bg-[#F4F7FA]">Clear selection</button>
+        </div>
+        {activeSystem.key === "other" ? <div className="mt-3 flex min-h-16 items-center rounded-xl border border-[#1974E2] bg-[#EAF3FF] px-4 py-3">
+          <strong className="flex-1 text-base text-[#071127]">Other / Fault not listed</strong><CheckCircle2 className="shrink-0 text-[#1974E2]" size={20} aria-hidden="true" />
+        </div> : <div className="mt-3 grid max-h-[32rem] gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
+          {activeSystem.services.map((service) => {
+            const selected = selectedKeys.includes(service.key);
+            return <label key={service.key} className={cn("relative flex min-h-16 cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition focus-within:ring-4 focus-within:ring-[#168BFF]/20", selected ? "border-[#1974E2] bg-[#EAF3FF] shadow-sm" : "border-[#D7E0E9] bg-white hover:border-[#79AFE9] hover:bg-[#F8FBFF]")}>
+              <input type="checkbox" name="booking-service" value={service.key} checked={selected} onChange={() => onChoose(service)} className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0" aria-describedby={error ? "booking-service-error" : undefined} />
+              <strong className="min-w-0 flex-1 text-base text-[#071127]">{service.name}</strong>
+              {selected && <CheckCircle2 className="shrink-0 text-[#1974E2]" size={20} aria-hidden="true" />}
+            </label>;
+          })}
+        </div>}
+        {selectedKeys.length > 0 && <button type="button" onClick={() => { setSystemKey(""); setView("systems"); }} className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#BCD6F6] bg-white px-4 text-sm font-extrabold text-[#145CAD] hover:bg-[#EAF3FF]"><Plus size={17} aria-hidden="true" /> Add another vehicle system repair</button>}
       </div>}
       {error && <p id="booking-service-error" role="alert" className="mt-3 text-sm text-red-700">{error}</p>}
     </fieldset>
@@ -1047,9 +1092,10 @@ function AppointmentStep({ date, setDate, minDate, maxDate, state, slots, select
   );
 }
 
-function ReviewStep({ vehicle, service, problemDescription, symptoms, mileage, warningLight, issueTiming, locationMode, address, postcode, vehicleAccessible, customer, appointmentStart, timeZone }: {
+function ReviewStep({ vehicle, service, serviceNames, problemDescription, symptoms, mileage, warningLight, issueTiming, locationMode, address, postcode, vehicleAccessible, customer, appointmentStart, timeZone }: {
   vehicle: VehicleDetails;
   service: BookingService;
+  serviceNames: string[];
   problemDescription: string;
   symptoms: string[];
   mileage: string;
@@ -1068,7 +1114,7 @@ function ReviewStep({ vehicle, service, problemDescription, symptoms, mileage, w
   return (
     <dl className="grid gap-3 sm:grid-cols-2">
       <ReviewCard icon={CarFront} label="Vehicle" value={vehicleLabel(vehicle)} support={formatRegistration(vehicle.registration)} />
-      <ReviewCard icon={Wrench} label="Service" value={service.name} />
+      <ReviewCard icon={Wrench} label={serviceNames.length > 1 ? "Services" : "Service"} value={serviceNames.join(", ") || service.name} />
       <ReviewCard icon={ClipboardCheck} label="Problem" value={problemDescription || "Not provided"} support={[symptomLabels, conditional].filter(Boolean).join(" · ")} wide />
       <ReviewCard icon={MapPin} label="Location" value={locationMode === "workshop" ? "SOB Autofix workshop" : address} support={locationMode === "workshop" ? workshopAddress : `${postcode.toUpperCase()} · ${vehicleAccessible ? "Vehicle safely accessible" : "Access needs checking"}`} />
       <ReviewCard icon={CalendarDays} label="Appointment" value={formatAppointment(appointmentStart, timeZone)} />
@@ -1135,12 +1181,6 @@ function bookingVehicle(vehicle: VehicleDetails) {
 
 function vehicleLabel(vehicle: VehicleDetails) {
   return [vehicle.make, vehicle.model].filter(Boolean).join(" ") || "Vehicle details entered";
-}
-
-function locationModeLabel(mode: ServiceLocationMode) {
-  if (mode === "mobile") return "Mobile service";
-  if (mode === "workshop") return "Workshop";
-  return "Workshop or mobile";
 }
 
 function issueTimingLabel(value: string) {

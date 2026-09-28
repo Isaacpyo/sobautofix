@@ -32,9 +32,14 @@ describe("shared service catalogue", () => {
     expect(wizard).toContain("1. Choose the vehicle system");
     expect(wizard).toContain("2. Choose a service under");
     expect(wizard).toContain("systemKey");
-    expect(wizard).toContain('const activeSystemKey = systemKey || selectedService?.systemKey || "";');
+    expect(wizard).toContain('view === "systems"');
+    expect(wizard).toContain("Other / Fault not listed");
+    expect(wizard).toContain("Add another vehicle system repair");
+    expect(wizard).toContain("Clear selection");
     expect(wizard).not.toContain("{system.description}");
     expect(wizard).not.toContain("{system.services.length} services");
+    expect(wizard).not.toContain("{service.description}");
+    expect(wizard).not.toContain("locationModeLabel(service.locationMode)");
   });
 
   it("provides an editable CMS portfolio and recoverable deletion", () => {
