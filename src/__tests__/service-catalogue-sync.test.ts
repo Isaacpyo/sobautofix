@@ -29,6 +29,8 @@ describe("shared service catalogue", () => {
     expect(vehicleJourney).toContain('fetch("/api/bookings/services"');
     expect(vehicleJourney).toContain("selectedSystem: system.key");
     expect(vehicleJourney).not.toContain("const serviceOptions");
+    expect(vehicleJourney).not.toContain("serviceCount");
+    expect(vehicleJourney).toContain("overflow-x-hidden");
   });
 
   it("presents vehicle systems before their services in the customer booking flow", () => {

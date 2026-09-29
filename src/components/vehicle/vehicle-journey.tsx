@@ -25,7 +25,7 @@ type CatalogueService = {
   systemName: string;
 };
 
-type CatalogueSystem = { key: string; name: string; serviceCount: number };
+type CatalogueSystem = { key: string; name: string };
 
 type State = "input" | "loading" | "confirm" | "problem" | "manual";
 
@@ -58,9 +58,7 @@ export function VehicleJourney({ compact = false, source = "website", heading = 
         const grouped = new Map<string, CatalogueSystem>();
         for (const candidate of result.services) {
           if (!isCatalogueService(candidate)) continue;
-          const system = grouped.get(candidate.systemKey);
-          if (system) system.serviceCount += 1;
-          else grouped.set(candidate.systemKey, { key: candidate.systemKey, name: candidate.systemName, serviceCount: 1 });
+          if (!grouped.has(candidate.systemKey)) grouped.set(candidate.systemKey, { key: candidate.systemKey, name: candidate.systemName });
         }
         const systems = [...grouped.values()];
         setCatalogueSystems(systems);
@@ -153,12 +151,12 @@ export function VehicleJourney({ compact = false, source = "website", heading = 
             <div>
               <p className="text-xs font-extrabold tracking-[.14em] text-[#67B9FF] uppercase">Vehicle ready</p>
               <h3 className="mt-1 text-2xl font-extrabold">What are you looking for?</h3>
-              <p className="mt-1 text-sm text-[#AEBBCC]">Choose a vehicle system to continue with your vehicle details.</p>
+              <p className="mt-1 text-sm text-[#AEBBCC]">Select the area that best matches the issue.</p>
             </div>
             <button type="button" className="shrink-0 rounded-lg px-3 py-2 text-sm font-bold text-[#AFC4D9] transition hover:bg-white/10 hover:text-white" onClick={() => { clearVehicle(); setVehicle(null); setState("input"); }}>Change vehicle</button>
           </div>
           {catalogueState === "loading" && <div className="mt-5 flex min-h-28 items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/[.04] text-sm text-[#C6D2DF]"><LoaderCircle className="animate-spin text-[#67B9FF]" size={19} /> Loading vehicle systems…</div>}
-          {catalogueState === "ready" && <div className={cn("mt-5 grid max-h-[30rem] gap-3 overflow-y-auto pr-1", compact ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3")}>
+          {catalogueState === "ready" && <div className="mt-5 grid max-h-[27rem] gap-2 overflow-x-hidden overflow-y-auto pr-1 sm:grid-cols-2">
             {catalogueSystems.map((system) => {
               const selected = session.selectedSystem === system.key;
               return (
@@ -167,16 +165,15 @@ export function VehicleJourney({ compact = false, source = "website", heading = 
                   onClick={() => selectSystem(system)}
                   href="/book"
                   className={cn(
-                    "group flex min-h-16 items-center gap-3 rounded-xl border p-3.5 transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#168BFF]/35",
+                    "group flex min-h-16 min-w-0 items-center gap-3 rounded-xl border px-3 py-3 text-left transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#168BFF]/35",
                     selected
                       ? "border-[#168BFF] bg-[#1974E2]/20"
                       : "border-white/10 bg-white/[.055] hover:-translate-y-0.5 hover:border-[#168BFF]/70 hover:bg-white/[.09] hover:shadow-lg",
                   )}
                 >
-                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-[#67B9FF]/20 bg-[#168BFF]/10 text-[#67B9FF] transition group-hover:bg-[#168BFF] group-hover:text-white"><Wrench size={21} strokeWidth={2} /></span>
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-[#67B9FF]/20 bg-[#168BFF]/10 text-[#67B9FF] transition group-hover:bg-[#168BFF] group-hover:text-white"><Wrench size={19} strokeWidth={2} /></span>
                   <span className="min-w-0 flex-1">
-                    <strong className="block text-sm font-extrabold text-white">{system.name}</strong>
-                    <span className="mt-0.5 block text-xs text-[#AEBBCC]">{system.serviceCount} {system.serviceCount === 1 ? "service" : "services"}</span>
+                    <strong className="block text-sm font-extrabold leading-5 text-white">{system.name}</strong>
                   </span>
                   <ChevronRight size={17} className="shrink-0 text-[#67B9FF] transition-transform group-hover:translate-x-0.5" />
                 </Link>
