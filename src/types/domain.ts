@@ -24,6 +24,7 @@ export type VehicleSession = {
   vehicle: VehicleDetails | null;
   vehicleConfirmed?: boolean;
   selectedProblem?: string;
+  selectedSystem?: string;
   selectedService?: string;
   source?: string;
 };

@@ -163,7 +163,7 @@ test("registration context survives into booking", async ({ page }) => {
   await page.route("**/api/bookings/services", (route) => route.fulfill({
     status: 200,
     contentType: "application/json",
-    body: JSON.stringify({ services: [{ key: "vehicle-servicing", name: "Vehicle Servicing", description: "Scheduled servicing and vehicle health checks.", locationMode: "workshop" }] }),
+    body: JSON.stringify({ services: [{ key: "general-repair-maintenance-vehicle-servicing", name: "Vehicle Servicing", description: "Scheduled servicing and vehicle health checks.", locationMode: "workshop", systemKey: "general-repair-maintenance", systemName: "General Repair & Maintenance", systemDescription: "Servicing and repair work." }] }),
   }));
   await setEssentialCookies(page);
   await page.goto("/vehicle-check");
@@ -174,9 +174,9 @@ test("registration context survives into booking", async ({ page }) => {
   await expect(page.getByRole("heading", { name: /vauxhall astra/i })).toBeVisible();
   await page.getByRole("button", { name: /that's my vehicle/i }).click();
   await expect(page.getByRole("heading", { name: "What are you looking for?" })).toBeVisible();
-  const servicingLink = page.getByRole("main").getByRole("link", { name: "Vehicle Servicing", exact: true });
-  await expect(servicingLink).toBeVisible();
-  await servicingLink.click();
+  const systemLink = page.getByRole("main").getByRole("link", { name: /General Repair & Maintenance/ });
+  await expect(systemLink).toBeVisible();
+  await systemLink.click();
   await expect(page).toHaveURL(/\/book$/);
   await expect(page.getByRole("heading", { name: "Which vehicle are we booking in?" })).toBeVisible();
   await expect(page.getByText("Vauxhall Astra", { exact: true })).toBeVisible();

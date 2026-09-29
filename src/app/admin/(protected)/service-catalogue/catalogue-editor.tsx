@@ -25,11 +25,11 @@ export function CatalogueEditor({ systems }: { systems: CatalogueSystem[] }) {
     <CreateSystemForm nextOrder={(systems.at(-1)?.sortOrder || 0) + 10} />
     <AdminBulkActions entity="catalogue_systems" action={manageTrashAction}>
       <div className="mt-4 grid gap-5">
-        {systems.map((system) => <details key={system.id} className="group overflow-hidden rounded-2xl border border-[#DCE6F2] bg-white open:border-[#1974E2]/40 open:shadow-lg">
-          <summary className="flex min-h-20 cursor-pointer list-none items-center gap-3 px-3 py-4 sm:px-5">
+        {systems.map((system) => <details key={system.id} className="group overflow-hidden rounded-2xl border border-[#DCE6F2] bg-white open:border-[#071127] open:shadow-lg">
+          <summary className="flex min-h-20 cursor-pointer list-none items-center gap-3 px-3 py-4 transition-colors group-open:bg-[#071127] sm:px-5">
             <AdminItemCheckbox id={system.id} label={`Select vehicle system ${system.name}`} />
-            <span className="min-w-0 flex-1"><strong className="block text-lg text-[#071127]">{system.name}</strong><span className="mt-1 block text-sm text-[#667586]">{system.services.length} services · {system.key}</span></span>
-            <ChevronDown className="shrink-0 text-[#1974E2] transition group-open:rotate-180" size={20} aria-hidden="true" />
+            <span className="min-w-0 flex-1"><strong className="block text-lg text-[#071127] group-open:text-white">{system.name}</strong><span className="mt-1 block text-sm text-[#667586] group-open:text-[#B7C5D7]">{system.services.length} services · {system.key}</span></span>
+            <ChevronDown className="shrink-0 text-[#1974E2] transition group-open:rotate-180 group-open:text-[#67B9FF]" size={20} aria-hidden="true" />
           </summary>
           <div className="border-t border-[#E4EAF0] bg-[#F8FAFC] p-4 sm:p-6">
             <SystemForm system={system} />
@@ -85,13 +85,13 @@ function CreateServiceForm({ system, nextOrder }: { system: CatalogueSystem; nex
   const [state, action, pending] = useActionState(createCatalogueServiceAction, initialState);
   return <form action={action} className="mt-5 rounded-xl border border-[#D7E0E9] bg-white p-4">
     <input type="hidden" name="systemId" value={system.id} />
+    <input type="hidden" name="sortOrder" value={String(nextOrder)} />
+    <input type="hidden" name="providerEventTypeId" value="" />
     <p className="text-sm font-extrabold text-[#1446A5]">Add a service</p>
-    <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-[1fr_1.5fr_8rem_10rem_10rem_auto] xl:items-end">
+    <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-[1fr_1.5fr_10rem_auto] xl:items-end">
       <Field name="name" title="Service name" required />
       <Field name="description" title="Customer description" required />
-      <Field name="sortOrder" title="Order" type="number" value={String(nextOrder)} required />
       <LocationField />
-      <Field name="providerEventTypeId" title="Calendar event ID" type="number" />
       <SaveButton pending={pending} text="Add service" icon="plus" />
     </div>
     <label className="mt-3 flex items-center gap-2 text-sm font-bold text-[#071127]"><input type="checkbox" name="onlineBookingEnabled" className="size-4 accent-[#1974E2]" /> Available for online booking</label>
@@ -105,13 +105,13 @@ function ServiceForm({ service, systems }: { service: CatalogueService; systems:
     <div className="absolute left-2 top-3"><AdminItemCheckbox id={service.id} label={`Select service ${service.name}`} /></div>
     <form action={action}>
       <input type="hidden" name="id" value={service.id} />
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[1fr_1.5fr_12rem_7rem]">
+      <input type="hidden" name="sortOrder" value={String(service.sortOrder)} />
+      <input type="hidden" name="providerEventTypeId" value={service.providerEventTypeId ? String(service.providerEventTypeId) : ""} />
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[1fr_1.5fr_12rem_10rem_auto]">
         <Field name="name" title="Service name" value={service.name} required />
         <Field name="description" title="Customer description" value={service.description} required />
         <label className={label}>Vehicle system<select name="systemId" defaultValue={systems.find((system) => system.services.some((candidate) => candidate.id === service.id))?.id} className={input}>{systems.map((system) => <option key={system.id} value={system.id}>{system.name}</option>)}</select></label>
-        <Field name="sortOrder" title="Order" type="number" value={String(service.sortOrder)} required />
         <LocationField value={service.locationMode} />
-        <Field name="providerEventTypeId" title="Calendar event ID" type="number" value={service.providerEventTypeId ? String(service.providerEventTypeId) : ""} />
         <label className={`${label} flex min-h-11 items-center gap-2 self-end rounded-xl border border-[#D7E0E9] px-3`}><input type="checkbox" name="onlineBookingEnabled" defaultChecked={service.onlineBookingEnabled} className="size-4 accent-[#1974E2]" /> Online booking</label>
         <SaveButton pending={pending} text="Save service" />
       </div>

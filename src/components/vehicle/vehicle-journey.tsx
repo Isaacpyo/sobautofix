@@ -1,20 +1,15 @@
 "use client";
 
 import {
-  BatteryCharging,
   Check,
   ChevronRight,
-  Disc3,
   LoaderCircle,
-  MapPin,
   Search,
-  ShieldCheck,
   TriangleAlert,
   Wrench,
-  type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { track } from "@/lib/analytics/events";
 import { formatRegistration, normalizeRegistration } from "@/lib/vehicle/registration-format";
 import type { VehicleDetails } from "@/types/domain";
@@ -23,22 +18,14 @@ import { ContextualServiceImage, type ContextualImageId } from "@/components/mar
 import { cn } from "@/lib/utils";
 import { useVehicleSession } from "./vehicle-context";
 
-type ServiceOption = {
-  value: string;
-  label: string;
-  service: string;
-  icon: LucideIcon;
+type CatalogueService = {
+  key: string;
+  name: string;
+  systemKey: string;
+  systemName: string;
 };
 
-const serviceOptions: ServiceOption[] = [
-  { value: "diagnostics", label: "Vehicle Diagnostics", service: "vehicle-diagnostics", icon: Search },
-  { value: "electrical", label: "Electrical Fault Finding", service: "electrical-fault-finding", icon: BatteryCharging },
-  { value: "service", label: "Vehicle Servicing", service: "vehicle-servicing", icon: Wrench },
-  { value: "engine", label: "Engine Repair Assessment", service: "engine-repair-assessment", icon: Wrench },
-  { value: "brakes", label: "Brake Repair Assessment", service: "brake-repair-assessment", icon: Disc3 },
-  { value: "mobile-diagnostics", label: "Mobile Diagnostic Visit", service: "mobile-diagnostic-visit", icon: MapPin },
-  { value: "inspection", label: "Pre-Purchase Inspection", service: "pre-purchase-inspection", icon: ShieldCheck },
-];
+type CatalogueSystem = { key: string; name: string; serviceCount: number };
 
 type State = "input" | "loading" | "confirm" | "problem" | "manual";
 
@@ -48,6 +35,8 @@ export function VehicleJourney({ compact = false, source = "website", heading = 
   const [state, setState] = useState<State | null>(null);
   const [vehicle, setVehicle] = useState<VehicleDetails | null>(null);
   const [error, setError] = useState("");
+  const [catalogueSystems, setCatalogueSystems] = useState<CatalogueSystem[]>([]);
+  const [catalogueState, setCatalogueState] = useState<"loading" | "ready" | "error">("loading");
   const activeVehicle = vehicle || session.vehicle;
   const activeState = state || (session.vehicle ? session.vehicleConfirmed === false ? "confirm" : "problem" : "input");
   const isHomepage = source === "homepage";
@@ -58,6 +47,32 @@ export function VehicleJourney({ compact = false, source = "website", heading = 
     "service-engine-repair": "engine",
     "service-brake-repair": "brakes",
   } as Partial<Record<string, ContextualImageId>>)[source];
+
+  useEffect(() => {
+    const controller = new AbortController();
+    async function loadCatalogue() {
+      try {
+        const response = await fetch("/api/bookings/services", { cache: "no-store", signal: controller.signal });
+        const result = await response.json().catch(() => ({})) as { services?: unknown };
+        if (!response.ok || !Array.isArray(result.services)) throw new Error("catalogue_unavailable");
+        const grouped = new Map<string, CatalogueSystem>();
+        for (const candidate of result.services) {
+          if (!isCatalogueService(candidate)) continue;
+          const system = grouped.get(candidate.systemKey);
+          if (system) system.serviceCount += 1;
+          else grouped.set(candidate.systemKey, { key: candidate.systemKey, name: candidate.systemName, serviceCount: 1 });
+        }
+        const systems = [...grouped.values()];
+        setCatalogueSystems(systems);
+        setCatalogueState(systems.length ? "ready" : "error");
+      } catch (caught) {
+        if (caught instanceof DOMException && caught.name === "AbortError") return;
+        setCatalogueState("error");
+      }
+    }
+    void loadCatalogue();
+    return () => controller.abort();
+  }, []);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -90,9 +105,9 @@ export function VehicleJourney({ compact = false, source = "website", heading = 
     setState("problem");
   }
 
-  function selectService(option: ServiceOption) {
-    updateSession({ vehicle: activeVehicle, vehicleConfirmed: true, selectedProblem: option.label, selectedService: option.service, source });
-    track("service_selected", { source, selection: option.value });
+  function selectSystem(system: CatalogueSystem) {
+    updateSession({ vehicle: activeVehicle, vehicleConfirmed: true, selectedProblem: system.name, selectedSystem: system.key, selectedService: undefined, source });
+    track("service_selected", { source, selection: system.key });
   }
 
   const shell = compact
@@ -138,18 +153,18 @@ export function VehicleJourney({ compact = false, source = "website", heading = 
             <div>
               <p className="text-xs font-extrabold tracking-[.14em] text-[#67B9FF] uppercase">Vehicle ready</p>
               <h3 className="mt-1 text-2xl font-extrabold">What are you looking for?</h3>
-              <p className="mt-1 text-sm text-[#AEBBCC]">Choose a service to continue with your vehicle details.</p>
+              <p className="mt-1 text-sm text-[#AEBBCC]">Choose a vehicle system to continue with your vehicle details.</p>
             </div>
             <button type="button" className="shrink-0 rounded-lg px-3 py-2 text-sm font-bold text-[#AFC4D9] transition hover:bg-white/10 hover:text-white" onClick={() => { clearVehicle(); setVehicle(null); setState("input"); }}>Change vehicle</button>
           </div>
-          <div className={cn("mt-5 grid gap-3", compact ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3")}>
-            {serviceOptions.map((option) => {
-              const Icon = option.icon;
-              const selected = session.selectedService === option.service;
+          {catalogueState === "loading" && <div className="mt-5 flex min-h-28 items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/[.04] text-sm text-[#C6D2DF]"><LoaderCircle className="animate-spin text-[#67B9FF]" size={19} /> Loading vehicle systems…</div>}
+          {catalogueState === "ready" && <div className={cn("mt-5 grid max-h-[30rem] gap-3 overflow-y-auto pr-1", compact ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3")}>
+            {catalogueSystems.map((system) => {
+              const selected = session.selectedSystem === system.key;
               return (
                 <Link
-                  key={option.value}
-                  onClick={() => selectService(option)}
+                  key={system.key}
+                  onClick={() => selectSystem(system)}
                   href="/book"
                   className={cn(
                     "group flex min-h-16 items-center gap-3 rounded-xl border p-3.5 transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#168BFF]/35",
@@ -158,19 +173,30 @@ export function VehicleJourney({ compact = false, source = "website", heading = 
                       : "border-white/10 bg-white/[.055] hover:-translate-y-0.5 hover:border-[#168BFF]/70 hover:bg-white/[.09] hover:shadow-lg",
                   )}
                 >
-                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-[#67B9FF]/20 bg-[#168BFF]/10 text-[#67B9FF] transition group-hover:bg-[#168BFF] group-hover:text-white"><Icon size={21} strokeWidth={2} /></span>
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-[#67B9FF]/20 bg-[#168BFF]/10 text-[#67B9FF] transition group-hover:bg-[#168BFF] group-hover:text-white"><Wrench size={21} strokeWidth={2} /></span>
                   <span className="min-w-0 flex-1">
-                    <strong className="block text-sm font-extrabold text-white">{option.label}</strong>
+                    <strong className="block text-sm font-extrabold text-white">{system.name}</strong>
+                    <span className="mt-0.5 block text-xs text-[#AEBBCC]">{system.serviceCount} {system.serviceCount === 1 ? "service" : "services"}</span>
                   </span>
                   <ChevronRight size={17} className="shrink-0 text-[#67B9FF] transition-transform group-hover:translate-x-0.5" />
                 </Link>
               );
             })}
-          </div>
+          </div>}
+          {catalogueState === "error" && <div className="mt-5 rounded-xl border border-amber-300/25 bg-amber-300/10 p-4 text-sm text-amber-100">The live service catalogue is temporarily unavailable. Continue to booking to try again.</div>}
           <Link href="/get-a-quote" className="mt-4 inline-block text-sm font-bold text-[#67B9FF] hover:underline">Prefer a quote request? Continue here →</Link>
         </div>
       )}
       </div>
     </div>
   );
+}
+
+function isCatalogueService(value: unknown): value is CatalogueService {
+  if (!value || typeof value !== "object") return false;
+  const service = value as Partial<CatalogueService>;
+  return typeof service.key === "string"
+    && typeof service.name === "string"
+    && typeof service.systemKey === "string"
+    && typeof service.systemName === "string";
 }

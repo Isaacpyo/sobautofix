@@ -22,9 +22,13 @@ describe("shared service catalogue", () => {
     const booking = source("src/lib/bookings/services.ts");
     const invoice = source("src/components/admin/invoice-form.tsx");
     const publicCatalogue = source("src/components/services/service-catalogue.tsx");
+    const vehicleJourney = source("src/components/vehicle/vehicle-journey.tsx");
     expect(booking).toContain("listServiceCatalogue({ bookableOnly: true })");
     expect(invoice).toContain("serviceCategories={serviceCategories}");
     expect(publicCatalogue).toContain("await listServiceCatalogue()");
+    expect(vehicleJourney).toContain('fetch("/api/bookings/services"');
+    expect(vehicleJourney).toContain("selectedSystem: system.key");
+    expect(vehicleJourney).not.toContain("const serviceOptions");
   });
 
   it("presents vehicle systems before their services in the customer booking flow", () => {
@@ -52,6 +56,11 @@ describe("shared service catalogue", () => {
     expect(page).toContain("Service catalogue");
     expect(editor).toContain("createCatalogueSystemAction");
     expect(editor).toContain("updateCatalogueServiceAction");
+    expect(editor).not.toContain('title="Calendar event ID"');
+    expect(editor).not.toContain('title="Order"');
+    expect(editor).toContain('type="hidden" name="providerEventTypeId"');
+    expect(editor).toContain('type="hidden" name="sortOrder"');
+    expect(editor).toContain("group-open:bg-[#071127]");
     expect(trash).toContain('"catalogue_systems"');
     expect(trash).toContain('"catalogue_services"');
   });

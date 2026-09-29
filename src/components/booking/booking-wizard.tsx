@@ -293,7 +293,7 @@ export function BookingWizard() {
     if (nextPrimary?.locationMode && nextPrimary.locationMode !== "both") setLocationMode(nextPrimary.locationMode);
     if (alreadySelected && otherFaultSelected && service.key === "diagnostics-electrical-vehicle-diagnostic-assessment") setOtherFaultSelected(false);
     setErrors((current) => ({ ...current, service: undefined }));
-    updateSession({ selectedService: nextPrimaryKey || undefined, source: "booking_wizard" });
+    updateSession({ selectedSystem: nextPrimary?.systemKey, selectedService: nextPrimaryKey || undefined, source: "booking_wizard" });
     setAppointmentStart("");
     setSlots([]);
     setSlotsState("idle");
@@ -309,7 +309,7 @@ export function BookingWizard() {
     setServiceKey("");
     setAdditionalServiceKeys([]);
     setOtherFaultSelected(false);
-    updateSession({ selectedService: undefined, source: "booking_wizard" });
+    updateSession({ selectedSystem: undefined, selectedService: undefined, source: "booking_wizard" });
     setErrors((current) => ({ ...current, service: undefined }));
     setAppointmentStart("");
     setSlots([]);
@@ -613,7 +613,7 @@ export function BookingWizard() {
 
         {step === 1 && (
           <StepShell headingRef={headingRef} icon={Wrench} eyebrow="Service" title="What does your vehicle need?" description="Choose the closest option. The technician will still assess the vehicle before any repair work is agreed.">
-            <ServiceStep services={services} state={servicesState} selectedKeys={selectedServiceKeys} otherSelected={otherFaultSelected} error={errors.service} onChoose={chooseService} onChooseOther={chooseOtherFault} onClear={clearServiceSelection} onRetry={retryServices} />
+            <ServiceStep services={services} state={servicesState} selectedKeys={selectedServiceKeys} initialSystemKey={session.selectedSystem} otherSelected={otherFaultSelected} error={errors.service} onChoose={chooseService} onChooseOther={chooseOtherFault} onClear={clearServiceSelection} onRetry={retryServices} />
           </StepShell>
         )}
 
@@ -861,7 +861,7 @@ function VehicleStep({ activeVehicle, view, registration, setRegistration, manua
   );
 }
 
-function ServiceStep({ services, state, selectedKeys, otherSelected, error, onChoose, onChooseOther, onClear, onRetry }: { services: BookingService[]; state: LoadState; selectedKeys: string[]; otherSelected: boolean; error?: string; onChoose: (service: BookingService) => void; onChooseOther: (service: BookingService) => void; onClear: () => void; onRetry: () => void }) {
+function ServiceStep({ services, state, selectedKeys, initialSystemKey, otherSelected, error, onChoose, onChooseOther, onClear, onRetry }: { services: BookingService[]; state: LoadState; selectedKeys: string[]; initialSystemKey?: string; otherSelected: boolean; error?: string; onChoose: (service: BookingService) => void; onChooseOther: (service: BookingService) => void; onClear: () => void; onRetry: () => void }) {
   const selectedService = services.find((service) => service.key === selectedKeys[0]);
   const systems = useMemo(() => {
     const grouped = new Map<string, { key: string; name: string; services: BookingService[] }>();
@@ -876,8 +876,8 @@ function ServiceStep({ services, state, selectedKeys, otherSelected, error, onCh
   }, [services]);
   const otherService = services.find((service) => service.key === "diagnostics-electrical-vehicle-diagnostic-assessment") || services[0];
   const allSystems = [...systems, { key: "other", name: "Other / Fault not listed", services: [] as BookingService[] }];
-  const [systemKey, setSystemKey] = useState(otherSelected ? "other" : selectedService?.systemKey || "");
-  const [view, setView] = useState<"systems" | "services">(selectedService ? "services" : "systems");
+  const [systemKey, setSystemKey] = useState(otherSelected ? "other" : selectedService?.systemKey || initialSystemKey || "");
+  const [view, setView] = useState<"systems" | "services">(selectedService || initialSystemKey ? "services" : "systems");
   const activeSystem = view === "services" ? allSystems.find((system) => system.key === systemKey) : undefined;
 
   function chooseSystem(key: string) {

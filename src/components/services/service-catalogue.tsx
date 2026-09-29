@@ -14,10 +14,10 @@ export async function PublicServiceCatalogue() {
         <p className="max-w-2xl leading-7 text-[#586575]">Open a system to see the diagnostic, repair and maintenance work available. If you are unsure which service fits, describe the symptoms when requesting a quote.</p>
       </div>
       <div className="mt-10 grid gap-4 lg:grid-cols-2">
-        {catalogue.map((category) => <details key={category.id} className="group rounded-2xl border border-[#DCE6F2] bg-white open:border-[#1974E2]/50 open:shadow-lg">
-          <summary className="flex min-h-20 cursor-pointer list-none items-center justify-between gap-5 px-5 py-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1974E2] sm:px-6">
-            <span><span className="block text-lg font-extrabold text-[#071127]">{category.name}</span><span className="mt-1 block text-sm text-[#667586]">{category.services.length} services</span></span>
-            <ChevronDown aria-hidden="true" className="shrink-0 text-[#1974E2] transition group-open:rotate-180" size={20} />
+        {catalogue.map((category) => <details key={category.id} className="group overflow-hidden rounded-2xl border border-[#DCE6F2] bg-white open:border-[#071127] open:shadow-lg">
+          <summary className="flex min-h-20 cursor-pointer list-none items-center justify-between gap-5 px-5 py-4 transition-colors group-open:bg-[#071127] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1974E2] sm:px-6">
+            <span><span className="block text-lg font-extrabold text-[#071127] group-open:text-white">{category.name}</span><span className="mt-1 block text-sm text-[#667586] group-open:text-[#B7C5D7]">{category.services.length} services</span></span>
+            <ChevronDown aria-hidden="true" className="shrink-0 text-[#1974E2] transition group-open:rotate-180 group-open:text-[#67B9FF]" size={20} />
           </summary>
           <div className="border-t border-[#E4EAF0] px-5 py-5 sm:px-6">
             <p className="text-sm leading-6 text-[#586575]">{category.description}</p>
