@@ -13,3 +13,7 @@ export function isSoldPageExpired(vehicle: SaleVehicle) {
     Date.now() - new Date(vehicle.soldAt!).getTime() > 90 * 86_400_000
   );
 }
+
+export function isVisibleOnSalesPage(vehicle: SaleVehicle) {
+  return vehicle.status === "available" || vehicle.status === "reserved" || (vehicle.status === "sold" && !isSoldPageExpired(vehicle));
+}

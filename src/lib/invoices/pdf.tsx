@@ -61,7 +61,7 @@ const s = StyleSheet.create({
   paidMarker: { marginTop: 7, paddingTop: 8, borderTopWidth: 1, borderTopColor: c.border, color: c.green, fontFamily: "Helvetica-Bold", textAlign: "right", fontSize: 8 },
   grand: { marginTop: 3, paddingTop: 6, borderTopWidth: 2, borderTopColor: c.blue, fontSize: 14, fontFamily: "Helvetica-Bold", color: c.navy },
   balance: { marginTop: 3, paddingTop: 6, borderTopWidth: 2, borderTopColor: c.blue, fontSize: 14, fontFamily: "Helvetica-Bold", color: c.navy },
-  lower: { marginTop: 8 }, lowerColumn: { flexGrow: 1, flexBasis: 0 },
+  lower: { marginTop: 8 },
   paymentStatus: { marginTop: 7, fontFamily: "Helvetica-Bold", color: c.navy, fontSize: 10 }, paymentGrid: { marginTop: 6, flexDirection: "row", gap: 15 }, paymentItem: { flexGrow: 1, flexBasis: 0 },
   notes: { marginTop: 7, color: c.secondary }, watermark: { position: "absolute", top: 330, left: 115, transform: "rotate(-35deg)", fontSize: 60, fontFamily: "Helvetica-Bold", color: c.border, opacity: 0.28 },
   footer: { position: "absolute", top: 786, left: 38, right: 38, paddingTop: 8, borderTopWidth: 1, borderTopColor: c.border, flexDirection: "row", justifyContent: "space-between" },
@@ -126,7 +126,7 @@ function SummaryStrip({ invoice, status }: { invoice: Invoice; status: string })
 }
 
 function PaymentSection({ invoice, status }: { invoice: Invoice; status: string }) {
-  return <View style={s.lowerColumn}><SectionHeading>Payment details</SectionHeading><Text style={s.paymentStatus}>Pay to: {invoicePaymentDetails.accountName}</Text><Text style={s.notes}>Sort code: {invoicePaymentDetails.sortCode} · Account no: {invoicePaymentDetails.accountNumber}</Text>{invoice.paid_at ? <><Text style={s.paymentStatus}>{status} · {formatDate(invoice.paid_at.slice(0, 10))}</Text>{invoice.payment_method && <Text style={s.notes}>{paymentMethodLabel(invoice.payment_method)}{invoice.payment_reference ? ` · ${invoice.payment_reference}` : ""}</Text>}</> : <>{invoice.due_date && <Text style={s.paymentStatus}>Payment due by {formatDate(invoice.due_date)}.</Text>}{invoice.payment_terms && <Text style={s.notes}>{invoice.payment_terms}</Text>}</>}</View>;
+  return <View><SectionHeading>Payment details</SectionHeading><Text style={s.paymentStatus}>Pay to: {invoicePaymentDetails.accountName}</Text><Text style={s.notes}>Sort code: {invoicePaymentDetails.sortCode} · Account no: {invoicePaymentDetails.accountNumber}</Text>{invoice.paid_at ? <><Text style={s.paymentStatus}>{status} · {formatDate(invoice.paid_at.slice(0, 10))}</Text>{invoice.payment_method && <Text style={s.notes}>{paymentMethodLabel(invoice.payment_method)}{invoice.payment_reference ? ` · ${invoice.payment_reference}` : ""}</Text>}</> : <>{invoice.due_date && <Text style={s.paymentStatus}>Payment due by {formatDate(invoice.due_date)}.</Text>}{invoice.payment_terms && <Text style={s.notes}>{invoice.payment_terms}</Text>}</>}</View>;
 }
 
 function SectionHeading({ children }: { children: React.ReactNode }) { return <><Text style={s.label}>{children}</Text><View style={s.sectionRule} /></>; }

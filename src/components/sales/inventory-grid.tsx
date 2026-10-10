@@ -100,11 +100,8 @@ export function InventoryGrid({ vehicles }: { vehicles: SaleVehicle[] }) {
                   <ImageIcon size={40} />
                 </span>
               )}
-              {vehicle.status === "reserved" && (
-                <span className="absolute top-4 left-4 rounded-md bg-[#071127] px-3 py-1 text-xs font-black text-white uppercase">
-                  Reserved
-                </span>
-              )}
+              {vehicle.status === "reserved" && <VehicleStatusMarker label="Reserved" />}
+              {vehicle.status === "sold" && <VehicleStatusMarker label="Sold" sold />}
             </div>
             <div className="p-5">
               <div className="flex items-center justify-between gap-3 md:block">
@@ -134,6 +131,10 @@ export function InventoryGrid({ vehicles }: { vehicles: SaleVehicle[] }) {
       </div>
     </>
   );
+}
+
+function VehicleStatusMarker({ label, sold = false }: { label: string; sold?: boolean }) {
+  return <span className={`absolute top-4 left-4 rounded-md px-4 py-2 text-sm font-black tracking-widest text-white uppercase shadow-lg ${sold ? "bg-[#B42318]" : "bg-[#071127]"}`}>{label}</span>;
 }
 
 function Filter({

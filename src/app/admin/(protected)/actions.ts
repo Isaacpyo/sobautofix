@@ -281,9 +281,11 @@ async function persistSaleVehicle(formData: FormData) {
     const { data: existing } = await client.from("sale_vehicles").select("id").eq("registration", registration).maybeSingle();
     if (existing) throw new Error("This registration already exists in Vehicle Stock.");
   }
-  const row = { registration, slug: parsed.slug, make: parsed.make, model: parsed.model, derivative: parsed.derivative || null, year: parsed.year, mileage: parsed.mileage, price: parsed.price, fuel_type: parsed.fuelType, transmission: parsed.transmission, engine_size: parsed.engineSize || null, colour: parsed.colour || null, body_type: parsed.bodyType || null, description: parsed.description.trim(), features: parsed.features.split("\n").map((value) => value.trim()).filter(Boolean), finance_available: parsed.financeAvailable, warranty: parsed.warrantyAvailable ? { available: true, description: parsed.warrantyDescription || undefined } : { available: false }, status, sold_at: status === "sold" ? new Date().toISOString() : null };
+  const previous = parsed.id ? (await client.from("sale_vehicles").select("status,sold_at").eq("id", parsed.id).maybeSingle()).data : null;
+  const soldAt = status === "sold" ? previous?.status === "sold" && previous.sold_at ? previous.sold_at : new Date().toISOString() : null;
+  const row = { registration, slug: parsed.slug, make: parsed.make, model: parsed.model, derivative: parsed.derivative || null, year: parsed.year, mileage: parsed.mileage, price: parsed.price, fuel_type: parsed.fuelType, transmission: parsed.transmission, engine_size: parsed.engineSize || null, colour: parsed.colour || null, body_type: parsed.bodyType || null, description: parsed.description.trim(), features: parsed.features.split("\n").map((value) => value.trim()).filter(Boolean), finance_available: parsed.financeAvailable, warranty: parsed.warrantyAvailable ? { available: true, description: parsed.warrantyDescription || undefined } : { available: false }, status, sold_at: soldAt };
   let entityId = parsed.id;
-  const previousStatus = parsed.id ? (await client.from("sale_vehicles").select("status").eq("id", parsed.id).maybeSingle()).data?.status : null;
+  const previousStatus = previous?.status || null;
   if (parsed.id) { const { error } = await client.from("sale_vehicles").update(row).eq("id", parsed.id); if (error) throw vehicleDatabaseError(error); } else { const { data, error } = await client.from("sale_vehicles").insert(row).select("id").single(); if (error) throw vehicleDatabaseError(error); entityId = data.id; }
   const photos = formData.getAll("photos").filter((value): value is File => value instanceof File && value.size > 0);
   if (photos.length > 8 || photos.reduce((total, file) => total + file.size, 0) > 32 * 1024 * 1024) throw new Error("Choose up to eight photos with a combined size under 32 MB.");
@@ -297,7 +299,7 @@ async function persistSaleVehicle(formData: FormData) {
     const { error: imageError } = await client.from("sale_vehicle_images").insert({ sale_vehicle_id: entityId, object_path: path, alt_text: alt, position });
     if (imageError) { await client.storage.from("vehicle-sales").remove([path]); throw new Error("The vehicle was saved, but a photo could not be added."); }
   }
-  const action = status === "available" && previousStatus !== "available" ? "publish" : parsed.id ? "update" : "create";
+  const action = status === "sold" && previousStatus !== "sold" ? "mark_sold" : status === "available" && previousStatus !== "available" ? "publish" : parsed.id ? "update" : "create";
   await audit(client, auth.user.id, action, "sale_vehicle", entityId!, { status, slug: parsed.slug, price: parsed.price, photoCount: photos.length });
   return { entityId: entityId!, slug: parsed.slug };
 }

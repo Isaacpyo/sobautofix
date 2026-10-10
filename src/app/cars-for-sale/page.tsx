@@ -9,14 +9,14 @@ import { createMetadata } from "@/lib/seo";
 export const metadata = createMetadata("Used Cars for Sale in Doncaster", "Browse genuine used vehicle listings from SOB Autofix in Doncaster. Finance options may be available on selected vehicles.", "/cars-for-sale");
 
 export default async function CarsForSalePage() {
-  const vehicles = await getPublicSaleVehicles();
+  const vehicles = await getPublicSaleVehicles({ includeRecentlySold: true });
 
   return (
     <>
       <PageHero title="Used cars for sale in Doncaster." cta={false} compact showTrustFacts={false} />
       <section className="py-8 sm:py-10 lg:py-12">
         <Container>
-          <SectionIntro className="mb-8" eyebrow="Current stock" title="Available vehicles" />
+          <SectionIntro className="mb-8" eyebrow="Current stock" title="Vehicles for sale" />
           <InventoryGrid vehicles={vehicles} />
         </Container>
       </section>

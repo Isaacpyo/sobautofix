@@ -246,7 +246,7 @@ test("cars for sale uses a compact title-only hero", async ({ page }) => {
   await expect(main.getByRole("link", { name: "Request an estimate", exact: true })).toHaveCount(0);
   await expect(main.getByText("Professional testing", { exact: true })).toHaveCount(0);
   await expect(main.getByText("Clear next steps", { exact: true })).toHaveCount(0);
-  const stockHeading = main.getByRole("heading", { name: "Available vehicles" });
+  const stockHeading = main.getByRole("heading", { name: "Vehicles for sale" });
   await expect(stockHeading).toBeVisible();
   await expect.poll(async () => {
     const box = await stockHeading.boundingBox();

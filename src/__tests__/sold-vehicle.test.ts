@@ -1,5 +1,6 @@
+import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { isPublicDeliveryListing, isSoldPageExpired } from "@/lib/sales/policy";
+import { isPublicDeliveryListing, isSoldPageExpired, isVisibleOnSalesPage } from "@/lib/sales/policy";
 import type { SaleVehicle } from "@/types/domain";
 
 const vehicle: SaleVehicle = { id: "1", slug: "test-car", make: "Ford", model: "Focus", year: 2020, mileage: 40000, price: 9000, fuelType: "Diesel", transmission: "Manual", description: "A genuine test vehicle used only by automated tests.", features: [], images: [], status: "sold", soldAt: "2026-01-01T00:00:00.000Z", createdAt: "2025-01-01T00:00:00.000Z", updatedAt: "2026-01-01T00:00:00.000Z" };
@@ -8,8 +9,20 @@ describe("sold vehicle lifecycle", () => {
   afterEach(() => vi.useRealTimers());
   it("retains a recently sold page", () => { vi.useFakeTimers(); vi.setSystemTime(new Date("2026-02-01")); expect(isSoldPageExpired(vehicle)).toBe(false); });
   it("expires a sold page after 90 days", () => { vi.useFakeTimers(); vi.setSystemTime(new Date("2026-05-01")); expect(isSoldPageExpired(vehicle)).toBe(true); });
+  it("shows recently sold vehicles in the sales grid but removes expired sold stock", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-02-01"));
+    expect(isVisibleOnSalesPage(vehicle)).toBe(true);
+    vi.setSystemTime(new Date("2026-05-01"));
+    expect(isVisibleOnSalesPage(vehicle)).toBe(false);
+    expect(isVisibleOnSalesPage({ ...vehicle, status: "available", soldAt: undefined })).toBe(true);
+  });
   it("keeps workflow validation stock out of the public delivery site", () => {
     expect(isPublicDeliveryListing({ description: "Test stock vehicle for validating the SOB Autofix inventory and sales workflow." })).toBe(false);
     expect(isPublicDeliveryListing({ description: "One-owner vehicle with full service history." })).toBe(true);
+  });
+  it("allows public access to sold vehicles and images for the same 90-day window", () => {
+    const migration = readFileSync("supabase/migrations/202610100001_show_recently_sold_vehicles.sql", "utf8");
+    expect(migration.match(/interval '90 days'/g)).toHaveLength(2);
   });
 });

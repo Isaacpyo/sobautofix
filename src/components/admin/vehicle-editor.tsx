@@ -12,7 +12,7 @@ export function VehicleEditor({ vehicle, action }: { vehicle?: SaleVehicle; acti
     <div className="grid gap-5 md:grid-cols-2">
       <AdminField label="Registration"><input name="registration" defaultValue={vehicle?.registration} pattern="[A-Za-z0-9 ]{2,9}" /></AdminField>
       <AdminField label="Slug"><input name="slug" required defaultValue={vehicle?.slug} pattern="[a-z0-9-]+" /></AdminField>
-      <AdminField label="Status"><select name="status" defaultValue={vehicle?.status || "draft"}><option value="draft">Draft</option><option value="available">Live</option><option value="reserved">Reserved</option><option value="sold">Sold</option><option value="archived">Archived</option></select></AdminField>
+      <AdminField label="Sale status"><select name="status" defaultValue={vehicle?.status || "draft"}><option value="draft">Draft</option><option value="available">Live - available for sale</option><option value="reserved">Reserved</option><option value="sold">This car has been sold</option><option value="archived">Archived</option></select></AdminField>
       <VehicleMakeModelFields initialMake={vehicle?.make} initialModel={vehicle?.model} />
       <AdminField label="Derivative"><input name="derivative" defaultValue={vehicle?.derivative} /></AdminField>
       <AdminField label="Year"><VehicleYearSelect value={vehicle?.year} /></AdminField>

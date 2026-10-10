@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createPublicClient } from "@/lib/supabase/server";
-import { isPublicDeliveryListing } from "@/lib/sales/policy";
+import { isPublicDeliveryListing, isVisibleOnSalesPage } from "@/lib/sales/policy";
 export { isSoldPageExpired } from "@/lib/sales/policy";
 import type { SaleVehicle } from "@/types/domain";
 
@@ -22,15 +22,19 @@ function mapVehicle(row: VehicleRow): SaleVehicle {
   };
 }
 
-export async function getPublicSaleVehicles(options: { throwOnError?: boolean } = {}) {
+export async function getPublicSaleVehicles(options: { throwOnError?: boolean; includeRecentlySold?: boolean } = {}) {
   const client = createPublicClient();
   if (!client) {
     if (options.throwOnError) throw new Error("Sitemap inventory source is not configured");
     return [] as SaleVehicle[];
   }
-  const { data, error } = await client.from("sale_vehicles").select("*, sale_vehicle_images(*)").in("status", ["available", "reserved"]).is("deleted_at", null).order("created_at", { ascending: false });
+  const statuses = options.includeRecentlySold ? ["available", "reserved", "sold"] : ["available", "reserved"];
+  const { data, error } = await client.from("sale_vehicles").select("*, sale_vehicle_images(*)").in("status", statuses).is("deleted_at", null).order("created_at", { ascending: false });
   if (error && options.throwOnError) throw new Error("Sitemap inventory query failed", { cause: error });
-  return ((data || []) as VehicleRow[]).map(mapVehicle).filter(isPublicDeliveryListing);
+  return ((data || []) as VehicleRow[])
+    .map(mapVehicle)
+    .filter((vehicle) => isPublicDeliveryListing(vehicle) && (!options.includeRecentlySold || isVisibleOnSalesPage(vehicle)))
+    .sort((a, b) => Number(a.status === "sold") - Number(b.status === "sold"));
 }
 
 export async function getSaleVehicle(slug: string) {

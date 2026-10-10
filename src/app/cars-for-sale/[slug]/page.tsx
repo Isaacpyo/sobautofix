@@ -90,8 +90,8 @@ export default async function VehicleDetailPage({
                 {formatCurrency(vehicle.price)}
               </strong>
               {vehicle.status !== "available" && (
-                <span className="mt-2 inline-block bg-white px-3 py-1 text-xs font-black text-[#071127] uppercase">
-                  {vehicle.status}
+                <span className={`mt-2 inline-block px-4 py-2 text-sm font-black tracking-widest text-white uppercase ${vehicle.status === "sold" ? "bg-[#B42318]" : "bg-[#1974E2]"}`}>
+                  {vehicle.status === "sold" ? "Sold" : vehicle.status}
                 </span>
               )}
             </div>
@@ -100,6 +100,7 @@ export default async function VehicleDetailPage({
       </section>
       <section className="py-10 sm:py-14">
         <Container>
+          {vehicle.status === "sold" && <div role="status" className="mb-8 rounded-xl border border-[#FDA29B] bg-[#FEF3F2] px-5 py-4 font-extrabold text-[#B42318]">This car has been sold.</div>}
           <VehicleImageGallery images={vehicle.images} vehicleName={vehicleName} />
           <div className="mt-14 grid gap-12 lg:grid-cols-[1fr_.65fr]">
             <div>

@@ -127,6 +127,31 @@ describe("garage invoicing", () => {
     expect(parsed.pageTexts[0]).toContain("Page 1 of 1");
   }, 20_000);
 
+  it("places notes below the complete payment section", async () => {
+    const notes = "Extended customer-facing workshop observations that must begin below every payment detail without overlapping any preceding line.";
+    const loadingTask = getDocument({
+      data: new Uint8Array(await renderInvoicePdf({ ...representativeInvoice("draft", 1), notes })),
+      standardFontDataUrl: `${join(root, "node_modules", "pdfjs-dist", "standard_fonts").replaceAll("\\", "/")}/`,
+    });
+    const document = await loadingTask.promise;
+    try {
+      const positionedText = (await Promise.all(Array.from({ length: document.numPages }, async (_, index) => {
+        const content = await (await document.getPage(index + 1)).getTextContent();
+        return content.items.flatMap((item) => "str" in item && "transform" in item ? [{ text: item.str, y: item.transform[5] }] : []);
+      }))).flat();
+      const paymentTerms = positionedText.find((item) => item.text === "Payment due within 7 days.");
+      const notesHeading = positionedText.find((item) => item.text.replace(/\s/g, "").toUpperCase() === "NOTES");
+      const notesBody = positionedText.find((item) => item.text.startsWith("Extended customer-facing"));
+      expect(paymentTerms).toBeDefined();
+      expect(notesHeading).toBeDefined();
+      expect(notesBody).toBeDefined();
+      expect(notesHeading!.y).toBeLessThan(paymentTerms!.y - 8);
+      expect(notesBody!.y).toBeLessThan(notesHeading!.y - 8);
+    } finally {
+      await loadingTask.destroy();
+    }
+  }, 20_000);
+
   it("renders total, part payment, balance and bank details on an issued invoice", async () => {
     const invoice = {
       ...representativeInvoice("issued", 1),
