@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { EnquiryForm } from "@/components/forms/enquiry-form";
 
 export function VehicleEnquiryModal({ vehicleSlug, vehicleName }: { vehicleSlug: string; vehicleName: string }) {
@@ -53,7 +54,8 @@ export function VehicleEnquiryModal({ vehicleSlug, vehicleName }: { vehicleSlug:
       <button ref={triggerRef} type="button" onClick={() => setOpen(true)} className="inline-flex min-h-12 items-center rounded-xl bg-[#1974E2] px-5 font-bold text-white transition hover:bg-[#145CAD] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#1974E2]/30">
         Arrange a viewing
       </button>
-      {open && (
+      {/* Portal out of the sticky buying panel: its stacking context let the sticky vehicle bar cover the dialog. */}
+      {open && createPortal(
         <div className="fixed inset-0 z-[80] grid place-items-center bg-[#071127]/70 p-2 backdrop-blur-sm sm:p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}>
           <section ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="vehicle-enquiry-title" aria-describedby="vehicle-enquiry-vehicle" className="max-h-[calc(100dvh-1rem)] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:rounded-3xl sm:p-6">
             <div className="flex items-start justify-between gap-3 sm:gap-5">
@@ -66,7 +68,8 @@ export function VehicleEnquiryModal({ vehicleSlug, vehicleName }: { vehicleSlug:
             </div>
             <div className="mt-5"><EnquiryForm type="vehicle_sales" title="" defaultService={vehicleSlug} compact /></div>
           </section>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );

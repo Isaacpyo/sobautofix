@@ -9,7 +9,8 @@ import { invoicePaymentDetails } from "@/config/invoicing";
 import { formatPence, invoicePaymentSummary } from "./money";
 import { invoiceStatusLabel, type Invoice, type InvoiceStatus } from "./types";
 
-export const invoiceLogoPath = join("public", "email", "sob-autofix-logo-white.png");
+// Navy logo on a white masthead keeps printed invoices light on ink.
+export const invoiceLogoPath = join("public", "brand", "sob-autofix-logo-invoice.png");
 
 let cachedLogoSource: string | null | undefined;
 
@@ -26,23 +27,23 @@ function loadInvoiceLogo() {
 }
 
 const c = {
-  navy: "#071127", blue: "#1974E2", brightBlue: "#168BFF", lightBlue: "#67B9FF", white: "#FFFFFF",
+  navy: "#071127", blue: "#1974E2", paleBlue: "#EAF3FF", white: "#FFFFFF",
   softGrey: "#F4F7FA", border: "#DCE6F2", text: "#111827", secondary: "#5F6B7A", green: "#237A57",
   red: "#A43A44", amber: "#9A6500", muted: "#667586",
 } as const;
 
 const s = StyleSheet.create({
   page: { paddingTop: 62, paddingBottom: 78, paddingHorizontal: 38, fontFamily: "Helvetica", fontSize: 9.2, color: c.text, lineHeight: 1.38 },
-  masthead: { minHeight: 142, backgroundColor: c.navy, marginHorizontal: -38, marginTop: -62, paddingHorizontal: 38, paddingVertical: 24, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  masthead: { minHeight: 142, backgroundColor: c.white, borderBottomWidth: 2, borderBottomColor: c.blue, marginHorizontal: -38, marginTop: -62, paddingHorizontal: 38, paddingVertical: 24, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   mastBrand: { width: "58%" }, logo: { width: 150, height: 100, objectFit: "contain", objectPosition: "left center" },
-  logoFallback: { color: c.white, fontFamily: "Helvetica-Bold", fontSize: 19, letterSpacing: 0.8 },
-  tagline: { marginTop: 5, color: c.lightBlue, fontSize: 8.7, fontFamily: "Helvetica-Bold" },
-  identity: { width: "38%", alignItems: "flex-end" }, invoiceTitle: { color: c.white, fontSize: 27, lineHeight: 1, fontFamily: "Helvetica-Bold", letterSpacing: 1.3 },
-  invoiceNumber: { color: c.lightBlue, marginTop: 11, fontSize: 11.5, lineHeight: 1, fontFamily: "Helvetica-Bold" },
+  logoFallback: { color: c.navy, fontFamily: "Helvetica-Bold", fontSize: 19, letterSpacing: 0.8 },
+  tagline: { marginTop: 5, color: c.blue, fontSize: 8.7, fontFamily: "Helvetica-Bold" },
+  identity: { width: "38%", alignItems: "flex-end" }, invoiceTitle: { color: c.navy, fontSize: 27, lineHeight: 1, fontFamily: "Helvetica-Bold", letterSpacing: 1.3 },
+  invoiceNumber: { color: c.blue, marginTop: 11, fontSize: 11.5, lineHeight: 1, fontFamily: "Helvetica-Bold" },
   badge: { marginTop: 9, borderRadius: 10, paddingVertical: 4, paddingHorizontal: 9, fontSize: 8.2, fontFamily: "Helvetica-Bold", color: c.white, letterSpacing: 0.4 },
   badgeDraft: { backgroundColor: c.muted }, badgeIssued: { backgroundColor: c.amber }, badgePaid: { backgroundColor: c.green }, badgeVoid: { backgroundColor: c.red },
   continuation: { position: "absolute", top: 17, left: 38, right: 38, height: 38, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: c.border, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  continuationLogo: { width: 55, height: 30, objectFit: "contain", objectPosition: "left center", backgroundColor: c.navy, padding: 2 },
+  continuationLogo: { width: 55, height: 30, objectFit: "contain", objectPosition: "left center" },
   continuationFallback: { fontSize: 9, fontFamily: "Helvetica-Bold", color: c.navy },
   continuationMeta: { alignItems: "flex-end" }, continuationNumber: { fontFamily: "Helvetica-Bold", color: c.navy, fontSize: 8.5 }, continuationStatus: { color: c.blue, fontFamily: "Helvetica-Bold", fontSize: 7.5, marginTop: 2 },
   summaryStrip: { flexDirection: "row", backgroundColor: c.softGrey, borderBottomWidth: 1, borderBottomColor: c.border, marginHorizontal: -38, paddingHorizontal: 38, paddingVertical: 13 },
@@ -54,7 +55,7 @@ const s = StyleSheet.create({
   registration: { fontFamily: "Helvetica-Bold", fontSize: 14, color: c.navy, letterSpacing: 0.7 }, vehicleName: { marginTop: 7, fontFamily: "Helvetica-Bold", fontSize: 10.2, color: c.navy }, service: { marginTop: 5, color: c.blue, fontFamily: "Helvetica-Bold" },
   issuer: { marginTop: 13, paddingTop: 8, borderTopWidth: 1, borderTopColor: c.border, flexDirection: "row", justifyContent: "space-between" },
   issuerBlock: { width: "48%" }, issuerDetails: { marginTop: 5, color: c.secondary, fontSize: 8.2 },
-  table: { marginTop: 12 }, tableHead: { flexDirection: "row", backgroundColor: c.navy, color: c.white, paddingVertical: 7, paddingHorizontal: 9, fontFamily: "Helvetica-Bold", fontSize: 7.6, letterSpacing: 0.35 },
+  table: { marginTop: 12 }, tableHead: { flexDirection: "row", backgroundColor: c.paleBlue, color: c.navy, borderBottomWidth: 1.5, borderBottomColor: c.blue, paddingVertical: 7, paddingHorizontal: 9, fontFamily: "Helvetica-Bold", fontSize: 7.6, letterSpacing: 0.35 },
   row: { flexDirection: "row", paddingVertical: 7, paddingHorizontal: 9, borderBottomWidth: 1, borderBottomColor: c.border, minHeight: 27 }, rowAlt: { backgroundColor: "#FAFCFE" },
   description: { width: "55%", paddingRight: 9 }, qty: { width: "11%", textAlign: "right" }, unit: { width: "17%", textAlign: "right" }, amount: { width: "17%", textAlign: "right", fontFamily: "Helvetica-Bold" },
   settlement: { flexDirection: "row", gap: 25, marginTop: 10, paddingTop: 7, borderTopWidth: 1, borderTopColor: c.border }, settlementLeft: { flexGrow: 1, flexBasis: 0 }, totals: { width: 232 }, totalRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 3, color: c.secondary },

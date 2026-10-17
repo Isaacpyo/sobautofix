@@ -4,6 +4,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { VehicleEnquiryModal } from "@/components/sales/vehicle-enquiry-modal";
 import { VehicleImageGallery } from "@/components/sales/vehicle-image-gallery";
 import { JsonLd } from "@/components/seo/json-ld";
+import { BackLink } from "@/components/ui/back-link";
 import { Container, Eyebrow } from "@/components/ui/container";
 import { contactLinks, siteConfig } from "@/config/site";
 import { getSaleVehicle, isSoldPageExpired } from "@/lib/sales/repository";
@@ -100,45 +101,48 @@ export default async function VehicleDetailPage({
       </section>
       <section className="py-10 sm:py-14">
         <Container>
-          {vehicle.status === "sold" && <div role="status" className="mb-8 rounded-xl border border-[#FDA29B] bg-[#FEF3F2] px-5 py-4 font-extrabold text-[#B42318]">This car has been sold.</div>}
-          <VehicleImageGallery images={vehicle.images} vehicleName={vehicleName} />
-          <div className="mt-14 grid gap-12 lg:grid-cols-[1fr_.65fr]">
-            <div>
-              <Eyebrow>Vehicle details</Eyebrow>
-              <h2 className="text-4xl font-extrabold text-[#071127]">
-                The approved listing information.
-              </h2>
-              <p className="mt-5 leading-8 text-[#586575]">
-                {vehicle.description}
-              </p>
-              <dl className="mt-8 grid grid-cols-2 gap-px overflow-hidden border border-[#E4EAF0] bg-[#E4EAF0] sm:grid-cols-3">
-                {specs.map(([label, value]) => (
-                  <div key={label} className="bg-[#F4F7FA] p-4">
-                    <dt className="text-xs font-bold text-[#667586] uppercase">
-                      {label}
-                    </dt>
-                    <dd className="mt-1 font-bold text-[#071127]">{value}</dd>
-                  </div>
-                ))}
-              </dl>
-              {vehicle.features.length > 0 && (
-                <>
-                  <h2 className="mt-10 text-3xl font-bold text-[#071127]">
-                    Features
-                  </h2>
-                  <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-                    {vehicle.features.map((feature) => (
-                      <li key={feature} className="flex gap-2 text-[#586575]">
-                        <span className="text-[#1974E2]">—</span>
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              )}
-              <VehicleBuyingInformation vehicle={vehicle} vehicleName={vehicleName} className="mt-10 lg:hidden" />
+          <BackLink href="/cars-for-sale" className="mb-5">Back to stock</BackLink>
+          {vehicle.status === "sold" && <div role="status" className="mb-6 rounded-xl border border-[#FDA29B] bg-[#FEF3F2] px-5 py-4 font-extrabold text-[#B42318]">This car has been sold.</div>}
+          <div className="grid gap-12 lg:grid-cols-[minmax(0,1.35fr)_minmax(20rem,.65fr)] lg:items-start">
+            <div className="min-w-0">
+              <VehicleImageGallery images={vehicle.images} vehicleName={vehicleName} sold={vehicle.status === "sold"} />
+              <div className="mt-12">
+                <Eyebrow>Vehicle details</Eyebrow>
+                <h2 className="text-4xl font-extrabold text-[#071127]">
+                  The approved listing information.
+                </h2>
+                <p className="mt-5 leading-8 text-[#586575]">
+                  {vehicle.description}
+                </p>
+                <dl className="mt-8 grid grid-cols-2 gap-px overflow-hidden border border-[#E4EAF0] bg-[#E4EAF0] sm:grid-cols-3">
+                  {specs.map(([label, value]) => (
+                    <div key={label} className="bg-[#F4F7FA] p-4">
+                      <dt className="text-xs font-bold text-[#667586] uppercase">
+                        {label}
+                      </dt>
+                      <dd className="mt-1 font-bold text-[#071127]">{value}</dd>
+                    </div>
+                  ))}
+                </dl>
+                {vehicle.features.length > 0 && (
+                  <>
+                    <h2 className="mt-10 text-3xl font-bold text-[#071127]">
+                      Features
+                    </h2>
+                    <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+                      {vehicle.features.map((feature) => (
+                        <li key={feature} className="flex gap-2 text-[#586575]">
+                          <span className="text-[#1974E2]">—</span>
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+                <VehicleBuyingInformation vehicle={vehicle} vehicleName={vehicleName} className="mt-10 lg:hidden" />
+              </div>
             </div>
-            <VehicleBuyingInformation vehicle={vehicle} vehicleName={vehicleName} className="hidden lg:sticky lg:top-28 lg:block" />
+            <VehicleBuyingInformation vehicle={vehicle} vehicleName={vehicleName} className="hidden lg:sticky lg:top-48 lg:block" />
           </div>
         </Container>
       </section>

@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { invoiceDraftSchema, invoicePaymentSchema, paymentSchema, sendInvoiceSchema, friendlyInvoiceError, priceInputToPence } from "@/lib/invoices/schema";
-import { createInvoiceCorrection, deleteDraftInvoice, duplicateInvoice, issueInvoice, markInvoicePaid, recordInvoicePayment, saveInvoiceDraft, sendInvoiceEmail, voidInvoice } from "@/lib/invoices/repository";
+import { invoiceDraftSchema, invoicePaymentSchema, sendInvoiceSchema, friendlyInvoiceError, priceInputToPence } from "@/lib/invoices/schema";
+import { createInvoiceCorrection, deleteDraftInvoice, duplicateInvoice, issueInvoice, recordInvoicePayment, saveInvoiceDraft, sendInvoiceEmail, voidInvoice } from "@/lib/invoices/repository";
 import { requireFreshAdminSession } from "@/lib/auth/trusted-device-server";
 
 export type InvoiceFormState = { error: string };
@@ -20,7 +20,6 @@ export async function voidInvoiceAction(formData: FormData) { await requireFresh
 export async function deleteDraftInvoiceAction(formData: FormData) { await requireFreshAdminSession("/admin/invoices"); const id = uuid(formData); await deleteDraftInvoice(id); refresh(id); redirect("/admin/invoices?notice=deleted"); }
 export async function duplicateInvoiceAction(formData: FormData) { await requireFreshAdminSession("/admin/invoices"); const id = uuid(formData); const draftId = await duplicateInvoice(id); refresh(draftId); redirect(`/admin/invoices/${draftId}/edit?notice=duplicated`); }
 export async function createInvoiceCorrectionAction(formData: FormData) { await requireFreshAdminSession("/admin/invoices"); const id = uuid(formData); const draftId = await createInvoiceCorrection(id); refresh(id); refresh(draftId); redirect(`/admin/invoices/${draftId}/edit?notice=corrected`); }
-export async function markInvoicePaidAction(formData: FormData) { await requireFreshAdminSession("/admin/invoices"); const date = String(formData.get("paidAt") || ""); const parsed = paymentSchema.parse({ invoiceId: formData.get("invoiceId"), paidAt: date ? new Date(`${date}T12:00:00Z`).toISOString() : "", method: formData.get("method"), reference: formData.get("reference") || "" }); await markInvoicePaid(parsed); refresh(parsed.invoiceId); redirect(`/admin/invoices/${parsed.invoiceId}?notice=paid`); }
 export async function recordInvoicePaymentAction(formData: FormData) {
   await requireFreshAdminSession("/admin/invoices");
   const date = String(formData.get("paidAt") || "");

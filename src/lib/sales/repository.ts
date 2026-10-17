@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createPublicClient } from "@/lib/supabase/server";
+import { createAdminReadClient, createPublicClient } from "@/lib/supabase/server";
 import { isPublicDeliveryListing, isVisibleOnSalesPage } from "@/lib/sales/policy";
 export { isSoldPageExpired } from "@/lib/sales/policy";
 import type { SaleVehicle } from "@/types/domain";
@@ -44,4 +44,12 @@ export async function getSaleVehicle(slug: string) {
   if (!data) return null;
   const vehicle = mapVehicle(data as VehicleRow);
   return isPublicDeliveryListing(vehicle) ? vehicle : null;
+}
+
+// Admin editing must see every non-deleted vehicle (drafts, archived, long-sold), so bypass public RLS after the admin check.
+export async function getAdminSaleVehicle(id: string) {
+  const client = await createAdminReadClient();
+  if (!client) return null;
+  const { data } = await client.from("sale_vehicles").select("*, sale_vehicle_images(*)").eq("id", id).is("deleted_at", null).maybeSingle();
+  return data ? mapVehicle(data as VehicleRow) : null;
 }

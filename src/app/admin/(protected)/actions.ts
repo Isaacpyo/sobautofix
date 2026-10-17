@@ -323,6 +323,21 @@ function friendlyVehicleSaveError(error: unknown) {
   return "Vehicle could not be saved. Please try again.";
 }
 
+export async function setSaleVehicleSold(formData: FormData) {
+  const { auth, client } = await requireAdmin();
+  const { id, sold } = z.object({ id: z.string().uuid(), sold: z.enum(["true", "false"]) }).parse(Object.fromEntries(formData));
+  const { data: vehicle } = await client.from("sale_vehicles").select("slug,status,sold_at").eq("id", id).is("deleted_at", null).maybeSingle();
+  if (!vehicle) throw new Error("Vehicle not found.");
+  const markSold = sold === "true";
+  // Keep the original sale date so the 90-day sold window is not restarted by a repeat click.
+  const row = markSold ? { status: "sold", sold_at: vehicle.status === "sold" && vehicle.sold_at ? vehicle.sold_at : new Date().toISOString() } : { status: "available", sold_at: null };
+  const { error } = await client.from("sale_vehicles").update(row).eq("id", id);
+  if (error) throw vehicleDatabaseError(error);
+  await audit(client, auth.user.id, markSold ? "mark_sold" : "publish", "sale_vehicle", id, { status: row.status, slug: vehicle.slug, previousStatus: vehicle.status });
+  revalidateSaleVehicle(vehicle.slug);
+  revalidatePath(`/admin/inventory/${id}`);
+}
+
 function revalidateSaleVehicle(slug: string) {
   revalidatePath("/cars-for-sale"); revalidatePath(`/cars-for-sale/${slug}`); revalidatePath("/admin/inventory"); revalidatePath("/sitemap.xml");
 }

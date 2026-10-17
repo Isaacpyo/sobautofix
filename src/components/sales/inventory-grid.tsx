@@ -6,6 +6,7 @@ import { Funnel, Gauge, ImageIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { formatCurrency } from "@/lib/utils";
 import type { SaleVehicle } from "@/types/domain";
+import { SoldBanner } from "./sold-banner";
 
 export function InventoryGrid({ vehicles }: { vehicles: SaleVehicle[] }) {
   const [make, setMake] = useState("");
@@ -100,8 +101,8 @@ export function InventoryGrid({ vehicles }: { vehicles: SaleVehicle[] }) {
                   <ImageIcon size={40} />
                 </span>
               )}
-              {vehicle.status === "reserved" && <VehicleStatusMarker label="Reserved" />}
-              {vehicle.status === "sold" && <VehicleStatusMarker label="Sold" sold />}
+              {vehicle.status === "reserved" && <ReservedMarker />}
+              {vehicle.status === "sold" && <SoldBanner />}
             </div>
             <div className="p-5">
               <div className="flex items-center justify-between gap-3 md:block">
@@ -133,8 +134,8 @@ export function InventoryGrid({ vehicles }: { vehicles: SaleVehicle[] }) {
   );
 }
 
-function VehicleStatusMarker({ label, sold = false }: { label: string; sold?: boolean }) {
-  return <span className={`absolute top-4 left-4 rounded-md px-4 py-2 text-sm font-black tracking-widest text-white uppercase shadow-lg ${sold ? "bg-[#B42318]" : "bg-[#071127]"}`}>{label}</span>;
+function ReservedMarker() {
+  return <span className="absolute top-4 left-4 rounded-md bg-[#071127] px-4 py-2 text-sm font-black tracking-widest text-white uppercase shadow-lg">Reserved</span>;
 }
 
 function Filter({

@@ -4,19 +4,22 @@ import Image from "next/image";
 import { ChevronLeft, ChevronRight, ImageIcon } from "lucide-react";
 import { useState } from "react";
 import type { SaleVehicle } from "@/types/domain";
+import { SoldBanner } from "./sold-banner";
 
 type VehicleImageGalleryProps = {
   images: SaleVehicle["images"];
   vehicleName: string;
+  sold?: boolean;
 };
 
-export function VehicleImageGallery({ images, vehicleName }: VehicleImageGalleryProps) {
+export function VehicleImageGallery({ images, vehicleName, sold = false }: VehicleImageGalleryProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const activeImage = images[activeIndex];
 
   if (!activeImage) {
     return (
-      <div className="grid aspect-[16/9] place-items-center bg-[#E4EAF0] text-[#667586]">
+      <div className="relative grid aspect-[16/9] place-items-center overflow-hidden bg-[#E4EAF0] text-[#667586]">
+        {sold && <SoldBanner size="lg" />}
         <span className="inline-flex items-center gap-2 text-sm font-semibold">
           <ImageIcon size={20} /> Vehicle photography awaiting approval
         </span>
@@ -30,16 +33,17 @@ export function VehicleImageGallery({ images, vehicleName }: VehicleImageGallery
 
   return (
     <section className="overflow-hidden border border-[#D7E0E9] bg-[#071127]" aria-label={`${vehicleName} photo gallery`}>
-      <div className="group relative aspect-[16/10] min-h-72 sm:aspect-[16/9] lg:min-h-[34rem]">
+      <div className="group relative aspect-[4/3] w-full sm:aspect-[16/10] xl:aspect-[16/9]">
         <Image
           key={activeImage.id}
           src={activeImage.url}
           alt={activeImage.alt}
           fill
           preload={activeIndex === 0}
-          sizes="(max-width: 1280px) 100vw, 75vw"
+          sizes="(max-width: 1024px) 100vw, 66vw"
           className="object-cover"
         />
+        {sold && <SoldBanner size="lg" />}
         {hasMultipleImages && (
           <>
             <button

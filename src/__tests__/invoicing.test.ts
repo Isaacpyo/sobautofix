@@ -174,7 +174,7 @@ describe("garage invoicing", () => {
   }, 20_000);
 
   it("embeds the approved optimized official logo without a runtime network request", async () => {
-    const logo = readFileSync(join(root, "public", "email", "sob-autofix-logo-white.png"));
+    const logo = readFileSync(join(root, "public", "brand", "sob-autofix-logo-invoice.png"));
     expect(logo.subarray(1, 4).toString()).toBe("PNG");
     expect(logo.readUInt32BE(16)).toBe(340);
     expect(logo.readUInt32BE(20)).toBe(227);
