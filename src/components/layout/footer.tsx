@@ -76,6 +76,10 @@ export function Footer({ settings = siteConfig }: { settings?: SiteSettings }) {
             <Link className="hover:text-white" href="/terms">Terms</Link>
           </nav>
         </div>
+        <p className="px-5 text-center text-xs text-[#8F9EAF]">
+          Developed by{" "}
+          <a className="font-bold text-[#C6D2DF] hover:text-white" href="https://vitalos.co.uk" target="_blank" rel="noopener">Vitalos Technologies</a>
+        </p>
       </Container>
     </footer>
   );
