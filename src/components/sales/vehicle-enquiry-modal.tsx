@@ -66,7 +66,7 @@ export function VehicleEnquiryModal({ vehicleSlug, vehicleName }: { vehicleSlug:
               </div>
               <button ref={closeRef} type="button" onClick={() => setOpen(false)} className="grid size-10 shrink-0 place-items-center rounded-full text-[#586575] transition hover:bg-[#F4F7FA] hover:text-[#071127] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#1974E2]/25" aria-label="Close vehicle enquiry form"><X size={20} aria-hidden="true" /></button>
             </div>
-            <div className="mt-5"><EnquiryForm type="vehicle_sales" title="" defaultService={vehicleSlug} compact /></div>
+            <div className="mt-5"><EnquiryForm type="vehicle_sales" title="" defaultService={vehicleSlug} allowUploads={false} compact /></div>
           </section>
         </div>,
         document.body,
