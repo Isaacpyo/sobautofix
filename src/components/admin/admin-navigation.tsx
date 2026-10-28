@@ -4,6 +4,7 @@ import {
   BadgePoundSterling,
   Bell,
   CalendarClock,
+  CalendarDays,
   CarFront,
   Gauge,
   Gift,
@@ -19,29 +20,33 @@ import {
   ShieldCheck,
   Star,
   Trash2,
+  UsersRound,
   Wrench,
   X,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { signOut } from "@/app/admin/login/actions";
 import { Logo } from "@/components/layout/logo";
+import { can, type ExchangePermission, type StaffRole } from "@/lib/exchange/permissions";
 import { cn } from "@/lib/utils";
 
-type AdminLink = { href: string; label: string; icon: LucideIcon };
+type AdminLink = { href: string; label: string; icon: LucideIcon; permission?: ExchangePermission };
 
-const navigationGroups: Array<{ label: string; links: AdminLink[] }> = [
+export const navigationGroups: Array<{ label: string; links: AdminLink[] }> = [
   {
     label: "Operations",
     links: [
       { href: "/admin", label: "Dashboard", icon: Gauge },
       { href: "/admin/enquiries", label: "Enquiries", icon: Inbox },
       { href: "/admin/bookings", label: "Bookings", icon: CalendarClock },
+      { href: "/admin/diary", label: "Autofix Diary", icon: CalendarDays, permission: "diary.manage" },
+      { href: "/admin/exchange", label: "Vehicle Buying & Selling", icon: CarFront, permission: "exchange.view" },
+      { href: "/admin/customers", label: "Customers", icon: UsersRound, permission: "customers.view" },
       { href: "/admin/invoices", label: "Invoices", icon: ReceiptText },
       { href: "/admin/service-catalogue", label: "Service catalogue", icon: Wrench },
-      { href: "/admin/inventory", label: "Vehicle stock", icon: CarFront },
     ],
   },
   {
@@ -70,27 +75,41 @@ const navigationGroups: Array<{ label: string; links: AdminLink[] }> = [
   },
 ];
 
-export function AdminNavigation({ displayName, notificationCount, collapsed, onToggleCollapsed }: { displayName: string; notificationCount: number; collapsed: boolean; onToggleCollapsed: () => void }) {
-  const [mobileOpen, setMobileOpen] = useState(false);
+type AdminNavigationProps = {
+  displayName: string;
+  notificationCount: number;
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
+  role: StaffRole;
+  mobileOpen: boolean;
+  /** Opens or closes the drawer. `opener` gets focus back when it closes. */
+  onMobileOpenChange: (open: boolean, opener?: HTMLElement | null) => void;
+};
+
+export function visibleNavigationGroups(role: StaffRole) {
+  return navigationGroups.map((group) => ({ ...group, links: group.links.filter((link) => !link.permission || can(role, link.permission)) }));
+}
+
+export function AdminNavigation({ displayName, notificationCount, collapsed, onToggleCollapsed, role, mobileOpen, onMobileOpenChange }: AdminNavigationProps) {
   const menuButton = useRef<HTMLButtonElement>(null);
   const pathname = usePathname();
   const countLabel = notificationCount > 99 ? "99+" : String(notificationCount);
+  const setMobileOpen = (open: boolean) => onMobileOpenChange(open);
+  const drawerClose = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!mobileOpen) return;
+    drawerClose.current?.focus();
     function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setMobileOpen(false);
-        menuButton.current?.focus();
-      }
+      if (event.key === "Escape") onMobileOpenChange(false);
     }
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [mobileOpen]);
+  }, [mobileOpen, onMobileOpenChange]);
 
   const navigation = (compact = false) => (
     <nav aria-label="Admin navigation" className="grid gap-4">
-      {navigationGroups.map((group) => (
+      {visibleNavigationGroups(role).map((group) => (
         <div key={group.label}>
           {!compact && <p className="mb-1.5 px-2.5 text-[0.625rem] font-extrabold tracking-[0.15em] text-[#71839A] uppercase">{group.label}</p>}
           <div className="grid gap-0.5">
@@ -155,7 +174,7 @@ export function AdminNavigation({ displayName, notificationCount, collapsed, onT
           ref={menuButton}
           type="button"
           className="grid size-10 place-items-center rounded-xl border border-white/15 text-[#DCE6F2]"
-          onClick={() => setMobileOpen(true)}
+          onClick={() => onMobileOpenChange(true, menuButton.current)}
           aria-expanded={mobileOpen}
           aria-controls="mobile-admin-navigation"
           aria-label="Open admin menu"
@@ -167,11 +186,11 @@ export function AdminNavigation({ displayName, notificationCount, collapsed, onT
       </div>
 
       <div className={cn("fixed inset-0 z-50 lg:hidden", mobileOpen ? "visible pointer-events-auto" : "invisible pointer-events-none")} aria-hidden={!mobileOpen} inert={!mobileOpen}>
-        <button type="button" tabIndex={-1} aria-label="Close admin menu" className={cn("absolute inset-0 bg-[#030712]/70 transition-opacity", mobileOpen ? "opacity-100" : "opacity-0")} onClick={() => setMobileOpen(false)} />
-        <aside id="mobile-admin-navigation" className={cn("absolute inset-y-0 left-0 flex w-[min(17rem,calc(100vw-3rem))] flex-col bg-[#030712] p-4 text-white shadow-2xl transition-transform duration-300", mobileOpen ? "translate-x-0" : "-translate-x-full")}>
+        <button type="button" tabIndex={-1} aria-label="Close admin menu" className={cn("absolute inset-0 bg-[#030712]/70 transition-opacity motion-reduce:transition-none", mobileOpen ? "opacity-100" : "opacity-0")} onClick={() => setMobileOpen(false)} />
+        <aside id="mobile-admin-navigation" className={cn("absolute inset-y-0 left-0 flex w-[min(17rem,calc(100vw-3rem))] flex-col bg-[#030712] p-4 text-white shadow-2xl transition-transform duration-300 motion-reduce:transition-none", mobileOpen ? "translate-x-0" : "-translate-x-full")}>
           <div className="flex shrink-0 items-center justify-between gap-4">
             <div className="w-24"><Logo inverse /></div>
-            <button type="button" className="grid size-10 place-items-center rounded-xl border border-white/15" onClick={() => setMobileOpen(false)} aria-label="Close admin menu"><X size={20} /></button>
+            <button ref={drawerClose} type="button" className="grid size-11 place-items-center rounded-xl border border-white/15" onClick={() => setMobileOpen(false)} aria-label="Close admin menu"><X size={20} aria-hidden="true" /></button>
           </div>
           <div className="mt-5 min-h-0 flex-1 overflow-y-auto pr-1">{navigation()}</div>
           <div className="mt-4 shrink-0">{account()}</div>

@@ -3,18 +3,59 @@
 import { RefreshCw, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { AdminNavigation } from "@/components/admin/admin-navigation";
+import { MobileBottomNav } from "@/components/admin/mobile-bottom-nav";
 import { NotificationMenu } from "@/components/admin/notification-menu";
+import type { StaffRole } from "@/lib/exchange/permissions";
 
 type AdminShellProps = {
   children: React.ReactNode;
   displayName: string;
   notificationCount: number;
+  /** Staff role from the server; controls which links and quick actions are shown. */
+  role?: StaffRole;
 };
 
-export function AdminShell({ children, displayName, notificationCount }: AdminShellProps) {
+/** Admin search: typed words matched against these terms, first match wins. */
+export const adminSearchDestinations = [
+  ["dashboard home", "/admin"], ["today agenda my day", "/admin/today"],
+  ["autofix diary calendar appointments viewings schedule", "/admin/diary"],
+  ["vehicle buying selling exchange", "/admin/exchange"],
+  ["vehicle stock inventory cars", "/admin/exchange/stock"],
+  ["customers contacts people", "/admin/customers"],
+  ["enquiries messages", "/admin/enquiries"], ["bookings workshop", "/admin/bookings"],
+  ["news blog articles", "/admin/news"],
+  ["media images", "/admin/media"], ["reviews", "/admin/reviews"],
+  ["offers", "/admin/offers"], ["pricing prices", "/admin/pricing"],
+  ["notifications alerts", "/admin/notifications"], ["settings configuration", "/admin/settings"],
+  ["security mfa two factor authenticator", "/admin/configuration/security"],
+] as const;
+
+export const adminSearchOptions = ["Dashboard", "Today", "Autofix Diary", "Vehicle Buying & Selling", "Vehicle stock", "Customers", "Enquiries", "Bookings", "News & Blog", "Media", "Reviews", "Offers", "Pricing", "Notifications", "Settings", "Security"];
+
+export function findAdminSearchDestination(input: string) {
+  const query = input.trim().toLowerCase().replace(/&/g, " ").replace(/\s+/g, " ").trim();
+  if (!query) return null;
+  const words = query.split(" ");
+  const match = adminSearchDestinations.find(([terms]) => terms.includes(query))
+    ?? adminSearchDestinations.find(([terms]) => words.every((word) => terms.split(" ").includes(word)));
+  return match ? match[1] : null;
+}
+
+export function AdminShell({ children, displayName, notificationCount, role = "owner" }: AdminShellProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const menuOpener = useRef<HTMLElement | null>(null);
+  const changeMobileMenu = useCallback((open: boolean, opener?: HTMLElement | null) => {
+    if (open) {
+      menuOpener.current = opener ?? null;
+      setMobileMenuOpen(true);
+      return;
+    }
+    setMobileMenuOpen(false);
+    menuOpener.current?.focus();
+  }, []);
   const [refreshing, setRefreshing] = useState(false);
   const [liveNotificationCount, setLiveNotificationCount] = useState(notificationCount);
   const [serverNotificationCount, setServerNotificationCount] = useState(notificationCount);
@@ -63,19 +104,8 @@ export function AdminShell({ children, displayName, notificationCount }: AdminSh
   function searchAdmin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const query = String(form.get("admin-search") || "").trim().toLowerCase();
-    if (!query) return;
-
-    const destinations = [
-      ["dashboard home", "/admin"], ["enquiries messages", "/admin/enquiries"],
-      ["vehicle stock inventory cars", "/admin/inventory"], ["news blog articles", "/admin/news"],
-      ["media images", "/admin/media"], ["reviews", "/admin/reviews"],
-      ["offers", "/admin/offers"], ["pricing prices", "/admin/pricing"],
-      ["notifications alerts", "/admin/notifications"], ["settings configuration", "/admin/settings"],
-      ["security mfa two factor authenticator", "/admin/configuration/security"],
-    ] as const;
-    const match = destinations.find(([terms]) => terms.includes(query));
-    if (match) router.push(match[1]);
+    const destination = findAdminSearchDestination(String(form.get("admin-search") || ""));
+    if (destination) router.push(destination);
   }
 
   function refreshPage() {
@@ -86,7 +116,7 @@ export function AdminShell({ children, displayName, notificationCount }: AdminSh
 
   return (
     <div className={`min-h-screen bg-[#F4F7FA] lg:grid ${sidebarCollapsed ? "lg:grid-cols-[68px_minmax(0,1fr)]" : "lg:grid-cols-[232px_minmax(0,1fr)]"}`}>
-      <AdminNavigation displayName={displayName} notificationCount={liveNotificationCount} collapsed={sidebarCollapsed} onToggleCollapsed={() => setSidebarCollapsed((value) => !value)} />
+      <AdminNavigation displayName={displayName} notificationCount={liveNotificationCount} collapsed={sidebarCollapsed} onToggleCollapsed={() => setSidebarCollapsed((value) => !value)} role={role} mobileOpen={mobileMenuOpen} onMobileOpenChange={changeMobileMenu} />
       <div className="min-w-0">
         <header className="sticky top-0 z-30 border-b border-[#E4EAF0] bg-white px-5 py-3 lg:px-8 xl:px-10">
           <div className="flex items-center justify-between gap-4">
@@ -97,7 +127,7 @@ export function AdminShell({ children, displayName, notificationCount }: AdminSh
                 <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#718096]" size={17} aria-hidden="true" />
                 <input id="admin-search" name="admin-search" list="admin-search-options" placeholder="Search admin…" autoComplete="off" className="h-10 w-full rounded-xl border border-[#D7E0E9] bg-[#F8FAFC] pl-10 pr-3 text-sm text-[#071127] outline-none placeholder:text-[#8794A3] focus:border-[#1974E2] focus:bg-white" />
                 <datalist id="admin-search-options">
-                  {['Dashboard', 'Enquiries', 'Vehicle stock', 'News & Blog', 'Media', 'Reviews', 'Offers', 'Pricing', 'Notifications', 'Settings', 'Security'].map((option) => <option key={option} value={option} />)}
+                  {adminSearchOptions.map((option) => <option key={option} value={option} />)}
                 </datalist>
               </form>
             </div>
@@ -110,8 +140,9 @@ export function AdminShell({ children, displayName, notificationCount }: AdminSh
             </div>
           </div>
         </header>
-        <main className="min-w-0 p-5 lg:p-8 xl:p-10">{children}</main>
+        <main className="min-w-0 p-5 pb-[calc(64px_+_env(safe-area-inset-bottom)_+_16px)] lg:p-8 xl:p-10">{children}</main>
       </div>
+      <MobileBottomNav role={role} menuOpen={mobileMenuOpen} onOpenMenu={(opener) => changeMobileMenu(true, opener)} />
     </div>
   );
 }

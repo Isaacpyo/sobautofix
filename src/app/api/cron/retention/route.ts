@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getExchangePrivateSettings } from "@/lib/exchange/settings";
 import { isMissingSchemaError } from "@/lib/exchange/schema";
+import { runNotificationRetrySweep } from "@/lib/notifications/retry-sweep";
 import { createAdminClient } from "@/lib/supabase/server";
 
 // Signed daily retention job (vercel.json). Supabase Storage refuses direct
@@ -57,5 +58,18 @@ export async function GET(request: NextRequest) {
     if (finalised) sellerSubmissions += 1;
   }
 
-  return NextResponse.json({ success: true, anonymisedRecords: anonymised, sellerSubmissions, sellerCandidates: sellerCandidates.length });
+  // ---------------------------------------------------------------------------
+  // Separate step: retry failed exchange enquiry notifications (at most three
+  // times each, with backoff; see src/lib/notifications/retry-policy.ts).
+  // Vercel Hobby allows only daily crons, so it runs here. A failure in this
+  // step never fails the retention job above.
+  // ---------------------------------------------------------------------------
+  let notificationRetries: Awaited<ReturnType<typeof runNotificationRetrySweep>> | { error: string };
+  try {
+    notificationRetries = await runNotificationRetrySweep(admin);
+  } catch {
+    notificationRetries = { error: "Notification retry step failed" };
+  }
+
+  return NextResponse.json({ success: true, anonymisedRecords: anonymised, sellerSubmissions, sellerCandidates: sellerCandidates.length, notificationRetries });
 }
