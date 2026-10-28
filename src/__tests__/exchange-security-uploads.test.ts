@@ -19,8 +19,8 @@ type Sharp = (input?: unknown, options?: unknown) => { jpeg: () => { withExif: (
 async function loadSharp(): Promise<Sharp | null> {
   const name = "sharp";
   try {
-    const module = await import(/* @vite-ignore */ name);
-    return (module.default ?? module) as Sharp;
+    const loaded = await import(/* @vite-ignore */ name);
+    return (loaded.default ?? loaded) as Sharp;
   } catch {
     return null;
   }
