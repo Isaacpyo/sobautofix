@@ -1,42 +1,12 @@
-import { Plus } from "lucide-react";
-import Link from "next/link";
-import { AdminBulkActions, AdminItemCheckbox } from "@/components/admin/admin-bulk-actions";
-import { AdminLoadingLink } from "@/components/admin/admin-loading-link";
-import { AdminListFilters, AdminPagination } from "@/components/admin/admin-list-controls";
-import { VehicleSoldToggle } from "@/components/admin/vehicle-sold-toggle";
-import { ADMIN_LIST_PAGE_SIZE, positiveAdminPage } from "@/lib/admin/pagination";
-import { createAdminReadClient } from "@/lib/supabase/server";
-import { formatCurrency } from "@/lib/utils";
-import { setSaleVehicleSold } from "../actions";
-import { manageTrashAction } from "../trash/actions";
+import { redirect } from "next/navigation";
 
-type InventoryRow = { id: string; registration: string | null; slug: string; make: string; model: string; year: number; price: number; status: string; updated_at: string };
-const pageSize = ADMIN_LIST_PAGE_SIZE;
-
-export default async function InventoryAdminPage({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; page?: string }> }) {
+/** Vehicle Stock moved into Vehicle Buying & Selling. Old links and bookmarks keep working. */
+export default async function InventoryRedirect({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; page?: string }> }) {
   const params = await searchParams;
-  const query = (params.q || "").trim();
-  const status = params.status || "";
-  const requestedPage = positiveAdminPage(params.page);
-  const client = await createAdminReadClient();
-  const { data } = client ? await client.from("sale_vehicles").select("id, registration, slug, make, model, year, price, status, updated_at").is("deleted_at", null).order("updated_at", { ascending: false }).limit(500) : { data: [] };
-  const filtered = ((data || []) as InventoryRow[]).filter((vehicle) => {
-    const searchable = [vehicle.make, vehicle.model, vehicle.registration, vehicle.slug, vehicle.year].filter(Boolean).join(" ").toLowerCase();
-    return (!query || searchable.includes(query.toLowerCase())) && (!status || vehicle.status === status);
-  });
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const page = Math.min(requestedPage, totalPages);
-  const vehicles = filtered.slice((page - 1) * pageSize, page * pageSize);
-
-  return <>
-    <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-extrabold tracking-widest text-[#1974E2] uppercase">Vehicle sales</p><h1 className="mt-2 text-4xl font-extrabold text-[#071127]">Vehicle stock</h1><p className="mt-2 text-sm text-[#667586]">Search and filter the vehicles currently managed in inventory.</p></div><Link href="/admin/inventory/new" className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[#1974E2] px-4 font-bold text-white"><Plus size={17} />Add vehicle</Link></div>
-    <AdminListFilters action="/admin/inventory" query={query} status={status} placeholder="Registration, make, model or year…" statusOptions={[{ value: "draft", label: "Draft" }, { value: "available", label: "Live" }, { value: "reserved", label: "Reserved" }, { value: "sold", label: "Sold" }, { value: "archived", label: "Archived" }]} />
-    <AdminBulkActions entity="inventory" action={manageTrashAction}>
-    <div className="mt-5 max-h-[60vh] overflow-auto rounded-2xl border border-[#E4EAF0] bg-white">
-      <table className="w-full min-w-[720px] text-left text-sm"><thead className="sticky top-0 z-10 bg-[#F4F7FA] text-xs uppercase text-[#667586] shadow-[0_1px_0_#E4EAF0]"><tr><th className="w-12 p-2"><span className="sr-only">Select</span></th><th className="p-4">Vehicle</th><th className="p-4">Price</th><th className="p-4">Status</th><th className="p-4">Updated</th><th className="p-4"><span className="sr-only">Action</span></th></tr></thead><tbody>{vehicles.map((vehicle) => <tr key={vehicle.id} className="border-t border-[#E4EAF0] hover:bg-[#F8FAFC]"><td className="p-2"><AdminItemCheckbox id={vehicle.id} label={`Select ${vehicle.year} ${vehicle.make} ${vehicle.model}`} /></td><td className="p-4"><span className="font-bold text-[#071127]">{vehicle.year} {vehicle.make} {vehicle.model}</span><span className="block text-xs text-[#667586]">{vehicle.registration || `/${vehicle.slug}`}</span></td><td className="p-4 font-bold">{formatCurrency(vehicle.price)}</td><td className="p-4">{vehicle.status === "sold" ? <span className="inline-flex rounded-md bg-[#B42318] px-2.5 py-1 text-xs font-black tracking-widest text-white uppercase">Sold</span> : <span className="capitalize">{vehicle.status === "available" ? "Live" : vehicle.status}</span>}</td><td className="p-4 text-[#667586]">{new Date(vehicle.updated_at).toLocaleDateString("en-GB")}</td><td className="p-4"><div className="flex items-center justify-end gap-2">{["available", "reserved", "sold"].includes(vehicle.status) && <VehicleSoldToggle vehicleId={vehicle.id} vehicleName={`${vehicle.year} ${vehicle.make} ${vehicle.model}`} sold={vehicle.status === "sold"} action={setSaleVehicleSold} />}<AdminLoadingLink href={`/admin/inventory/${vehicle.id}`} className="inline-flex min-h-10 items-center rounded-lg border border-[#BCD6F6] px-3 text-xs font-extrabold text-[#1446A5] hover:bg-[#F1F7FF]" loadingTitle="Opening vehicle" loadingDescription="Please wait while the vehicle record opens.">View</AdminLoadingLink></div></td></tr>)}</tbody></table>
-      {!vehicles.length && <p className="p-8 text-center text-[#667586]">No vehicles match the current filters.</p>}
-    </div>
-    <AdminPagination path="/admin/inventory" page={page} pageSize={pageSize} totalItems={filtered.length} query={query} status={status} />
-    </AdminBulkActions>
-  </>;
+  const query = new URLSearchParams();
+  if (params.q) query.set("q", params.q);
+  if (params.status) query.set("status", params.status);
+  if (params.page) query.set("page", params.page);
+  const suffix = query.toString();
+  redirect(`/admin/exchange/stock${suffix ? `?${suffix}` : ""}`);
 }

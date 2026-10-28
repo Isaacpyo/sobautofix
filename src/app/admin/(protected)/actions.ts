@@ -16,6 +16,9 @@ import { articleCategories } from "@/lib/news/article";
 import { formatOpeningHours } from "@/lib/settings/opening-hours";
 import { normalizeRegistration } from "@/lib/vehicle/registration-format";
 import { safeAdminReturnTo } from "@/lib/auth/mfa";
+import { requireStaffAction } from "@/lib/exchange/staff";
+import { changeStockStatus } from "@/lib/exchange/admin/stock";
+import { ExchangeUserError, revalidatePublicStock } from "@/lib/exchange/admin/core";
 
 async function requireAdmin() {
   const auth = await getAdminUser({ requireMfa: false });
@@ -265,27 +268,33 @@ export async function saveNewSaleVehicle(_previous: NewVehicleSaveState, formDat
 export async function saveSaleVehicle(formData: FormData) {
   const saved = await persistSaleVehicle(formData);
   revalidateSaleVehicle(saved.slug);
-  redirect("/admin/inventory");
+  redirect(`/admin/exchange/stock/${saved.entityId}`);
 }
 
 async function persistSaleVehicle(formData: FormData) {
-  const { auth, client } = await requireAdmin();
+  // Vehicle Buying & Selling permissions apply to the legacy stock forms too.
+  const staff = await requireStaffAction("stock.edit");
+  const { client } = staff;
+  const auth = { user: { id: staff.userId } };
   const schema = z.object({ id: z.string().uuid().optional(), registration: z.string().max(9).optional(), slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/), make: z.string().min(1), model: z.string().min(1), derivative: z.string().optional(), year: z.coerce.number().int().min(1885).max(2100), mileage: z.coerce.number().int().nonnegative(), price: z.coerce.number().int().nonnegative(), fuelType: z.string().min(1), transmission: z.string().min(1), engineSize: z.string().optional(), colour: z.string().optional(), bodyType: z.string().optional(), description: z.string(), features: z.string().default(""), financeAvailable: z.coerce.boolean(), warrantyAvailable: z.coerce.boolean(), warrantyDescription: z.string().optional(), status: z.enum(["draft", "available", "reserved", "sold", "archived"]).optional(), inventoryIntent: z.enum(["draft", "publish"]).optional() });
   const parsed = schema.parse(Object.fromEntries(formData));
   const registration = parsed.registration ? normalizeRegistration(parsed.registration) : null;
   if (registration !== null && (registration.length < 2 || registration.length > 8)) throw new Error("Check the registration number and try again.");
-  const status = parsed.inventoryIntent === "publish" ? "available" : parsed.inventoryIntent === "draft" ? "draft" : parsed.status || "draft";
-  if (status !== "draft" && parsed.description.trim().length < 20) throw new Error("Add a vehicle description of at least 20 characters before publishing.");
+  const requestedStatus = parsed.inventoryIntent === "publish" ? "available" : parsed.inventoryIntent === "draft" ? "draft" : parsed.status || "draft";
+  if (requestedStatus !== "draft" && parsed.description.trim().length < 20) throw new Error("Add a vehicle description of at least 20 characters before publishing.");
   assertCustomerFacingContent({ ...parsed, registration: undefined });
   if (!parsed.id && registration) {
     const { data: existing } = await client.from("sale_vehicles").select("id").eq("registration", registration).maybeSingle();
     if (existing) throw new Error("This registration already exists in Vehicle Stock.");
   }
-  const previous = parsed.id ? (await client.from("sale_vehicles").select("status,sold_at").eq("id", parsed.id).maybeSingle()).data : null;
-  const soldAt = status === "sold" ? previous?.status === "sold" && previous.sold_at ? previous.sold_at : new Date().toISOString() : null;
-  const row = { registration, slug: parsed.slug, make: parsed.make, model: parsed.model, derivative: parsed.derivative || null, year: parsed.year, mileage: parsed.mileage, price: parsed.price, fuel_type: parsed.fuelType, transmission: parsed.transmission, engine_size: parsed.engineSize || null, colour: parsed.colour || null, body_type: parsed.bodyType || null, description: parsed.description.trim(), features: parsed.features.split("\n").map((value) => value.trim()).filter(Boolean), finance_available: parsed.financeAvailable, warranty: parsed.warrantyAvailable ? { available: true, description: parsed.warrantyDescription || undefined } : { available: false }, status, sold_at: soldAt };
+  const previous = parsed.id ? (await client.from("sale_vehicles").select("status,sold_at,price").eq("id", parsed.id).maybeSingle()).data : null;
+  if (previous && parsed.price !== previous.price && !staff.can("stock.price")) throw new Error("Only an owner or manager can change the advertised price.");
+  if (!previous && parsed.price > 0 && !staff.can("stock.price")) parsed.price = 0;
+  // New vehicles start as drafts; any status change goes through the stock
+  // status service below (publishing permission, readiness, reservations).
+  const status = previous?.status || "draft";
+  const row = { registration, slug: parsed.slug, make: parsed.make, model: parsed.model, derivative: parsed.derivative || null, year: parsed.year, mileage: parsed.mileage, price: parsed.price, fuel_type: parsed.fuelType, transmission: parsed.transmission, engine_size: parsed.engineSize || null, colour: parsed.colour || null, body_type: parsed.bodyType || null, description: parsed.description.trim(), features: parsed.features.split("\n").map((value) => value.trim()).filter(Boolean), finance_available: parsed.financeAvailable, warranty: parsed.warrantyAvailable ? { available: true, description: parsed.warrantyDescription || undefined } : { available: false }, ...(previous ? {} : { status })};
   let entityId = parsed.id;
-  const previousStatus = previous?.status || null;
   if (parsed.id) { const { error } = await client.from("sale_vehicles").update(row).eq("id", parsed.id); if (error) throw vehicleDatabaseError(error); } else { const { data, error } = await client.from("sale_vehicles").insert(row).select("id").single(); if (error) throw vehicleDatabaseError(error); entityId = data.id; }
   const photos = formData.getAll("photos").filter((value): value is File => value instanceof File && value.size > 0);
   if (photos.length > 8 || photos.reduce((total, file) => total + file.size, 0) > 32 * 1024 * 1024) throw new Error("Choose up to eight photos with a combined size under 32 MB.");
@@ -299,8 +308,8 @@ async function persistSaleVehicle(formData: FormData) {
     const { error: imageError } = await client.from("sale_vehicle_images").insert({ sale_vehicle_id: entityId, object_path: path, alt_text: alt, position });
     if (imageError) { await client.storage.from("vehicle-sales").remove([path]); throw new Error("The vehicle was saved, but a photo could not be added."); }
   }
-  const action = status === "sold" && previousStatus !== "sold" ? "mark_sold" : status === "available" && previousStatus !== "available" ? "publish" : parsed.id ? "update" : "create";
-  await audit(client, auth.user.id, action, "sale_vehicle", entityId!, { status, slug: parsed.slug, price: parsed.price, photoCount: photos.length });
+  await audit(client, auth.user.id, parsed.id ? "update" : "create", "sale_vehicle", entityId!, { status, slug: parsed.slug, price: parsed.price, photoCount: photos.length });
+  if (requestedStatus !== status) await changeStockStatus(staff, entityId!, requestedStatus, { source: "legacy_inventory_form" });
   return { entityId: entityId!, slug: parsed.slug };
 }
 
@@ -312,7 +321,10 @@ function vehicleDatabaseError(error: { code?: string }) {
 
 function friendlyVehicleSaveError(error: unknown) {
   if (error instanceof z.ZodError) return "Check the required vehicle and sales details, then try again.";
+  if (error instanceof ExchangeUserError) return error.message;
   if (error instanceof Error && [
+    "Only an owner or manager can change the advertised price.",
+    "You do not have permission to do that.",
     "This registration already exists in Vehicle Stock.",
     "Vehicle Stock needs its database update before vehicles can be saved.",
     "Vehicle could not be saved. Please check the details and try again.",
@@ -324,26 +336,24 @@ function friendlyVehicleSaveError(error: unknown) {
 }
 
 export async function setSaleVehicleSold(formData: FormData) {
-  const { auth, client } = await requireAdmin();
+  // The quick sold toggle uses the same status service as Vehicle Buying &
+  // Selling: publishing permission, readiness, and no bypassing reservations.
+  const staff = await requireStaffAction("stock.publish");
   const { id, sold } = z.object({ id: z.string().uuid(), sold: z.enum(["true", "false"]) }).parse(Object.fromEntries(formData));
-  const { data: vehicle } = await client.from("sale_vehicles").select("slug,status,sold_at").eq("id", id).is("deleted_at", null).maybeSingle();
-  if (!vehicle) throw new Error("Vehicle not found.");
-  const markSold = sold === "true";
-  // Keep the original sale date so the 90-day sold window is not restarted by a repeat click.
-  const row = markSold ? { status: "sold", sold_at: vehicle.status === "sold" && vehicle.sold_at ? vehicle.sold_at : new Date().toISOString() } : { status: "available", sold_at: null };
-  const { error } = await client.from("sale_vehicles").update(row).eq("id", id);
-  if (error) throw vehicleDatabaseError(error);
-  await audit(client, auth.user.id, markSold ? "mark_sold" : "publish", "sale_vehicle", id, { status: row.status, slug: vehicle.slug, previousStatus: vehicle.status });
-  revalidateSaleVehicle(vehicle.slug);
-  revalidatePath(`/admin/inventory/${id}`);
+  const result = await changeStockStatus(staff, id, sold === "true" ? "sold" : "available", { source: "sold_toggle" });
+  revalidateSaleVehicle(result.slug);
+  revalidatePath(`/admin/exchange/stock/${id}`);
 }
 
 function revalidateSaleVehicle(slug: string) {
-  revalidatePath("/cars-for-sale"); revalidatePath(`/cars-for-sale/${slug}`); revalidatePath("/admin/inventory"); revalidatePath("/sitemap.xml");
+  revalidatePublicStock(slug);
+  revalidatePath("/admin/exchange", "layout");
 }
 
 export async function uploadSaleVehicleImage(formData: FormData) {
-  const { auth, client } = await requireAdmin();
+  const staff = await requireStaffAction("stock.edit");
+  const { client } = staff;
+  const auth = { user: { id: staff.userId } };
   const vehicleId = z.string().uuid().parse(formData.get("vehicleId"));
   const alt = z.string().trim().min(5).max(180).parse(formData.get("alt"));
   const file = formData.get("file");
@@ -367,7 +377,9 @@ export async function uploadSaleVehicleImage(formData: FormData) {
 }
 
 export async function updateSaleVehicleImage(formData: FormData) {
-  const { auth, client } = await requireAdmin();
+  const staff = await requireStaffAction("stock.edit");
+  const { client } = staff;
+  const auth = { user: { id: staff.userId } };
   const parsed = z.object({ id: z.string().uuid(), vehicleId: z.string().uuid(), position: z.coerce.number().int().min(0).max(100), alt: z.string().trim().min(5).max(180) }).parse(Object.fromEntries(formData));
   assertCustomerFacingContent(parsed.alt);
   const { data } = await client.from("sale_vehicle_images").update({ position: parsed.position, alt_text: parsed.alt }).eq("id", parsed.id).eq("sale_vehicle_id", parsed.vehicleId).select("id").single();
@@ -377,7 +389,9 @@ export async function updateSaleVehicleImage(formData: FormData) {
 }
 
 export async function deleteSaleVehicleImage(formData: FormData) {
-  const { auth, client } = await requireAdmin();
+  const staff = await requireStaffAction("stock.edit");
+  const { client } = staff;
+  const auth = { user: { id: staff.userId } };
   const id = z.string().uuid().parse(formData.get("id"));
   const vehicleId = z.string().uuid().parse(formData.get("vehicleId"));
   const { data } = await client.from("sale_vehicle_images").select("object_path").eq("id", id).eq("sale_vehicle_id", vehicleId).single();
