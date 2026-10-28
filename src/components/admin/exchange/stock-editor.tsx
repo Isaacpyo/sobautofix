@@ -45,7 +45,7 @@ function SaveBar({ children }: { children: React.ReactNode }) {
 }
 
 export function ListingForm({ vehicle, canEditPrice }: { vehicle: SaleVehicle; canEditPrice: boolean }) {
-  return <ActionForm action={saveListingAction} hidden={{ vehicleId: vehicle.id }} aria-label="Listing details">
+  return <ActionForm action={saveListingAction} hidden={{ vehicleId: vehicle.id, updatedAt: vehicle.updatedAt }} aria-label="Listing details">
     <div className="grid gap-4 md:grid-cols-2">
       <VehicleMakeModelFields initialMake={vehicle.make} initialModel={vehicle.model} />
       <TextField name="derivative" label="Derivative" defaultValue={vehicle.derivative} maxLength={120} />
@@ -73,7 +73,7 @@ export function ListingForm({ vehicle, canEditPrice }: { vehicle: SaleVehicle; c
 }
 
 export function ConditionForm({ vehicle }: { vehicle: SaleVehicle }) {
-  return <ActionForm action={saveConditionAction} hidden={{ vehicleId: vehicle.id }} aria-label="Condition and disclosure">
+  return <ActionForm action={saveConditionAction} hidden={{ vehicleId: vehicle.id, updatedAt: vehicle.updatedAt }} aria-label="Condition and disclosure">
     <fieldset className="grid gap-4 md:grid-cols-2">
       <legend className="sr-only">Condition</legend>
       <SelectField name="listingCondition" label="Listing condition" defaultValue={vehicle.listingCondition} options={options(listingConditionLabels)} hint="A repair project must list its known faults." />
@@ -121,7 +121,7 @@ const statusHelp: Record<SaleVehicleStatus, string> = {
 export function StatusPanel({ vehicle, allowed }: { vehicle: SaleVehicle; allowed: Array<{ status: SaleVehicleStatus; blockedReason: string | null }> }) {
   const [choice, setChoice] = useState<SaleVehicleStatus | "">("");
   const selected = allowed.find((item) => item.status === choice);
-  return <ActionForm action={changeStockStatusAction} hidden={{ vehicleId: vehicle.id }} aria-label="Change status">
+  return <ActionForm action={changeStockStatusAction} hidden={{ vehicleId: vehicle.id, updatedAt: vehicle.updatedAt }} aria-label="Change status">
     <fieldset>
       <legend className="text-sm font-bold text-[#071127]">Move this vehicle to</legend>
       <div className="mt-2 grid gap-2 sm:grid-cols-2">{allowed.map((item) => <label key={item.status} className={`flex min-h-14 cursor-pointer items-start gap-3 rounded-xl border p-3 ${choice === item.status ? "border-[#1974E2] bg-[#EAF2FD]" : "border-[#D7E0E9] bg-white"} ${item.blockedReason ? "cursor-not-allowed bg-[#F8FAFC]" : ""}`}>

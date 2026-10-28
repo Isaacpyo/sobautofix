@@ -30,6 +30,15 @@ import {
 import { statusChangeColumns, statusChangeProblem } from "./stock-rules";
 
 const STOCK_SELECT = "*, sale_vehicle_images(*)";
+export const STOCK_CONFLICT_MESSAGE = "This vehicle was changed by someone else. Reload to see the latest.";
+
+/** Compare-and-set on updated_at: the update only applies if nobody saved since the form was loaded. */
+async function updateIfUnchanged(staff: StaffContext, vehicleId: string, expectedUpdatedAt: string | null | undefined, values: Record<string, unknown>, message: string) {
+  let query = staff.client.from("sale_vehicles").update(values).eq("id", vehicleId);
+  if (expectedUpdatedAt) query = query.eq("updated_at", expectedUpdatedAt);
+  const rows = must(await query.select("id"), message);
+  if (!rows?.length) throw new ExchangeUserError(STOCK_CONFLICT_MESSAGE);
+}
 export const saleStatusSchema = z.enum(["draft", "preparation", "available", "reserved", "sold", "archived"]);
 
 export type StockListItem = {
@@ -190,7 +199,7 @@ async function activeSaleState(client: StaffClient, vehicleId: string) {
 // Status: the single service function for every stock status change.
 // ---------------------------------------------------------------------------
 
-export async function changeStockStatus(staff: StaffContext, vehicleId: string, to: SaleVehicleStatus, options: { reason?: string | null; source?: string } = {}) {
+export async function changeStockStatus(staff: StaffContext, vehicleId: string, to: SaleVehicleStatus, options: { reason?: string | null; source?: string; expectedUpdatedAt?: string | null } = {}) {
   const loaded = await loadStockVehicle(staff.client, vehicleId);
   if (!loaded) throw new ExchangeUserError("This vehicle no longer exists.");
   const { vehicle } = loaded;
@@ -199,9 +208,11 @@ export async function changeStockStatus(staff: StaffContext, vehicleId: string, 
   const problem = statusChangeProblem({ from: vehicle.status, to, can: staff.can, readiness, ...saleState });
   if (problem) throw new ExchangeUserError(problem);
   const columns = statusChangeColumns(vehicle.status, to, { listedAt: vehicle.listedAt, soldAt: vehicle.soldAt });
-  const result = await staff.client.from("sale_vehicles").update(columns).eq("id", vehicleId).eq("status", vehicle.status).select("id");
-  const rows = must(result, "The status could not be changed.");
-  if (!rows?.length) throw new ExchangeUserError("This vehicle changed while you were working. Refresh the page and try again.");
+  if (options.expectedUpdatedAt && options.expectedUpdatedAt !== vehicle.updatedAt) throw new ExchangeUserError(STOCK_CONFLICT_MESSAGE);
+  let query = staff.client.from("sale_vehicles").update(columns).eq("id", vehicleId).eq("status", vehicle.status);
+  if (options.expectedUpdatedAt) query = query.eq("updated_at", options.expectedUpdatedAt);
+  const rows = must(await query.select("id"), "The status could not be changed.");
+  if (!rows?.length) throw new ExchangeUserError(STOCK_CONFLICT_MESSAGE);
   await auditStaffAction(staff, to === "available" && !vehicle.listedAt ? "publish" : to === "sold" ? "mark_sold" : "status_change", "sale_vehicle", vehicleId, { from: vehicle.status, to, slug: vehicle.slug, reason: options.reason || undefined, source: options.source });
   return { slug: vehicle.slug, from: vehicle.status, to, label: stockStatusLabels[to] };
 }
@@ -232,7 +243,7 @@ export const listingSchema = z.object({
   warrantyDescription: optionalText("warranty wording", 1000),
 });
 
-export async function saveListing(staff: StaffContext, vehicleId: string, input: z.infer<typeof listingSchema>) {
+export async function saveListing(staff: StaffContext, vehicleId: string, input: z.infer<typeof listingSchema>, expectedUpdatedAt?: string | null) {
   assertCan(staff, "stock.edit");
   const loaded = await loadStockVehicle(staff.client, vehicleId);
   if (!loaded) throw new ExchangeUserError("This vehicle no longer exists.");
@@ -253,7 +264,7 @@ export async function saveListing(staff: StaffContext, vehicleId: string, input:
     doors: input.doors, seats: input.seats, description: input.description, features: input.features, finance_available: input.financeAvailable,
     warranty: input.warrantyAvailable ? { available: true, description: input.warrantyDescription || undefined } : { available: false },
   };
-  must(await staff.client.from("sale_vehicles").update(row).eq("id", vehicleId), "The listing could not be saved.");
+  await updateIfUnchanged(staff, vehicleId, expectedUpdatedAt, row, "The listing could not be saved.");
   const changed = Object.keys(row).filter((key) => key !== "registration" && JSON.stringify((loaded.raw as Record<string, unknown>)[key] ?? null) !== JSON.stringify((row as Record<string, unknown>)[key] ?? null));
   await auditStaffAction(staff, input.price !== current.price ? "price_change" : "update_listing", "sale_vehicle", vehicleId, { slug: current.slug, changed, ...(input.price !== current.price ? { previousPrice: current.price, price: input.price } : {}) });
   return { slug: current.slug };
@@ -292,7 +303,7 @@ export const conditionSchema = z.object({
   afterSales: optionalText("after-sales", 2000),
 });
 
-export async function saveCondition(staff: StaffContext, vehicleId: string, input: z.infer<typeof conditionSchema>) {
+export async function saveCondition(staff: StaffContext, vehicleId: string, input: z.infer<typeof conditionSchema>, expectedUpdatedAt?: string | null) {
   assertCan(staff, "stock.edit");
   const loaded = await loadStockVehicle(staff.client, vehicleId);
   if (!loaded) throw new ExchangeUserError("This vehicle no longer exists.");
@@ -306,7 +317,7 @@ export async function saveCondition(staff: StaffContext, vehicleId: string, inpu
     service_history: input.serviceHistory, service_history_notes: input.serviceHistoryNotes, previous_owners: input.previousOwners, keys_count: input.keysCount,
     history_check_summary: input.historyCheckSummary, history_checked_on: input.historyCheckedOn, video_url: input.videoUrl, collection_delivery: input.collectionDelivery, after_sales: input.afterSales,
   };
-  must(await staff.client.from("sale_vehicles").update(row).eq("id", vehicleId), "The condition details could not be saved.");
+  await updateIfUnchanged(staff, vehicleId, expectedUpdatedAt, row, "The condition details could not be saved.");
   await auditStaffAction(staff, "update_disclosures", "sale_vehicle", vehicleId, { slug: loaded.vehicle.slug, listingCondition: input.listingCondition, writeOffStatus: input.writeOffStatus, knownFaults: input.knownFaults.length });
   return { slug: loaded.vehicle.slug };
 }

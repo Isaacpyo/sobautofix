@@ -45,11 +45,13 @@ export async function createStockDraftAction(_previous: NewStockDraftState, form
 }
 
 const idOnly = z.object({ vehicleId: uuidField("vehicle") });
+/** Stock edits send the updated_at they loaded (compare-and-set). */
+const editTarget = z.object({ vehicleId: uuidField("vehicle"), updatedAt: z.string().min(10, "Reload the page and try again.") });
 
 export async function saveListingAction(_previous: FormState, formData: FormData): Promise<FormState> {
   return runStaffAction("stock.edit", formData, async (staff) => {
-    const { vehicleId } = parseForm(idOnly, formData);
-    const { slug } = await saveListing(staff, vehicleId, parseForm(listingSchema, formData));
+    const { vehicleId, updatedAt } = parseForm(editTarget, formData);
+    const { slug } = await saveListing(staff, vehicleId, parseForm(listingSchema, formData), updatedAt);
     revalidateExchangeAdmin();
     revalidatePublicStock(slug);
     return success("Listing saved.");
@@ -58,21 +60,21 @@ export async function saveListingAction(_previous: FormState, formData: FormData
 
 export async function saveConditionAction(_previous: FormState, formData: FormData): Promise<FormState> {
   return runStaffAction("stock.edit", formData, async (staff) => {
-    const { vehicleId } = parseForm(idOnly, formData);
-    const { slug } = await saveCondition(staff, vehicleId, parseForm(conditionSchema, formData));
+    const { vehicleId, updatedAt } = parseForm(editTarget, formData);
+    const { slug } = await saveCondition(staff, vehicleId, parseForm(conditionSchema, formData), updatedAt);
     revalidateExchangeAdmin();
     revalidatePublicStock(slug);
     return success("Condition and disclosures saved.");
   });
 }
 
-const statusForm = z.object({ vehicleId: uuidField("vehicle"), status: saleStatusSchema, reason: optionalText("reason", 300) });
+const statusForm = z.object({ vehicleId: uuidField("vehicle"), status: saleStatusSchema, reason: optionalText("reason", 300), updatedAt: z.string().optional() });
 
 export async function changeStockStatusAction(_previous: FormState, formData: FormData): Promise<FormState> {
   // The service checks the exact permission for the transition (edit vs publish).
   return runStaffAction("exchange.view", formData, async (staff) => {
     const input = parseForm(statusForm, formData);
-    const result = await changeStockStatus(staff, input.vehicleId, input.status, { reason: input.reason, source: "stock_editor" });
+    const result = await changeStockStatus(staff, input.vehicleId, input.status, { reason: input.reason, source: "stock_editor", expectedUpdatedAt: input.updatedAt });
     revalidateExchangeAdmin();
     revalidatePublicStock(result.slug);
     return success(`Status changed to ${result.label}.`);

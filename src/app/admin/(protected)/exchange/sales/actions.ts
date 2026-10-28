@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { success, type FormState } from "@/components/admin/exchange/form-state";
 import { parseForm, revalidateExchangeAdmin, revalidatePublicStock, runStaffAction, uuidField } from "@/lib/exchange/admin/core";
-import { cancelSale, cancelSchema, completeSale, reserveSchema, reserveVehicle, saleUpdateSchema, updateSale } from "@/lib/exchange/admin/handover";
+import { cancelSale, cancelSchema, completeSale, loadChecklistFromSettings, reserveSchema, reserveVehicle, saleUpdateSchema, setChecklistItem, updateSale } from "@/lib/exchange/admin/handover";
 import { salesUpdateSchema, updateSalesEnquiry } from "@/lib/exchange/admin/sales";
 
 export async function updateSalesEnquiryAction(_previous: FormState, formData: FormData): Promise<FormState> {
@@ -55,5 +55,23 @@ export async function cancelSaleAction(_previous: FormState, formData: FormData)
     revalidateExchangeAdmin();
     revalidatePublicStock(slug);
     return success("Reservation cancelled. The vehicle is available again.");
+  });
+}
+
+export async function setChecklistItemAction(_previous: FormState, formData: FormData): Promise<FormState> {
+  return runStaffAction("sales.manage", formData, async (staff) => {
+    const input = parseForm(saleId.extend({ index: z.coerce.number().int().min(0).max(50), done: z.enum(["true", "false"]) }), formData);
+    await setChecklistItem(staff, input.saleId, input.index, input.done === "true");
+    revalidateExchangeAdmin();
+    return success(input.done === "true" ? "Step ticked." : "Step unticked.");
+  });
+}
+
+export async function loadChecklistAction(_previous: FormState, formData: FormData): Promise<FormState> {
+  return runStaffAction("sales.manage", formData, async (staff) => {
+    const { saleId: id } = parseForm(saleId, formData);
+    await loadChecklistFromSettings(staff, id);
+    revalidateExchangeAdmin();
+    return success("Checklist added from Settings.");
   });
 }

@@ -12,6 +12,7 @@ import { BackLink } from "@/components/ui/back-link";
 import { listStaff } from "@/lib/exchange/admin/core";
 import { getSalesEnquiry, manualStages } from "@/lib/exchange/admin/sales";
 import { formatPence } from "@/lib/exchange/margin";
+import { getExchangePrivateSettings } from "@/lib/exchange/settings";
 import { requireStaffPage } from "@/lib/exchange/staff";
 import { saveExchangeNoteAction, sendExchangeReplyAction } from "../../thread-actions";
 import { updateSalesEnquiryAction } from "../actions";
@@ -20,7 +21,7 @@ export default async function SalesEnquiryPage({ params }: { params: Promise<{ e
   const { staff, allowed } = await requireStaffPage("sales.manage");
   if (!allowed) return <NoAccess area="sales enquiries" />;
   const { enquiryId } = await params;
-  const [detail, staffList] = await Promise.all([getSalesEnquiry(staff, enquiryId), listStaff(staff.client)]);
+  const [detail, staffList, { reservationHoldDays: holdDays }] = await Promise.all([getSalesEnquiry(staff, enquiryId), listStaff(staff.client), getExchangePrivateSettings()]);
   if (!detail) notFound();
   const { enquiry } = detail;
   const vehicle = enquiry.sale_vehicles;
@@ -67,7 +68,7 @@ export default async function SalesEnquiryPage({ params }: { params: Promise<{ e
             <p className="text-sm text-[#586575]">{vehicle.stock_reference} · {formatPounds(vehicle.price)} · <span className="capitalize">{vehicle.status === "archived" ? "Withdrawn" : vehicle.status}</span></p>
             {ownSale ? <div className="mt-3 rounded-lg bg-[#F4F7FA] p-3 text-sm"><p className="flex flex-wrap items-center gap-2 font-bold text-[#071127]">Reserved for this customer <Badge tone={vehicleSaleStatusTones[ownSale.status as keyof typeof vehicleSaleStatusTones]}>{vehicleSaleStatusLabels[ownSale.status as keyof typeof vehicleSaleStatusLabels]}</Badge></p><p className="text-[#586575]">Agreed {formatPence(ownSale.agreed_price_pence)}</p><Link href={`/admin/exchange/handover/${ownSale.id}`} className="mt-1 inline-flex min-h-10 items-center font-extrabold text-[#1462C4]">Open in Sales &amp; Handover</Link></div>
               : reservedElsewhere ? <div className="mt-3"><Notice>This vehicle is reserved for another customer.</Notice></div>
-              : vehicle.status === "available" ? <div className="mt-4 border-t border-[#EEF2F6] pt-4"><h4 className="mb-2 text-sm font-extrabold text-[#071127]">Reserve this vehicle</h4><ReserveForm vehicle={{ id: vehicle.id, title: `${vehicle.year} ${vehicle.make} ${vehicle.model}`, price: vehicle.price }} enquiryId={enquiry.id} canChangePrice={staff.can("stock.price")} partExchangeOptions={detail.partExchangeOptions} narrow /></div>
+              : vehicle.status === "available" ? <div className="mt-4 border-t border-[#EEF2F6] pt-4"><h4 className="mb-2 text-sm font-extrabold text-[#071127]">Reserve this vehicle</h4><ReserveForm vehicle={{ id: vehicle.id, title: `${vehicle.year} ${vehicle.make} ${vehicle.model}`, price: vehicle.price }} enquiryId={enquiry.id} canChangePrice={staff.can("stock.price")} canRecordPayment={staff.can("finance.edit")} holdDays={holdDays} partExchangeOptions={detail.partExchangeOptions} narrow /></div>
               : <p className="mt-3 text-sm text-[#586575]">This vehicle is not available to reserve.</p>}
           </> : <p className="text-sm text-[#586575]">No vehicle is linked to this enquiry.</p>}
         </Card>

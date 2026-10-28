@@ -47,7 +47,7 @@ export default async function ExchangeStockPage({ searchParams }: { searchParams
             <td className="px-4 py-3"><StockStatusBadge status={vehicle.status} /></td>
             <td className="px-4 py-3 text-[#344054]">{daysInStock} {daysInStock === 1 ? "day" : "days"}</td>
             <td className="px-4 py-3"><ReadinessBadge readiness={readiness} status={vehicle.status} /></td>
-            <td className="px-4 py-3"><div className="flex items-center justify-end gap-2">{canPublish && <StockSoldToggle vehicle={{ id: vehicle.id, status: vehicle.status, name: vehicleTitle(vehicle) }} hasActiveSale={hasActiveSale} compact />}<AdminLoadingLink href={`/admin/exchange/stock/${vehicle.id}`} className="inline-flex min-h-10 items-center rounded-lg border border-[#BCD6F6] px-3 text-xs font-extrabold text-[#1446A5] hover:bg-[#F1F7FF]" loadingTitle="Opening vehicle" loadingDescription="Please wait while the vehicle record opens.">Open<span className="sr-only"> {vehicleTitle(vehicle)}</span></AdminLoadingLink></div></td>
+            <td className="px-4 py-3"><div className="flex items-center justify-end gap-2">{canPublish && <StockSoldToggle vehicle={{ id: vehicle.id, status: vehicle.status, name: vehicleTitle(vehicle), updatedAt: vehicle.updatedAt }} hasActiveSale={hasActiveSale} compact />}<AdminLoadingLink href={`/admin/exchange/stock/${vehicle.id}`} className="inline-flex min-h-10 items-center rounded-lg border border-[#BCD6F6] px-3 text-xs font-extrabold text-[#1446A5] hover:bg-[#F1F7FF]" loadingTitle="Opening vehicle" loadingDescription="Please wait while the vehicle record opens.">Open<span className="sr-only"> {vehicleTitle(vehicle)}</span></AdminLoadingLink></div></td>
           </tr>)}</tbody>
         </table>
       </div>
@@ -61,7 +61,7 @@ export default async function ExchangeStockPage({ searchParams }: { searchParams
           </div>
         </a>
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-[#EEF2F6] pt-2"><span className="text-xs font-semibold text-[#586575]">{daysInStock} {daysInStock === 1 ? "day" : "days"} in stock</span><ReadinessBadge readiness={readiness} status={vehicle.status} /></div>
-        {canPublish && (vehicle.status === "available" || vehicle.status === "sold") && <div className="mt-2"><StockSoldToggle vehicle={{ id: vehicle.id, status: vehicle.status, name: vehicleTitle(vehicle) }} hasActiveSale={hasActiveSale} /></div>}
+        {canPublish && (vehicle.status === "available" || vehicle.status === "sold") && <div className="mt-2"><StockSoldToggle vehicle={{ id: vehicle.id, status: vehicle.status, name: vehicleTitle(vehicle), updatedAt: vehicle.updatedAt }} hasActiveSale={hasActiveSale} /></div>}
       </li>)}</ul>
       <AdminPagination path="/admin/exchange/stock" page={page} pageSize={pageSize} totalItems={filtered.length} query={query} status={status} additionalParams={{ sort: sort === "updated" ? "" : sort }} />
     </>}

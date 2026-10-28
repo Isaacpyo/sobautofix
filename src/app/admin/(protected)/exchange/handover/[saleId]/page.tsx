@@ -1,14 +1,14 @@
-import { ArrowLeftRight, CalendarPlus, CheckCircle2 } from "lucide-react";
+import { ArrowLeftRight, CalendarPlus, CheckCircle2, Circle } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ActionForm, CheckboxField, ConfirmButton, MoneyField, SelectField, SubmitButton, TextArea, TextField } from "@/components/admin/exchange/forms";
 import { formatDate, formatDateTime, handoverMethodLabels, label, paymentStatuses, paymentStatusLabels, penceToInput, submissionStatusLabels, toLocalInput, vehicleSaleStatusLabels, vehicleSaleStatusTones, type SubmissionStatus } from "@/components/admin/exchange/labels";
 import { Badge, Card, KeyValues, LinkButton, NoAccess, Notice } from "@/components/admin/exchange/ui";
 import { BackLink } from "@/components/ui/back-link";
-import { getSale } from "@/lib/exchange/admin/handover";
+import { checklistComplete, getSale } from "@/lib/exchange/admin/handover";
 import { formatPence } from "@/lib/exchange/margin";
 import { requireStaffPage } from "@/lib/exchange/staff";
-import { cancelSaleAction, completeSaleAction, updateSaleAction } from "../../sales/actions";
+import { cancelSaleAction, completeSaleAction, loadChecklistAction, setChecklistItemAction, updateSaleAction } from "../../sales/actions";
 
 export default async function HandoverDetailPage({ params }: { params: Promise<{ saleId: string }> }) {
   const { staff, allowed } = await requireStaffPage("sales.manage");
@@ -22,6 +22,9 @@ export default async function HandoverDetailPage({ params }: { params: Promise<{
   const active = ["reserved", "awaiting_payment", "ready_for_handover"].includes(sale.status);
   const balance = sale.agreed_price_pence - (sale.part_exchange_allowance_pence ?? 0) - sale.amount_paid_pence;
   const canPrice = staff.can("stock.price");
+  const canPay = staff.can("finance.edit");
+  const checklist = sale.handover_checklist || [];
+  const ready = checklistComplete(checklist);
 
   return <>
     <BackLink href="/admin/exchange/handover">Back to Sales &amp; Handover</BackLink>
@@ -44,12 +47,12 @@ export default async function HandoverDetailPage({ params }: { params: Promise<{
             <div className="grid gap-4 md:grid-cols-2">
               <SelectField name="status" label="Stage" defaultValue={sale.status} options={(["reserved", "awaiting_payment", "ready_for_handover"] as const).map((value) => ({ value, label: vehicleSaleStatusLabels[value] }))} />
               <MoneyField name="agreedPrice" label="Agreed price" defaultValue={penceToInput(sale.agreed_price_pence)} required readOnly={!canPrice} hint={canPrice ? undefined : "Only an owner or manager can change the agreed price."} />
-              <MoneyField name="deposit" label="Deposit" defaultValue={penceToInput(sale.deposit_pence)} />
-              <MoneyField name="amountPaid" label="Total paid so far" defaultValue={penceToInput(sale.amount_paid_pence)} hint="Including the deposit." />
-              <SelectField name="paymentStatus" label="Payment status" defaultValue={sale.payment_status} options={paymentStatuses.map((value) => ({ value, label: paymentStatusLabels[value] }))} />
-              <TextField name="paymentMethod" label="Payment method" defaultValue={sale.payment_method} />
+              <MoneyField name="deposit" label="Deposit" defaultValue={penceToInput(sale.deposit_pence)} readOnly={!canPay} />
+              <MoneyField name="amountPaid" label="Total paid so far" defaultValue={penceToInput(sale.amount_paid_pence)} hint={canPay ? "Including the deposit." : "Only an owner or manager records payments."} readOnly={!canPay} />
+              {canPay ? <SelectField name="paymentStatus" label="Payment status" defaultValue={sale.payment_status} options={paymentStatuses.map((value) => ({ value, label: paymentStatusLabels[value] }))} hint="Recorded only. Nothing is charged online." /> : <><input type="hidden" name="paymentStatus" value={sale.payment_status} /><TextField name="paymentStatusLabel" label="Payment status" defaultValue={label(paymentStatusLabels, sale.payment_status)} readOnly /></>}
+              <TextField name="paymentMethod" label="Payment method" defaultValue={sale.payment_method} readOnly={!canPay} />
               <TextField name="reservationExpiresAt" label="Reservation ends" type="datetime-local" defaultValue={toLocalInput(sale.reservation_expires_at)} />
-              {sale.part_exchange_submission_id ? <MoneyField name="partExchangeAllowance" label="Part-exchange allowance" defaultValue={penceToInput(sale.part_exchange_allowance_pence)} /> : <div className="hidden md:block" />}
+              {sale.part_exchange_submission_id ? <MoneyField name="partExchangeAllowance" label="Part-exchange allowance" defaultValue={penceToInput(sale.part_exchange_allowance_pence)} readOnly={!canPay} /> : <div className="hidden md:block" />}
               <SelectField name="handoverMethod" label="Handover" defaultValue={sale.handover_method} options={Object.entries(handoverMethodLabels).map(([value, text]) => ({ value, label: text }))} />
               <TextField name="handoverAt" label="Handover date and time" type="datetime-local" defaultValue={toLocalInput(sale.handover_at)} />
               <TextArea className="md:col-span-2" name="handoverNotes" label="Handover notes" rows={3} defaultValue={sale.handover_notes} hint="Staff only." />
@@ -74,16 +77,24 @@ export default async function HandoverDetailPage({ params }: { params: Promise<{
           <Link href={`/admin/exchange/buying/${detail.partExchange.id}`} className="font-bold text-[#1462C4]">{detail.partExchange.reference} · {[detail.partExchange.year, detail.partExchange.make, detail.partExchange.model].filter(Boolean).join(" ")}</Link>
           <p className="text-sm text-[#586575]">{submissionStatusLabels[detail.partExchange.status as SubmissionStatus] || detail.partExchange.status}{sale.part_exchange_allowance_pence != null ? ` · allowance ${formatPence(sale.part_exchange_allowance_pence)}` : ""}</p>
         </Card>}
-        {active && <Card title="Complete the sale" description="Do this at handover, once payment is in full. The vehicle is marked Sold on the website straight away.">
-          {sale.payment_status === "paid_in_full"
-            ? <ActionForm action={completeSaleAction} hidden={{ saleId: sale.id }}><ConfirmButton variant="primary" tone="warning" className="w-full" title="Complete this sale?" message={`Record the ${title} as sold to this customer for ${formatPence(sale.agreed_price_pence)}? The listing shows a sold banner for 90 days.`} confirmLabel="Complete sale"><CheckCircle2 size={16} aria-hidden="true" />Complete sale</ConfirmButton></ActionForm>
-            : <Notice tone="info">Set the payment status to Paid in full first.</Notice>}
+        <Card title="Handover checklist" description="Steps from Settings. Each tick records who did it and when.">
+          {checklist.length ? <ol className="grid gap-2">{checklist.map((item, index) => <li key={`${item.label}-${index}`} className="flex items-start justify-between gap-3 rounded-lg border border-[#E4EAF0] p-3">
+            <div className="flex min-w-0 items-start gap-2">{item.done ? <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-[#067647]" aria-hidden="true" /> : <Circle size={18} className="mt-0.5 shrink-0 text-[#98A2B3]" aria-hidden="true" />}<div className="min-w-0"><p className={`text-sm font-bold ${item.done ? "text-[#344054]" : "text-[#071127]"}`}>{item.label}<span className="sr-only">{item.done ? " (done)" : " (not done)"}</span></p>{item.done && <p className="text-xs text-[#586575]">{item.doneByName || "Staff"} · {formatDateTime(item.doneAt)}</p>}</div></div>
+            {active && <ActionForm action={setChecklistItemAction} hidden={{ saleId: sale.id, index: String(index), done: item.done ? "false" : "true" }} successMessage={false}><SubmitButton variant={item.done ? "secondary" : "primary"} className="min-h-10 px-3 text-xs" pendingLabel="…">{item.done ? "Untick" : "Tick"}<span className="sr-only"> {item.label}</span></SubmitButton></ActionForm>}
+          </li>)}</ol> : detail.settingsChecklist.length && active
+            ? <ActionForm action={loadChecklistAction} hidden={{ saleId: sale.id }}><Notice tone="info">This sale was reserved before a checklist was set up.</Notice><div className="mt-2 flex justify-end"><SubmitButton variant="secondary">Add the checklist from Settings</SubmitButton></div></ActionForm>
+            : <Notice tone="info">No handover checklist has been set up in Settings, so there are no steps to tick. {staff.can("settings.manage") ? <Link href="/admin/exchange/settings#handover" className="font-extrabold underline">Add the steps in Settings</Link> : "Ask the owner to add them in Settings."}</Notice>}
+        </Card>
+        {active && <Card title="Complete the sale" description="An explicit step at handover. The vehicle is marked Sold on the website straight away.">
+          {ready
+            ? <ActionForm action={completeSaleAction} hidden={{ saleId: sale.id }}><ConfirmButton variant="primary" tone="warning" className="w-full" title="Complete this sale?" message={`Record the ${title} as sold to this customer for ${formatPence(sale.agreed_price_pence)}? The listing shows a sold banner for 90 days.${sale.payment_status !== "paid_in_full" ? ` Payment is recorded as "${label(paymentStatusLabels, sale.payment_status)}", not paid in full.` : ""}`} confirmLabel="Complete sale"><CheckCircle2 size={16} aria-hidden="true" />Complete sale</ConfirmButton></ActionForm>
+            : <Notice tone="info">Tick every handover checklist step to complete the sale.</Notice>}
         </Card>}
         {active && <Card title="Cancel the reservation" description="The vehicle goes back to Available on the website.">
           <ActionForm action={cancelSaleAction} hidden={{ saleId: sale.id }}>
             <TextArea name="reason" label="Reason" rows={2} required />
             <CheckboxField className="mt-3" name="markLost" label="The buyer is no longer interested" hint="Marks the sales enquiry as Lost." />
-            <div className="mt-3 flex justify-end"><ConfirmButton title="Cancel this reservation?" message="The vehicle becomes Available again and can be reserved by someone else. Any deposit refund is handled outside this system." confirmLabel="Cancel reservation">Cancel reservation</ConfirmButton></div>
+            <div className="mt-3 flex justify-end"><ConfirmButton title="Cancel this reservation?" message="The vehicle becomes Available again on the website and can be reserved by someone else. This system does not take or refund payments." confirmLabel="Cancel reservation">Cancel reservation</ConfirmButton></div>
           </ActionForm>
         </Card>}
         {sale.status === "completed" && <Notice tone="success">Sale completed {formatDate(sale.completed_at)}. The vehicle is marked as sold.</Notice>}
