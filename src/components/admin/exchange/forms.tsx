@@ -53,7 +53,22 @@ export function ActionForm({ action, children, className, hidden, successMessage
       {children}
       <FormMessage show={successMessage || state.status === "error"} />
     </form>
+    {!successMessage && <Toast state={state} />}
   </FormContext.Provider>;
+}
+
+/** Brief confirmation for compact controls (row buttons) that have no room for an inline message. */
+function Toast({ state }: { state: FormState }) {
+  const [visible, setVisible] = useState<FormState | null>(null);
+  useEffect(() => {
+    if (state.status !== "success" || !state.message) return;
+    setVisible(state);
+    const timer = window.setTimeout(() => setVisible(null), 4000);
+    return () => window.clearTimeout(timer);
+  }, [state]);
+  return <div aria-live="polite" role="status" className="pointer-events-none fixed inset-x-4 bottom-[calc(64px+env(safe-area-inset-bottom)+16px)] z-[90] flex justify-center lg:inset-x-auto lg:right-6 lg:bottom-6">
+    {visible && <p className="pointer-events-auto flex items-center gap-2 rounded-xl bg-[#071127] px-4 py-3 text-sm font-bold text-white shadow-2xl"><CheckCircle2 size={17} className="text-[#6CE9A6]" aria-hidden="true" />{visible.message}</p>}
+  </div>;
 }
 
 export function FormMessage({ show = true }: { show?: boolean }) {

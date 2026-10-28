@@ -82,16 +82,18 @@ export function StatTile({ label, value, support, href, tone = "default", icon: 
     <p className="mt-2 text-3xl font-extrabold text-[#071127]">{value}</p>
     {support && <p className="mt-1 text-xs font-semibold text-[#667586]">{support}</p>}
   </>;
-  const className = cn("block rounded-xl border bg-white p-4 transition", tone === "warning" ? "border-amber-200" : "border-[#E4EAF0]", href && "hover:-translate-y-0.5 hover:border-[#1974E2]/45 hover:shadow-[0_10px_24px_rgba(7,17,39,0.08)] focus-visible:outline-3 focus-visible:outline-[#1974E2]/50");
+  const className = cn("block rounded-xl border bg-white p-4 transition", tone === "warning" ? "border-amber-200" : "border-[#E4EAF0]", href && "hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 hover:border-[#1974E2]/45 hover:shadow-[0_10px_24px_rgba(7,17,39,0.08)] focus-visible:outline-3 focus-visible:outline-[#1974E2]/50");
   return href ? <Link href={href} className={className}>{body}</Link> : <div className={className}>{body}</div>;
 }
 
+const pressed = " active:translate-y-px active:shadow-none motion-reduce:active:translate-y-0 aria-[busy=true]:cursor-progress";
+
 export const buttonStyles = {
-  primary: "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#1974E2] px-4 text-sm font-extrabold text-white transition hover:bg-[#1462C4] disabled:cursor-not-allowed disabled:opacity-50",
-  secondary: "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#C9D5E2] bg-white px-4 text-sm font-extrabold text-[#071127] transition hover:border-[#1974E2] hover:text-[#1462C4] disabled:cursor-not-allowed disabled:opacity-50",
-  dark: "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#071127] px-4 text-sm font-extrabold text-white transition hover:bg-[#1B2740] disabled:cursor-not-allowed disabled:opacity-50",
-  danger: "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 text-sm font-extrabold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50",
-  dangerSolid: "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#B42318] px-4 text-sm font-extrabold text-white transition hover:bg-[#912018] disabled:cursor-not-allowed disabled:opacity-50",
+  primary: "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#1974E2] px-4 text-sm font-extrabold text-white transition hover:bg-[#1462C4] disabled:cursor-not-allowed disabled:opacity-50" + pressed,
+  secondary: "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#C9D5E2] bg-white px-4 text-sm font-extrabold text-[#071127] transition hover:border-[#1974E2] hover:text-[#1462C4] disabled:cursor-not-allowed disabled:opacity-50" + pressed,
+  dark: "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#071127] px-4 text-sm font-extrabold text-white transition hover:bg-[#1B2740] disabled:cursor-not-allowed disabled:opacity-50" + pressed,
+  danger: "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 text-sm font-extrabold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50" + pressed,
+  dangerSolid: "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#B42318] px-4 text-sm font-extrabold text-white transition hover:bg-[#912018] disabled:cursor-not-allowed disabled:opacity-50" + pressed,
   link: "inline-flex min-h-11 items-center gap-1.5 text-sm font-extrabold text-[#1462C4] underline-offset-4 hover:underline",
 } as const;
 
