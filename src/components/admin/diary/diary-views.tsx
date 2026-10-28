@@ -1,8 +1,10 @@
 import { CalendarPlus } from "lucide-react";
 import Link from "next/link";
 import { DiaryEntryCard, StatusBadge } from "@/components/admin/diary/diary-badges";
+import { GridScroller } from "@/components/admin/diary/grid-scroller";
+import { gridHours, hoursConfigured, type DayHours, type WeeklyHours } from "@/lib/diary/hours";
 import { entriesOnDate, groupByStartDate, layoutDay, visibleHours, type PositionedEntry } from "@/lib/diary/layout";
-import { dateKeysInRange, formatDateKeyLong, londonDayLengthHours, londonTimeKey, type DiaryRange } from "@/lib/diary/time";
+import { dateKeysInRange, formatDateKeyLong, londonDayLengthHours, londonTimeKey, weekdayIndex, type DiaryRange } from "@/lib/diary/time";
 import { diaryTypeLabels, diaryTypeStyles, type DiaryEntry } from "@/lib/diary/types";
 import { cn } from "@/lib/utils";
 
@@ -65,15 +67,19 @@ export function AgendaView({ range, entries, today, newHref }: { range: DiaryRan
 const HOUR_HEIGHT = 56;
 
 /** Day and week views: hour rows with entries placed by London wall-clock time. */
-export function TimeGridView({ range, entries, today, dayHref, newHref }: { range: DiaryRange; entries: DiaryEntry[]; today: string; dayHref: (date: string) => string; newHref: (date: string) => string }) {
+export function TimeGridView({ range, entries, today, dayHref, newHref, openingHours }: { range: DiaryRange; entries: DiaryEntry[]; today: string; dayHref: (date: string) => string; newHref: (date: string) => string; openingHours: WeeklyHours }) {
   const days = dateKeysInRange(range.start, range.end);
   const layouts = new Map(days.map((date) => [date, layoutDay(entries, date)]));
-  const { from, to } = visibleHours([...layouts.values()].flat());
+  const positioned = [...layouts.values()].flat();
+  // Configured opening hours set the span; without them the day is shown in full.
+  const { from, to } = visibleHours(positioned, gridHours(openingHours));
   const hours = Array.from({ length: to - from }, (_, index) => from + index);
   const single = days.length === 1;
+  const firstMinute = positioned.length ? Math.min(...positioned.map((item) => item.top)) : null;
+  const startAt = firstMinute !== null ? Math.max(from * 60, firstMinute - 30) : hoursConfigured(openingHours) ? from * 60 : 7 * 60;
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-[#E3E8EF] bg-white" role="region" aria-label={single ? "Day timetable" : "Week timetable"} tabIndex={0}>
+    <GridScroller initialTop={((startAt - from * 60) / 60) * HOUR_HEIGHT} label={single ? "Day timetable" : "Week timetable"} className="max-h-[calc(100vh-14rem)] min-h-80 overflow-auto overscroll-contain rounded-2xl border border-[#E3E8EF] bg-white">
       <div className={cn("grid", single ? "min-w-[320px] grid-cols-[56px_minmax(0,1fr)]" : "min-w-[880px] grid-cols-[56px_repeat(7,minmax(0,1fr))]")}>
         <div className="sticky top-0 z-10 border-b border-[#E3E8EF] bg-white" />
         {days.map((date) => (
@@ -104,16 +110,28 @@ export function TimeGridView({ range, entries, today, dayHref, newHref }: { rang
           ))}
         </div>
         {days.map((date) => (
-          <DayColumn key={date} date={date} positioned={layouts.get(date) ?? []} from={from} hours={hours.length} today={date === today} compact={!single} />
+          <DayColumn key={date} date={date} positioned={layouts.get(date) ?? []} from={from} hours={hours.length} today={date === today} compact={!single} dayHours={openingHours[weekdayIndex(date)] ?? null} />
         ))}
       </div>
-    </div>
+    </GridScroller>
   );
 }
 
-function DayColumn({ date, positioned, from, hours, today, compact }: { date: string; positioned: PositionedEntry[]; from: number; hours: number; today: boolean; compact: boolean }) {
+function minutesOf(time: string) {
+  const [hour = 0, minute = 0] = time.split(":").map(Number);
+  return hour * 60 + minute;
+}
+
+function DayColumn({ date, positioned, from, hours, today, compact, dayHours }: { date: string; positioned: PositionedEntry[]; from: number; hours: number; today: boolean; compact: boolean; dayHours: DayHours }) {
+  const toPx = (minute: number) => ((minute - from * 60) / 60) * HOUR_HEIGHT;
   return (
     <section className={cn("relative border-l border-[#E3E8EF]", today && "bg-[#F5F9FF]")} style={{ height: hours * HOUR_HEIGHT }} aria-label={formatDateKeyLong(date)}>
+      {dayHours && (
+        <>
+          <div className="absolute inset-x-0 top-0 bg-[#F2F4F7]" style={{ height: Math.max(0, toPx(minutesOf(dayHours.open))) }} aria-hidden="true" />
+          <div className="absolute inset-x-0 bottom-0 bg-[#F2F4F7]" style={{ top: Math.max(0, toPx(minutesOf(dayHours.close))) }} aria-hidden="true" />
+        </>
+      )}
       {Array.from({ length: hours }, (_, index) => <div key={index} className="absolute inset-x-0 border-t border-[#EEF2F6]" style={{ top: index * HOUR_HEIGHT }} aria-hidden="true" />)}
       {!positioned.length && <p className="sr-only">Nothing booked.</p>}
       <ul>
@@ -123,15 +141,18 @@ function DayColumn({ date, positioned, from, hours, today, compact }: { date: st
           const height = Math.max(26, ((item.bottom - item.top) / 60) * HOUR_HEIGHT - 2);
           const width = 100 / item.columns;
           const cancelled = item.entry.status === "cancelled" || item.entry.status === "no_show";
+          const requested = item.entry.status === "requested";
           return (
             <li key={item.entry.key} className="absolute px-0.5" style={{ top: Math.max(0, top) + 1, height, left: `${item.column * width}%`, width: `${width}%` }}>
               <Link
                 href={item.entry.href}
-                className={cn("flex h-full flex-col overflow-hidden rounded-lg border-l-4 px-1.5 py-1 text-left shadow-[0_1px_2px_rgba(16,24,40,.06)] hover:brightness-[.97] focus-visible:z-20 focus-visible:outline-3 focus-visible:outline-[rgba(22,139,255,.55)]", cancelled && "opacity-70")}
-                style={{ borderLeftColor: style.edge, backgroundColor: style.fill, color: style.text }}
+                className={cn("flex h-full flex-col overflow-hidden rounded-lg border-l-4 px-1.5 py-1 text-left shadow-[0_1px_2px_rgba(16,24,40,.06)] hover:brightness-[.97] focus-visible:z-20 focus-visible:outline-3 focus-visible:outline-[rgba(22,139,255,.55)] motion-reduce:transition-none", cancelled && "opacity-70", requested && "border-y border-r border-dashed")}
+                style={requested
+                  ? { borderLeftColor: style.edge, borderTopColor: style.edge, borderRightColor: style.edge, borderBottomColor: style.edge, borderLeftStyle: "dashed", backgroundColor: "#FFFFFF", backgroundImage: `repeating-linear-gradient(135deg, ${style.fill} 0 6px, #FFFFFF 6px 12px)`, color: style.text }
+                  : { borderLeftColor: style.edge, backgroundColor: style.fill, color: style.text }}
               >
                 <span className="text-[11px] leading-tight font-bold">
-                  {item.continuesBefore ? "…" : londonTimeKey(item.entry.start)} {diaryTypeLabels[item.entry.type]}
+                  {item.continuesBefore ? "…" : londonTimeKey(item.entry.start)} {requested ? `${item.entry.source === "booking" ? "Pending" : "Requested"} ${diaryTypeLabels[item.entry.type].toLowerCase()}` : diaryTypeLabels[item.entry.type]}
                 </span>
                 <span className={cn("text-xs leading-tight font-extrabold", cancelled && "line-through")}>{item.entry.title}</span>
                 {!compact || height > 60 ? (
@@ -175,8 +196,8 @@ export function MonthView({ range, entries, today, dayHref }: { range: DiaryRang
                   const style = diaryTypeStyles[entry.type];
                   return (
                     <li key={entry.key}>
-                      <Link href={entry.href} className="block truncate rounded-md border-l-[3px] px-1.5 py-0.5 text-[11px] leading-tight font-semibold hover:brightness-[.97] focus-visible:outline-3 focus-visible:outline-[rgba(22,139,255,.55)]" style={{ borderLeftColor: style.edge, backgroundColor: style.fill, color: style.text }}>
-                        <span className="font-bold">{londonTimeKey(entry.start)}</span> <span className="sr-only">{diaryTypeLabels[entry.type]}: </span>{entry.title}
+                      <Link href={entry.href} className={cn("block truncate rounded-md border-l-[3px] px-1.5 py-0.5 text-[11px] leading-tight font-semibold hover:brightness-[.97] focus-visible:outline-3 focus-visible:outline-[rgba(22,139,255,.55)]", entry.status === "requested" && "border border-dashed italic")} style={entry.status === "requested" ? { borderColor: style.edge, backgroundColor: "#FFFFFF", color: style.text } : { borderLeftColor: style.edge, backgroundColor: style.fill, color: style.text }}>
+                        <span className="font-bold">{londonTimeKey(entry.start)}</span> <span className="sr-only">{diaryTypeLabels[entry.type]}{entry.status === "requested" ? ", requested, not confirmed" : ""}: </span>{entry.title}
                       </Link>
                     </li>
                   );
@@ -193,12 +214,14 @@ export function MonthView({ range, entries, today, dayHref }: { range: DiaryRang
   );
 }
 
-export function DiaryLegend() {
+export function DiaryLegend({ showHours = false }: { showHours?: boolean }) {
   return (
     <ul className="flex flex-wrap gap-x-4 gap-y-2 text-xs font-semibold text-[#344054]" aria-label="Appointment types">
       {(Object.keys(diaryTypeLabels) as Array<keyof typeof diaryTypeLabels>).map((type) => (
         <li key={type} className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full" style={{ backgroundColor: diaryTypeStyles[type].edge }} aria-hidden="true" />{diaryTypeLabels[type]}</li>
       ))}
+      <li className="inline-flex items-center gap-1.5"><span className="h-3 w-5 rounded-sm border border-dashed border-[#B54708]" style={{ backgroundImage: "repeating-linear-gradient(135deg, #FFFAEB 0 3px, #FFFFFF 3px 6px)" }} aria-hidden="true" />Dashed: requested, not yet confirmed</li>
+      {showHours && <li className="inline-flex items-center gap-1.5"><span className="h-3 w-5 rounded-sm bg-[#F2F4F7] ring-1 ring-[#D0D5DD]" aria-hidden="true" />Grey: outside opening hours</li>}
     </ul>
   );
 }

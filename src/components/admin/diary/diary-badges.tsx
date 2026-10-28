@@ -22,13 +22,14 @@ export function StatusBadge({ status, label, className }: { status: AppointmentS
 export function DiaryEntryCard({ entry, showDate = false, dateLabel }: { entry: DiaryEntry; showDate?: boolean; dateLabel?: string }) {
   const style = diaryTypeStyles[entry.type];
   const muted = entry.status === "cancelled" || entry.status === "no_show";
+  const requested = entry.status === "requested";
   return (
-    <article className={cn("relative rounded-2xl border border-[#E3E8EF] bg-white", muted && "opacity-80")}>
+    <article className={cn("relative rounded-2xl border bg-white", requested ? "border-2 border-dashed border-[#F79009]" : "border-[#E3E8EF]", muted && "opacity-80")}>
       <span className="absolute inset-y-3 left-0 w-1.5 rounded-r-full" style={{ backgroundColor: style.edge }} aria-hidden="true" />
       <Link href={entry.href} className="block rounded-2xl py-3.5 pr-4 pl-5 hover:bg-[#F8FAFC] focus-visible:outline-3 focus-visible:outline-offset-0 focus-visible:outline-[rgba(22,139,255,.55)]">
         <div className="flex flex-wrap items-center gap-2">
           <TypeBadge type={entry.type} />
-          <StatusBadge status={entry.status} label={entry.statusLabel} />
+          <StatusBadge status={entry.status} label={requested ? `${entry.statusLabel}: not confirmed` : entry.statusLabel} />
         </div>
         <h3 className={cn("mt-2 text-base leading-snug font-extrabold text-[#0B1220]", muted && "line-through decoration-1")}>{entry.title}</h3>
         <dl className="mt-2 grid grid-cols-1 gap-1 text-sm text-[#344054]">

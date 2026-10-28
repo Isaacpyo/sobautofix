@@ -4,11 +4,13 @@ import Link from "next/link";
 import { LoadFailedNotice, NotPermitted, SchemaMissingNotice } from "@/components/admin/diary/diary-states";
 import { DiaryToolbar } from "@/components/admin/diary/diary-toolbar";
 import { AgendaView, DiaryLegend, MonthView, TimeGridView } from "@/components/admin/diary/diary-views";
+import { hoursConfigured, parseWeeklyHours } from "@/lib/diary/hours";
 import { filterEntries } from "@/lib/diary/mapping";
 import { diaryHref, parseDiaryParams } from "@/lib/diary/params";
 import { loadDiaryEntries, loadStaffDirectory, staffNameMap } from "@/lib/diary/repository";
 import { diaryRange, rangeTitle, shiftDiaryDate, todayInLondon, type DiaryView } from "@/lib/diary/time";
 import { requireStaffPage } from "@/lib/exchange/staff";
+import { getSiteSettings } from "@/lib/settings/repository";
 
 export const metadata: Metadata = { title: "Autofix Diary" };
 
@@ -24,7 +26,8 @@ export default async function DiaryPage({ searchParams }: { searchParams: Promis
   const startUtc = ranges.map((range) => range.startUtc).sort()[0] as string;
   const endUtc = ranges.map((range) => range.endUtc).sort().at(-1) as string;
 
-  const directory = await loadStaffDirectory(staff.client);
+  const [directory, site] = await Promise.all([loadStaffDirectory(staff.client), getSiteSettings()]);
+  const openingHours = parseWeeklyHours(site.openingHours as Record<string, string>);
   const result = await loadDiaryEntries(staff.client, startUtc, endUtc, staff.role, staffNameMap(directory));
   const entries = filterEntries(result.entries, state);
 
@@ -69,7 +72,7 @@ export default async function DiaryPage({ searchParams }: { searchParams: Promis
         }}
       />
 
-      {state.view !== "agenda" && <div className={state.view ? undefined : "hidden lg:block"}><DiaryLegend /></div>}
+      {state.view !== "agenda" && <div className={state.view ? undefined : "hidden lg:block"}><DiaryLegend showHours={hoursConfigured(openingHours)} /></div>}
 
       {(state.view === "agenda" || !state.view) && (
         <div className={state.view ? undefined : "lg:hidden"}>
@@ -78,12 +81,12 @@ export default async function DiaryPage({ searchParams }: { searchParams: Promis
       )}
       {(state.view === "week" || !state.view) && (
         <div className={state.view ? undefined : "hidden lg:block"}>
-          <TimeGridView range={diaryRange("week", state.date)} entries={entries} today={today} dayHref={dayHref} newHref={newHref} />
+          <TimeGridView range={diaryRange("week", state.date)} entries={entries} today={today} dayHref={dayHref} newHref={newHref} openingHours={openingHours} />
         </div>
       )}
       {state.view === "day" && (
         <>
-          <div className="hidden sm:block"><TimeGridView range={diaryRange("day", state.date)} entries={entries} today={today} dayHref={dayHref} newHref={newHref} /></div>
+          <div className="hidden sm:block"><TimeGridView range={diaryRange("day", state.date)} entries={entries} today={today} dayHref={dayHref} newHref={newHref} openingHours={openingHours} /></div>
           <div className="sm:hidden"><AgendaView range={diaryRange("day", state.date)} entries={entries} today={today} newHref={newHref} /></div>
         </>
       )}
