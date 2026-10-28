@@ -67,6 +67,14 @@ export const serviceHistoryValues = ["full", "partial", "none", "not_sure"] as c
 export const outstandingFinanceValues = ["yes", "no", "not_sure"] as const;
 
 const currentYear = new Date().getFullYear();
+/** "41,250" -> "41250"; "" -> undefined so an empty number field fails with its own message instead of becoming 0. */
+function emptyToUndefined(value: unknown) {
+  if (typeof value === "string") {
+    const cleaned = value.replace(/[,\s]/g, "");
+    return cleaned === "" ? undefined : cleaned;
+  }
+  return value ?? undefined;
+}
 const optionalText = (max: number) => z.string().trim().max(max, `Use ${max.toLocaleString("en-GB")} characters or fewer`).optional().transform((value) => value || undefined);
 
 export const sellerVehicleSchema = z.object({
@@ -75,8 +83,8 @@ export const sellerVehicleSchema = z.object({
   make: z.string().trim().min(1, "Enter the make").max(60),
   model: z.string().trim().min(1, "Enter the model").max(80),
   derivative: optionalText(120),
-  year: z.coerce.number({ message: "Enter the year" }).int("Enter the year").min(1950, "Enter a year after 1950").max(currentYear + 1, "Check the year"),
-  mileage: z.coerce.number({ message: "Enter the mileage" }).int("Enter whole miles").min(0, "Enter the mileage").max(999_999, "Check the mileage"),
+  year: z.preprocess(emptyToUndefined, z.coerce.number({ message: "Enter the year" }).int("Enter the year").min(1950, "Enter a year after 1950").max(currentYear + 1, "Check the year")),
+  mileage: z.preprocess(emptyToUndefined, z.coerce.number({ message: "Enter the mileage" }).int("Enter whole miles").min(0, "Enter the mileage").max(999_999, "Check the mileage")),
   fuelType: optionalText(40),
   transmission: optionalText(40),
   colour: optionalText(40),
@@ -99,6 +107,17 @@ const sellerContactBase = z.object({
 });
 
 export const sellerContactSchema = sellerContactBase.superRefine(emailRequiredForEmailContact);
+
+/** Everything the visitor fills in across the five steps. */
+export const sellerFormSchema = z.object({
+  vehicle: sellerVehicleSchema,
+  condition: sellerConditionSchema,
+  contact: sellerContactSchema,
+  privacyAccepted: z.literal(true, { message: "Please confirm you have read how we use your information" }),
+});
+
+export type SellerFormInput = z.input<typeof sellerFormSchema>;
+export type SellerFormOutput = z.output<typeof sellerFormSchema>;
 
 export const sellerSubmissionRequestSchema = z.object({
   idempotencyKey: z.uuid(),
