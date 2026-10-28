@@ -61,6 +61,8 @@ describe("admin mobile bottom navigation", () => {
     const dialog = screen.getByRole("dialog");
     await waitFor(() => expect(within(dialog).getByRole("link", { name: /New appointment/ })).toHaveFocus());
     await user.tab({ shift: true });
+    expect(within(dialog).getByRole("button", { name: "Close create menu" })).toHaveFocus();
+    await user.tab({ shift: true });
     expect(within(dialog).getByRole("link", { name: /New sales enquiry/ })).toHaveFocus();
     await user.tab();
     expect(dialog.contains(document.activeElement)).toBe(true);

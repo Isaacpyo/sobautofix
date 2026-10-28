@@ -2,6 +2,7 @@
 
 import { CalendarClock, Check, LoaderCircle, MailWarning, RotateCw, X } from "lucide-react";
 import { useActionState, useEffect, useId, useRef, useState } from "react";
+import { ConflictPanel, useOverrideSubmit } from "@/components/admin/diary/conflict-panel";
 import type { DiaryFormState } from "@/lib/diary/form-state";
 import { cn } from "@/lib/utils";
 
@@ -11,7 +12,7 @@ const focusRing = "focus-visible:outline-3 focus-visible:outline-offset-2 focus-
 const initialState: DiaryFormState = { status: "idle" };
 
 function Feedback({ state }: { state: DiaryFormState }) {
-  if (state.status === "idle") return null;
+  if (state.status === "idle" || state.status === "conflict" || state.status === "stale") return null;
   const failedEmail = state.email && state.email.status === "failed";
   return (
     <div role={state.status === "error" ? "alert" : "status"} className={cn("rounded-xl px-3 py-2 text-sm font-semibold", state.status === "error" ? "bg-[#FEF3F2] text-[#B42318]" : "bg-[#ECFDF3] text-[#067647]")}>
@@ -22,8 +23,10 @@ function Feedback({ state }: { state: DiaryFormState }) {
 }
 
 /** Confirm / Propose another time / Decline for a requested viewing. */
-export function ViewingRequestActions({ id, defaultDate, defaultTime, confirm, propose, decline, compact = false }: {
+export function ViewingRequestActions({ id, updatedAt, defaultDate, defaultTime, confirm, propose, decline, compact = false }: {
   id: string;
+  /** updated_at when the page loaded, so a stale page cannot overwrite someone else's change. */
+  updatedAt?: string;
   defaultDate: string;
   defaultTime: string;
   confirm: FormAction;
@@ -42,6 +45,9 @@ export function ViewingRequestActions({ id, defaultDate, defaultTime, confirm, p
   const uid = useId();
   const firstField = useRef<HTMLInputElement>(null);
   const reasonField = useRef<HTMLTextAreaElement>(null);
+  const confirmOverride = useOverrideSubmit();
+  const proposeOverride = useOverrideSubmit();
+  const version = updatedAt ? <input type="hidden" name="updatedAt" value={updatedAt} /> : null;
 
   useEffect(() => {
     if (panel === "propose") firstField.current?.focus();
@@ -53,10 +59,12 @@ export function ViewingRequestActions({ id, defaultDate, defaultTime, confirm, p
   return (
     <div className="grid grid-cols-1 gap-3">
       <div className={cn("flex flex-wrap gap-2", compact && "gap-1.5")}>
-        <form action={confirmAction}>
+        <form ref={confirmOverride.form} action={confirmAction}>
           <input type="hidden" name="id" value={id} />
+          {version}
+          {confirmOverride.fields}
           <button type="submit" disabled={busy} className={cn("inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#067647] px-4 text-sm font-bold text-white hover:bg-[#05603A] disabled:opacity-60", focusRing)}>
-            {confirming ? <LoaderCircle size={16} className="animate-spin" aria-hidden="true" /> : <Check size={17} aria-hidden="true" />} Confirm
+            {confirming ? <LoaderCircle size={16} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Check size={17} aria-hidden="true" />} Confirm
           </button>
         </form>
         <button type="button" onClick={() => setPanel(panel === "propose" ? "none" : "propose")} aria-expanded={panel === "propose"} aria-controls={`${uid}-propose`} disabled={busy} className={cn("inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#D0D5DD] bg-white px-4 text-sm font-bold text-[#0B1220] hover:border-[#1974E2] disabled:opacity-60", focusRing)}>
@@ -67,8 +75,12 @@ export function ViewingRequestActions({ id, defaultDate, defaultTime, confirm, p
         </button>
       </div>
 
-      <form id={`${uid}-propose`} hidden={panel !== "propose"} action={proposeAction} className="grid grid-cols-1 gap-3 rounded-xl border border-[#E3E8EF] bg-[#F8FAFC] p-3">
+      <ConflictPanel state={confirmState} pending={busy} actionLabel="Confirm anyway" onOverride={confirmOverride.submitWithOverride} compact />
+
+      <form ref={proposeOverride.form} id={`${uid}-propose`} hidden={panel !== "propose"} action={proposeAction} className="grid grid-cols-1 gap-3 rounded-xl border border-[#E3E8EF] bg-[#F8FAFC] p-3">
         <input type="hidden" name="id" value={id} />
+        {version}
+        {proposeOverride.fields}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <label htmlFor={`${uid}-date`} className="mb-1 block text-sm font-bold text-[#0B1220]">New date</label>
@@ -87,25 +99,28 @@ export function ViewingRequestActions({ id, defaultDate, defaultTime, confirm, p
         </div>
         <p className="text-xs text-[#5B6575]">The viewing stays a request until the customer agrees and you confirm it.</p>
         <button type="submit" disabled={busy} className={cn("inline-flex min-h-11 w-fit items-center gap-2 rounded-xl bg-[#1974E2] px-4 text-sm font-bold text-white hover:bg-[#1462C4] disabled:opacity-60", focusRing)}>
-          {proposing && <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />} Send suggested time
+          {proposing && <LoaderCircle size={16} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />} Send suggested time
         </button>
+        <ConflictPanel state={proposeState} pending={busy} actionLabel="Suggest anyway" onOverride={proposeOverride.submitWithOverride} compact />
       </form>
 
       <form id={`${uid}-decline`} hidden={panel !== "decline"} action={declineAction} className="grid grid-cols-1 gap-3 rounded-xl border border-[#FECDCA] bg-[#FEF3F2]/40 p-3">
         <input type="hidden" name="id" value={id} />
+        {version}
         <div>
           <label htmlFor={`${uid}-reason`} className="mb-1 block text-sm font-bold text-[#0B1220]">Reason (sent to the customer)</label>
           <textarea ref={reasonField} id={`${uid}-reason`} name="reason" rows={2} maxLength={500} required value={reason} onChange={(event) => setReason(event.target.value)} className="w-full rounded-xl border border-[#D0D5DD] bg-white px-3 py-2 text-sm" />
           {declineState.fieldErrors?.reason && <p className="mt-1 text-sm font-semibold text-[#B42318]">{declineState.fieldErrors.reason}</p>}
         </div>
         <button type="submit" disabled={busy} className={cn("inline-flex min-h-11 w-fit items-center gap-2 rounded-xl bg-[#B42318] px-4 text-sm font-bold text-white hover:bg-[#912018] disabled:opacity-60", focusRing)}>
-          {declining && <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />} Decline viewing
+          {declining && <LoaderCircle size={16} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />} Decline viewing
         </button>
       </form>
 
       <Feedback state={confirmState} />
       <Feedback state={proposeState} />
       <Feedback state={declineState} />
+      <ConflictPanel state={declineState} pending={busy} onOverride={() => undefined} compact />
     </div>
   );
 }
@@ -121,7 +136,7 @@ export function EmailFailure({ id, label, retry }: { id: string; label: string; 
       <form action={action}>
         <input type="hidden" name="id" value={id} />
         <button type="submit" disabled={pending} className={cn("inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-white px-3 font-bold text-[#B42318] ring-1 ring-[#FDA29B] hover:bg-[#FEF3F2] disabled:opacity-60", focusRing)}>
-          {pending ? <LoaderCircle size={15} className="animate-spin" aria-hidden="true" /> : <RotateCw size={15} aria-hidden="true" />} Retry email
+          {pending ? <LoaderCircle size={15} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <RotateCw size={15} aria-hidden="true" />} Retry email
         </button>
       </form>
     </div>

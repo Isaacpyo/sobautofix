@@ -114,6 +114,7 @@ async function AppointmentPage({ staff, appointment, directory, saved, email }: 
     assignedTo: appointment.assigned_to ?? "",
     notes: canSeeNotes(staff.role, kind) ? appointment.notes ?? "" : "",
     links: { vehicle: links.vehicle ?? null, customer: links.customer ?? null, enquiry: links.enquiry ?? null, submission: links.submission ?? null, sale: links.sale ?? null },
+    updatedAt: appointment.updated_at,
   };
 
   return (
@@ -135,6 +136,14 @@ async function AppointmentPage({ staff, appointment, directory, saved, email }: 
         </div>
       )}
 
+      {appointment.conflict_override_reason && (
+        <div className="rounded-2xl border border-[#FEDF89] bg-[#FFFAEB] p-4 text-sm text-[#7A2E0E]">
+          <p className="font-extrabold">Saved despite a warning</p>
+          <p className="mt-1 text-[#344054]">Reason: {appointment.conflict_override_reason}</p>
+          <p className="mt-0.5 text-[#5B6575]">{[appointment.conflict_override_by ? names.get(appointment.conflict_override_by) ?? "A former staff member" : null, appointment.conflict_override_at ? formatLondonDateTime(appointment.conflict_override_at) : null].filter(Boolean).join(", ")}</p>
+        </div>
+      )}
+
       {isViewing && canSales && latestEmail?.status === "failed" && (
         <EmailFailure id={appointment.id} label={`The ${latestEmail.template === "proposed" ? "suggested time" : latestEmail.template} email to the customer was not sent${latestEmail.errorCode === "email_not_configured" ? " because email is not set up here" : ""}.`} retry={retryViewingEmailAction} />
       )}
@@ -146,7 +155,7 @@ async function AppointmentPage({ staff, appointment, directory, saved, email }: 
           {canSales && appointment.alternative_start && <p className="text-sm text-[#344054]"><strong>Alternative they offered:</strong> {formatLondonDateTime(appointment.alternative_start)}</p>}
           {canSales && appointment.customer_message && <p className="text-sm text-[#344054]"><strong>Their message:</strong> {appointment.customer_message}</p>}
           {canSales ? (
-            <ViewingRequestActions id={appointment.id} defaultDate={date} defaultTime={londonTimeKey(appointment.starts_at)} confirm={confirmViewingAction} propose={proposeViewingTimeAction} decline={declineViewingAction} />
+            <ViewingRequestActions id={appointment.id} updatedAt={appointment.updated_at} defaultDate={date} defaultTime={londonTimeKey(appointment.starts_at)} confirm={confirmViewingAction} propose={proposeViewingTimeAction} decline={declineViewingAction} />
           ) : (
             <p className="text-sm font-semibold text-[#93370D]">A member of the sales team confirms viewing requests.</p>
           )}
@@ -185,7 +194,7 @@ async function AppointmentPage({ staff, appointment, directory, saved, email }: 
             search={searchDiaryLinksAction}
             cancelHref={`/admin/diary?date=${date}`}
           />
-          <CancelAppointment id={appointment.id} isViewing={isViewing} customerHasEmail={customerHasEmail && canSales} action={cancelAppointmentAction} />
+          <CancelAppointment id={appointment.id} updatedAt={appointment.updated_at} isViewing={isViewing} customerHasEmail={customerHasEmail && canSales} action={cancelAppointmentAction} />
         </>
       )}
 
@@ -211,7 +220,11 @@ function historyLabel(action: string, detail: Record<string, unknown> | null) {
     "diary.appointment_cancelled": "Cancelled",
     "diary.viewing_confirmed": "Viewing confirmed",
     "diary.viewing_proposed": "New time suggested to the customer",
+    "diary.viewing_declined": "Viewing request declined",
+    "diary.appointment_status_changed": `Status changed to ${String(detail?.status ?? "").replace("_", " ")}`,
   };
+  const override = typeof detail?.conflictOverride === "string" ? ` (warning overridden: ${detail.conflictOverride})` : "";
+  if (labels[action]) return `${labels[action]}${override}`;
   if (action === "diary.customer_email") return `Customer email (${String(detail?.template ?? "update")}): ${detail?.status === "sent" ? "sent" : "not sent"}`;
   return labels[action] ?? action;
 }

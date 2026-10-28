@@ -29,6 +29,9 @@ export const appointmentFormSchema = z.object({
   submissionId: optionalUuid,
   saleId: optionalUuid,
   acknowledgedConflicts: z.string().max(4000).optional(),
+  overrideReason: optionalText(500),
+  /** updated_at when the form was opened, for compare-and-set. */
+  updatedAt: z.string().max(64).optional(),
   notifyCustomer: z.preprocess((value) => value === "on" || value === "true" || value === true, z.boolean()),
 });
 
@@ -54,18 +57,32 @@ export function appointmentTimes(date: string, startTime: string, endTime: strin
 
 export const cancelFormSchema = z.object({
   id: z.uuid(),
+  updatedAt: z.string().max(64).optional(),
   reason: z.string().trim().min(3, "Give a short reason for cancelling").max(500, "Keep the reason under 500 characters"),
   notifyCustomer: z.preprocess((value) => value === "on" || value === "true" || value === true, z.boolean()),
 });
 
+const overrideFields = {
+  acknowledgedConflicts: z.string().max(4000).optional(),
+  overrideReason: optionalText(500),
+};
+
 export const assignBookingSchema = z.object({
   bookingId: z.uuid(),
   assignedTo: optionalUuid,
-  acknowledgedConflicts: z.string().max(4000).optional(),
+  ...overrideFields,
+});
+
+export const viewingActionSchema = z.object({
+  id: z.uuid(),
+  updatedAt: z.string().max(64).optional(),
+  ...overrideFields,
 });
 
 export const proposeTimeSchema = z.object({
   id: z.uuid(),
+  updatedAt: z.string().max(64).optional(),
+  ...overrideFields,
   date: z.string().refine(isDateKey, "Enter a valid date"),
   startTime: z.string().refine(isTimeKey, "Enter a time"),
   message: optionalText(500),
@@ -73,6 +90,7 @@ export const proposeTimeSchema = z.object({
 
 export const declineSchema = z.object({
   id: z.uuid(),
+  updatedAt: z.string().max(64).optional(),
   reason: z.string().trim().min(3, "Give a short reason").max(500, "Keep the reason under 500 characters"),
 });
 

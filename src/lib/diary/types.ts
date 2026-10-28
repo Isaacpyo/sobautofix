@@ -119,3 +119,27 @@ export type DiaryEntry = {
 };
 
 export const workshopKindsWithNotes: readonly DiaryEntryType[] = ["workshop_booking", "preparation", "purchase_inspection", "other"];
+
+/**
+ * Appointment lifecycle: requested -> confirmed -> completed / cancelled /
+ * no_show. A request can also be cancelled (declined). Completed, no-show and
+ * cancelled are final; staff create a new appointment instead.
+ */
+const statusFlow: Record<AppointmentStatus, readonly AppointmentStatus[]> = {
+  requested: ["requested", "confirmed", "cancelled"],
+  confirmed: ["confirmed", "completed", "no_show", "cancelled"],
+  completed: ["completed"],
+  no_show: ["no_show"],
+  cancelled: [],
+};
+
+export function canChangeStatus(from: AppointmentStatus | null, to: AppointmentStatus) {
+  if (from === null) return to === "requested" || to === "confirmed";
+  return statusFlow[from].includes(to);
+}
+
+/** Statuses offered in the edit form for an appointment currently in `from` (cancelling has its own step). */
+export function formStatusOptions(from: AppointmentStatus | null): AppointmentStatus[] {
+  if (from === null) return ["confirmed", "requested"];
+  return statusFlow[from].filter((status) => status !== "cancelled");
+}

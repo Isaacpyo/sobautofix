@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { toFormState, type DiaryFormState } from "@/lib/diary/form-state";
-import { declineSchema, fieldErrors, proposeTimeSchema } from "@/lib/diary/schema";
+import { declineSchema, fieldErrors, proposeTimeSchema, viewingActionSchema } from "@/lib/diary/schema";
 import { confirmViewing, declineViewing, proposeViewingTime, retryViewingEmail } from "@/lib/diary/service";
 import { requireStaffAction, StaffPermissionError, type StaffContext } from "@/lib/exchange/staff";
 
@@ -31,9 +31,9 @@ const idSchema = z.object({ id: z.uuid() });
 export async function confirmViewingAction(_previous: DiaryFormState, formData: FormData): Promise<DiaryFormState> {
   const staff = await salesStaff();
   if (!("userId" in staff)) return staff;
-  const parsed = idSchema.safeParse(Object.fromEntries(formData));
+  const parsed = viewingActionSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { status: "error", message: "This viewing could not be found." };
-  const result = await confirmViewing(staff, parsed.data.id);
+  const result = await confirmViewing(staff, { id: parsed.data.id, updatedAt: parsed.data.updatedAt, acknowledged: parsed.data.acknowledgedConflicts, reason: parsed.data.overrideReason });
   if (result.ok) refresh(parsed.data.id);
   return toFormState(result);
 }
@@ -43,7 +43,7 @@ export async function proposeViewingTimeAction(_previous: DiaryFormState, formDa
   if (!("userId" in staff)) return staff;
   const parsed = proposeTimeSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { status: "error", message: "Choose a date and time.", fieldErrors: fieldErrors(parsed.error) };
-  const result = await proposeViewingTime(staff, parsed.data);
+  const result = await proposeViewingTime(staff, { ...parsed.data, acknowledged: parsed.data.acknowledgedConflicts, reason: parsed.data.overrideReason });
   if (result.ok) refresh(parsed.data.id);
   return toFormState(result);
 }

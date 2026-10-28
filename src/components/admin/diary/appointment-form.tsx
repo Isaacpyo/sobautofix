@@ -1,14 +1,15 @@
 "use client";
 
-import { AlertTriangle, CalendarClock, LoaderCircle } from "lucide-react";
+import { CalendarClock, LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import { useActionState, useEffect, useRef, useState } from "react";
+import { ConflictPanel, useOverrideSubmit } from "@/components/admin/diary/conflict-panel";
 import { LinkPicker } from "@/components/admin/diary/link-picker";
 import type { DiaryFormState } from "@/lib/diary/form-state";
 import type { LinkKind, LinkOption } from "@/lib/diary/repository";
-import { addMinutesToTime, defaultTitle, editableStatuses } from "@/lib/diary/schema";
+import { addMinutesToTime, defaultTitle, type editableStatuses } from "@/lib/diary/schema";
 import { clockChangeNote } from "@/lib/diary/time";
-import { appointmentKinds, appointmentStatusLabels, diaryTypeLabels, type AppointmentKind } from "@/lib/diary/types";
+import { appointmentKinds, appointmentStatusLabels, diaryTypeLabels, formStatusOptions, type AppointmentKind } from "@/lib/diary/types";
 import { cn } from "@/lib/utils";
 
 export type AppointmentFormValues = {
@@ -23,6 +24,8 @@ export type AppointmentFormValues = {
   assignedTo: string;
   notes: string;
   links: Partial<Record<LinkKind, LinkOption | null>>;
+  /** updated_at when the page loaded; the save is refused if someone else changed it since. */
+  updatedAt?: string;
 };
 
 type SaveAction = (state: DiaryFormState, formData: FormData) => Promise<DiaryFormState>;
@@ -55,8 +58,8 @@ export function AppointmentForm({ initial, staff, permissions, customerHasEmail,
   const [titleTouched, setTitleTouched] = useState(Boolean(initial.id));
   const [notify, setNotify] = useState(true);
   const alertRef = useRef<HTMLDivElement>(null);
-  const formRef = useRef<HTMLFormElement>(null);
-  const acknowledgeInput = useRef<HTMLInputElement>(null);
+  const { form: formRef, fields: overrideFields, submitWithOverride } = useOverrideSubmit();
+  const statusOptions = formStatusOptions(initial.id ? initial.status : null);
   const errors = state.fieldErrors ?? {};
   const editing = Boolean(initial.id);
   const timeChanged = values.date !== initial.date || values.startTime !== initial.startTime;
@@ -64,7 +67,7 @@ export function AppointmentForm({ initial, staff, permissions, customerHasEmail,
   const showNotify = editing && values.kind === "viewing" && Boolean(values.links.customer) && (timeChanged || confirmingViewing);
 
   useEffect(() => {
-    if (state.status === "conflict" || state.status === "error") alertRef.current?.focus();
+    if (state.status === "error") alertRef.current?.focus();
   }, [state]);
 
   function set<K extends keyof AppointmentFormValues>(key: K, value: AppointmentFormValues[K]) {
@@ -73,12 +76,6 @@ export function AppointmentForm({ initial, staff, permissions, customerHasEmail,
       if (!titleTouched && (key === "kind" || key === "links")) next.title = defaultTitle(next.kind, next.links.vehicle?.label);
       return next;
     });
-  }
-
-  /** Resubmits with the clashes acknowledged. Enter in a field never does this by accident. */
-  function saveAnyway(signature: string) {
-    if (acknowledgeInput.current) acknowledgeInput.current.value = signature;
-    formRef.current?.requestSubmit();
   }
 
   function setLink(kind: LinkKind, option: LinkOption | null) {
@@ -101,36 +98,10 @@ export function AppointmentForm({ initial, staff, permissions, customerHasEmail,
   return (
     <form ref={formRef} action={formAction} className="grid grid-cols-1 gap-6" noValidate>
       {initial.id && <input type="hidden" name="id" value={initial.id} />}
-      <input ref={acknowledgeInput} type="hidden" name="acknowledgedConflicts" defaultValue="" />
+      {initial.updatedAt && <input type="hidden" name="updatedAt" value={initial.updatedAt} />}
+      {overrideFields}
 
-      {state.status === "conflict" && state.conflicts?.length ? (
-        <div ref={alertRef} tabIndex={-1} role="alert" className="rounded-2xl border border-[#FEC84B] bg-[#FFFAEB] p-4 text-[#7A2E0E] outline-none focus-visible:ring-4 focus-visible:ring-[#FEC84B]/50">
-          <div className="flex gap-3">
-            <AlertTriangle className="mt-0.5 shrink-0" size={20} aria-hidden="true" />
-            <div className="min-w-0 flex-1">
-              <h2 className="font-extrabold">Possible clash</h2>
-              <p className="mt-1 text-sm">{state.message}</p>
-              <ul className="mt-3 grid grid-cols-1 gap-2">
-                {state.conflicts.map((conflict) => (
-                  <li key={conflict.key} className="rounded-xl bg-white/70 p-3 text-sm ring-1 ring-[#FEDF89]">
-                    <p className="font-bold text-[#0B1220]">{conflict.reason}</p>
-                    <p className="mt-0.5 text-[#344054]"><Link href={conflict.href} className="font-semibold text-[#1462C4] underline" target="_blank" rel="noopener">{conflict.title}<span className="sr-only"> (opens in a new tab)</span></Link> ({conflict.type}, {conflict.status})</p>
-                    <p className="text-[#344054]">{conflict.when}{conflict.staff ? ` · ${conflict.staff}` : ""}{conflict.vehicle ? ` · ${conflict.vehicle}` : ""}</p>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <button type="button" onClick={() => saveAnyway(state.signature ?? "")} disabled={pending} className={cn("inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#B54708] px-4 text-sm font-bold text-white hover:bg-[#93370D] disabled:opacity-60", focusRing)}>
-                  Save anyway
-                </button>
-                <button type="button" onClick={() => document.getElementById("appointment-date")?.focus()} className={cn("inline-flex min-h-11 items-center rounded-xl border border-[#B54708] bg-white px-4 text-sm font-bold text-[#93370D]", focusRing)}>
-                  Change the time
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <ConflictPanel state={state} pending={pending} onOverride={submitWithOverride} onChangeTime={() => document.getElementById("appointment-date")?.focus()} />
 
       {state.status === "error" && (
         <div ref={alertRef} tabIndex={-1} role="alert" className="rounded-2xl border border-[#FECDCA] bg-[#FEF3F2] p-4 text-sm font-semibold text-[#B42318] outline-none">
@@ -151,7 +122,7 @@ export function AppointmentForm({ initial, staff, permissions, customerHasEmail,
           <div>
             <label htmlFor="appointment-status" className={labelClass}>Status</label>
             <select id="appointment-status" name="status" value={values.status} onChange={(event) => set("status", event.target.value as AppointmentFormValues["status"])} className={cn(fieldClass, "border-[#D0D5DD]")}>
-              {editableStatuses.map((status) => <option key={status} value={status}>{appointmentStatusLabels[status]}</option>)}
+              {statusOptions.map((status) => <option key={status} value={status}>{appointmentStatusLabels[status]}</option>)}
             </select>
             {fieldError("status")}
           </div>

@@ -92,7 +92,7 @@ export default async function ViewingsPage() {
                   {email?.status === "failed" && <EmailFailure id={request.id} label={emailFailureLabel(email)} retry={retryViewingEmailAction} />}
                   {email?.status === "sent" && email.template === "proposed" && <p className="text-sm text-[#344054]">Suggested this time to the customer on {formatLondonDateTime(email.createdAt)}. Confirm once they agree.</p>}
                   {canSales ? (
-                    <ViewingRequestActions id={request.id} defaultDate={londonDateKey(request.starts_at)} defaultTime={londonTimeKey(request.starts_at)} confirm={confirmViewingAction} propose={proposeViewingTimeAction} decline={declineViewingAction} compact />
+                    <ViewingRequestActions id={request.id} updatedAt={request.updated_at} defaultDate={londonDateKey(request.starts_at)} defaultTime={londonTimeKey(request.starts_at)} confirm={confirmViewingAction} propose={proposeViewingTimeAction} decline={declineViewingAction} compact />
                   ) : (
                     <p className="text-sm font-semibold text-[#93370D]">A member of the sales team confirms viewing requests.</p>
                   )}

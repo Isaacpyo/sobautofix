@@ -1,7 +1,7 @@
 "use client";
 
-import { AlertTriangle, LoaderCircle, XCircle } from "lucide-react";
-import Link from "next/link";
+import { LoaderCircle, XCircle } from "lucide-react";
+import { ConflictPanel, useOverrideSubmit } from "@/components/admin/diary/conflict-panel";
 import { useActionState, useEffect, useId, useRef, useState } from "react";
 import type { DiaryFormState } from "@/lib/diary/form-state";
 import { cn } from "@/lib/utils";
@@ -11,7 +11,7 @@ type FormAction = (state: DiaryFormState, formData: FormData) => Promise<DiaryFo
 const focusRing = "focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[rgba(22,139,255,.55)]";
 
 /** Cancelling always asks for a reason; viewings can also email the customer. */
-export function CancelAppointment({ id, isViewing, customerHasEmail, action }: { id: string; isViewing: boolean; customerHasEmail: boolean; action: FormAction }) {
+export function CancelAppointment({ id, updatedAt, isViewing, customerHasEmail, action }: { id: string; updatedAt?: string; isViewing: boolean; customerHasEmail: boolean; action: FormAction }) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [notify, setNotify] = useState(true);
@@ -31,6 +31,7 @@ export function CancelAppointment({ id, isViewing, customerHasEmail, action }: {
       </button>
       <form id={panelId} hidden={!open} action={formAction} className="mt-4 grid grid-cols-1 gap-3">
         <input type="hidden" name="id" value={id} />
+        {updatedAt && <input type="hidden" name="updatedAt" value={updatedAt} />}
         <div>
           <label htmlFor={`${panelId}-reason`} className="mb-1 block text-sm font-bold text-[#0B1220]">Reason for cancelling</label>
           <textarea
@@ -56,6 +57,7 @@ export function CancelAppointment({ id, isViewing, customerHasEmail, action }: {
           </label>
         )}
         {state.status === "error" && !state.fieldErrors && <p role="alert" className="text-sm font-semibold text-[#B42318]">{state.message}</p>}
+        <ConflictPanel state={state} pending={pending} onOverride={() => undefined} compact />
         <div className="flex flex-wrap gap-2">
           <button type="submit" disabled={pending} className={cn("inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#B42318] px-4 text-sm font-bold text-white hover:bg-[#912018] disabled:opacity-60", focusRing)}>
             {pending && <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />} Confirm cancellation
@@ -71,12 +73,11 @@ export function CancelAppointment({ id, isViewing, customerHasEmail, action }: {
 export function AssignBookingStaff({ bookingId, current, staff, action }: { bookingId: string; current: string; staff: Array<{ id: string; name: string }>; action: FormAction }) {
   const [state, formAction, pending] = useActionState(action, { status: "idle" } as DiaryFormState);
   const [value, setValue] = useState(current);
-  const ack = useRef<HTMLInputElement>(null);
-  const form = useRef<HTMLFormElement>(null);
+  const { form, fields, submitWithOverride } = useOverrideSubmit();
   return (
     <form ref={form} action={formAction} className="grid grid-cols-1 gap-3">
       <input type="hidden" name="bookingId" value={bookingId} />
-      <input ref={ack} type="hidden" name="acknowledgedConflicts" defaultValue="" />
+      {fields}
       <div>
         <label htmlFor="booking-staff" className="mb-1 block text-sm font-bold text-[#0B1220]">Staff member</label>
         <div className="flex flex-wrap gap-2">
@@ -85,21 +86,13 @@ export function AssignBookingStaff({ bookingId, current, staff, action }: { book
             {staff.map((member) => <option key={member.id} value={member.id}>{member.name}</option>)}
           </select>
           <button type="submit" disabled={pending} className={cn("inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#1974E2] px-4 text-sm font-bold text-white hover:bg-[#1462C4] disabled:opacity-60", focusRing)}>
-            {pending && <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />} Save
+            {pending && <LoaderCircle size={16} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />} Save
           </button>
         </div>
       </div>
       {state.status === "saved" && <p role="status" className="text-sm font-semibold text-[#067647]">{state.message}</p>}
       {state.status === "error" && <p role="alert" className="text-sm font-semibold text-[#B42318]">{state.message}</p>}
-      {state.status === "conflict" && state.conflicts && (
-        <div role="alert" className="rounded-xl border border-[#FEC84B] bg-[#FFFAEB] p-3 text-sm text-[#7A2E0E]">
-          <p className="flex items-center gap-2 font-extrabold"><AlertTriangle size={17} aria-hidden="true" /> {state.message}</p>
-          <ul className="mt-2 grid grid-cols-1 gap-1">
-            {state.conflicts.map((conflict) => <li key={conflict.key}><strong>{conflict.reason}:</strong> <Link href={conflict.href} className="font-semibold text-[#1462C4] underline">{conflict.title}</Link>, {conflict.when}</li>)}
-          </ul>
-          <button type="button" onClick={() => { if (ack.current) ack.current.value = state.signature ?? ""; form.current?.requestSubmit(); }} className={cn("mt-3 inline-flex min-h-11 items-center rounded-xl bg-[#B54708] px-4 text-sm font-bold text-white hover:bg-[#93370D]", focusRing)}>Assign anyway</button>
-        </div>
-      )}
+      <ConflictPanel state={state} pending={pending} actionLabel="Assign anyway" onOverride={submitWithOverride} compact />
     </form>
   );
 }

@@ -31,7 +31,8 @@ export function MobileQuickActions({ role, open, onClose }: { role: StaffRole; o
   useEffect(() => {
     if (!open) return;
     const focusable = () => Array.from(panel.current?.querySelectorAll<HTMLElement>("a[href], button:not([disabled])") ?? []);
-    focusable()[0]?.focus();
+    // Start on the first action; the close button stays reachable with Tab.
+    (panel.current?.querySelector<HTMLElement>("a[href]") ?? focusable()[0])?.focus();
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         event.preventDefault();

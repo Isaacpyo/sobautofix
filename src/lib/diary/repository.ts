@@ -94,12 +94,20 @@ export type AppointmentDetail = AppointmentRow & {
   cancellation_reason: string | null;
   created_at: string;
   updated_at: string;
+  conflict_override_reason?: string | null;
+  conflict_override_by?: string | null;
+  conflict_override_at?: string | null;
   customers: (CustomerRelation & { email?: string | null; phone?: string | null }) | null;
   sale_vehicles: (SaleVehicleRelation & { slug?: string; status?: string }) | null;
 };
 
+/** Columns added by migration 20261028090300; read separately so older databases still work. */
+const overrideSelect = "conflict_override_reason,conflict_override_by,conflict_override_at";
+
 export async function getAppointment(client: DbClient, id: string): Promise<{ appointment: AppointmentDetail | null; schemaMissing: boolean }> {
-  const { data, error } = await client.from("diary_appointments").select(appointmentSelect).eq("id", id).is("deleted_at", null).maybeSingle();
+  const read = (columns: string) => client.from("diary_appointments").select(columns).eq("id", id).is("deleted_at", null).maybeSingle();
+  let { data, error } = await read(`${appointmentSelect},${overrideSelect}`);
+  if (error && isMissingSchemaError(error)) ({ data, error } = await read(appointmentSelect));
   if (error) return { appointment: null, schemaMissing: isMissingSchemaError(error) };
   if (!data) return { appointment: null, schemaMissing: false };
   const row = data as unknown as AppointmentDetail;

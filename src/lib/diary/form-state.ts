@@ -11,7 +11,7 @@ import { diaryTypeLabels } from "./types";
 export type ConflictView = { key: string; reason: string; reasons: string[]; title: string; type: string; when: string; staff: string | null; vehicle: string | null; href: string; status: string };
 
 export type DiaryFormState = {
-  status: "idle" | "error" | "conflict" | "saved";
+  status: "idle" | "error" | "conflict" | "stale" | "saved";
   message?: string;
   fieldErrors?: Record<string, string>;
   conflicts?: ConflictView[];
@@ -48,7 +48,12 @@ export function conflictViews(conflicts: DiaryConflict[]): ConflictView[] {
 
 export function toFormState(result: ServiceResult): DiaryFormState {
   if (result.ok) return { status: "saved", message: result.message, email: result.email };
-  if (result.kind === "conflict") return { status: "conflict", message: result.message, conflicts: conflictViews(result.conflicts), signature: result.signature };
+  if (result.kind === "conflict") {
+    const views = conflictViews(result.conflicts);
+    if (result.outsideHours) views.push({ key: "outside_hours", reason: "Outside opening hours", reasons: ["Outside opening hours"], title: `Open ${result.outsideHours.open} to ${result.outsideHours.close} that day`, type: "Opening hours", when: "Set in Settings", staff: null, vehicle: null, href: "/admin/settings", status: "Settings" });
+    return { status: "conflict", message: result.message, conflicts: views, signature: result.signature, fieldErrors: result.fieldErrors };
+  }
+  if (result.kind === "stale") return { status: "stale", message: result.message };
   if (result.kind === "invalid") return { status: "error", message: result.message, fieldErrors: result.fieldErrors };
   return { status: "error", message: result.message };
 }
