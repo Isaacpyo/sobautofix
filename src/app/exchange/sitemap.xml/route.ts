@@ -6,6 +6,9 @@ import { getExchangeSettings } from "@/lib/exchange/settings";
 
 // Served at exchange.sobautofix.com/sitemap.xml through the proxy rewrite.
 // Exchange-host URLs only; the main site's sitemap is unchanged.
+// Rendered per request (cached briefly by the CDN header below) so stock is never frozen at build time.
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const [stock, settings] = await Promise.all([getListedStock(), getExchangeSettings()]);
   const pages: SitemapEntry[] = [
