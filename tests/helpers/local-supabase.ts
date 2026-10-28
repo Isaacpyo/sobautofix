@@ -12,6 +12,8 @@ type LocalTestIdentity = {
   id: string;
   email: string;
   accessToken: string;
+  /** Base32 TOTP secret for admins enrolled in MFA; lets browser tests pass the challenge. */
+  totpSecret?: string;
 };
 
 export type LocalTestUsers = {
@@ -216,10 +218,10 @@ async function ensureLocalAdminIdentity(service: SupabaseClient, publishableKey:
   if (verificationError || !verified.access_token) {
     throw new Error(`Could not verify local MFA for ${email}: ${verificationError?.message || "AAL2 token unavailable"}`);
   }
-  return { id: identity.id, email, accessToken: verified.access_token };
+  return { id: identity.id, email, accessToken: verified.access_token, totpSecret: enrollment.totp.secret };
 }
 
-function currentTotp(secret: string) {
+export function currentTotp(secret: string) {
   const counter = Buffer.alloc(8);
   counter.writeBigUInt64BE(BigInt(Math.floor(Date.now() / 30_000)));
   const digest = createHmac("sha1", decodeBase32(secret)).update(counter).digest();
