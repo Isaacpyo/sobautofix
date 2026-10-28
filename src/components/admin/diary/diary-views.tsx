@@ -110,7 +110,7 @@ export function TimeGridView({ range, entries, today, dayHref, newHref, openingH
           ))}
         </div>
         {days.map((date) => (
-          <DayColumn key={date} date={date} positioned={layouts.get(date) ?? []} from={from} hours={hours.length} today={date === today} compact={!single} dayHours={openingHours[weekdayIndex(date)] ?? null} />
+          <DayColumn key={date} date={date} positioned={layouts.get(date) ?? []} from={from} hours={hours.length} today={date === today} compact={!single} dayHours={openingHours[weekdayIndex(date)] ?? null} moreHref={dayHref(date)} />
         ))}
       </div>
     </GridScroller>
@@ -122,8 +122,16 @@ function minutesOf(time: string) {
   return hour * 60 + minute;
 }
 
-function DayColumn({ date, positioned, from, hours, today, compact, dayHours }: { date: string; positioned: PositionedEntry[]; from: number; hours: number; today: boolean; compact: boolean; dayHours: DayHours }) {
+function DayColumn({ date, positioned, from, hours, today, compact, dayHours, moreHref }: { date: string; positioned: PositionedEntry[]; from: number; hours: number; today: boolean; compact: boolean; dayHours: DayHours; moreHref: string }) {
   const toPx = (minute: number) => ((minute - from * 60) / 60) * HOUR_HEIGHT;
+  // Busy slots: show a few side by side, then "+N more" (opens the day, or the list on phones).
+  const maxColumns = compact ? 3 : 6;
+  const shown = positioned.filter((item) => item.columns <= maxColumns || item.column < maxColumns - 1);
+  const hidden = positioned.filter((item) => !shown.includes(item));
+  const overflow = [...new Set(hidden.map((item) => item.cluster))].map((cluster) => {
+    const items = hidden.filter((item) => item.cluster === cluster);
+    return { cluster, count: items.length, top: Math.min(...items.map((item) => item.top)) };
+  });
   return (
     <section className={cn("relative border-l border-[#E3E8EF]", today && "bg-[#F5F9FF]")} style={{ height: hours * HOUR_HEIGHT }} aria-label={formatDateKeyLong(date)}>
       {dayHours && (
@@ -135,11 +143,11 @@ function DayColumn({ date, positioned, from, hours, today, compact, dayHours }: 
       {Array.from({ length: hours }, (_, index) => <div key={index} className="absolute inset-x-0 border-t border-[#EEF2F6]" style={{ top: index * HOUR_HEIGHT }} aria-hidden="true" />)}
       {!positioned.length && <p className="sr-only">Nothing booked.</p>}
       <ul>
-        {positioned.map((item) => {
+        {shown.map((item) => {
           const style = diaryTypeStyles[item.entry.type];
           const top = ((item.top - from * 60) / 60) * HOUR_HEIGHT;
           const height = Math.max(26, ((item.bottom - item.top) / 60) * HOUR_HEIGHT - 2);
-          const width = 100 / item.columns;
+          const width = 100 / Math.min(item.columns, maxColumns);
           const cancelled = item.entry.status === "cancelled" || item.entry.status === "no_show";
           const requested = item.entry.status === "requested";
           return (
@@ -165,6 +173,13 @@ function DayColumn({ date, positioned, from, hours, today, compact, dayHours }: 
             </li>
           );
         })}
+        {overflow.map((group) => (
+          <li key={`more-${group.cluster}`} className="absolute px-0.5" style={{ top: Math.max(0, toPx(group.top)) + 1, left: `${((maxColumns - 1) / maxColumns) * 100}%`, width: `${100 / maxColumns}%` }}>
+            <Link href={moreHref} className="flex min-h-11 items-center justify-center rounded-lg bg-[#0B1220] px-1 text-xs font-bold text-white hover:bg-[#344054] focus-visible:outline-3 focus-visible:outline-[rgba(22,139,255,.55)]">
+              +{group.count}<span className="sr-only"> more at this time on {formatDateKeyLong(date)}</span>
+            </Link>
+          </li>
+        ))}
       </ul>
     </section>
   );

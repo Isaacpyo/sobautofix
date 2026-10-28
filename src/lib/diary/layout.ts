@@ -13,6 +13,8 @@ export type PositionedEntry = {
   bottom: number;
   column: number;
   columns: number;
+  /** Entries that overlap directly or through a chain share a cluster. */
+  cluster: number;
   /** The entry started before or ends after this day. */
   continuesBefore: boolean;
   continuesAfter: boolean;
@@ -52,7 +54,7 @@ export function layoutDay(entries: DiaryEntry[], date: string): PositionedEntry[
       let bottom = continuesAfter ? 24 * 60 : londonMinutesOfDay(end);
       if (!continuesAfter && bottom === 0 && end > start) bottom = 24 * 60;
       bottom = Math.max(bottom, top + MIN_HEIGHT_MINUTES);
-      return { entry, top, bottom, column: 0, columns: 1, continuesBefore, continuesAfter };
+      return { entry, top, bottom, column: 0, columns: 1, cluster: 0, continuesBefore, continuesAfter };
     })
     .sort((left, right) => left.top - right.top || right.bottom - left.bottom || left.entry.key.localeCompare(right.entry.key));
 
@@ -60,9 +62,14 @@ export function layoutDay(entries: DiaryEntry[], date: string): PositionedEntry[
   // one the first free column inside its cluster.
   let cluster: PositionedEntry[] = [];
   let clusterEnd = -1;
+  let clusterIndex = 0;
   const finish = () => {
     const columns = Math.max(1, ...cluster.map((item) => item.column + 1));
-    for (const item of cluster) item.columns = columns;
+    for (const item of cluster) {
+      item.columns = columns;
+      item.cluster = clusterIndex;
+    }
+    clusterIndex += 1;
     cluster = [];
   };
   for (const item of placed) {
