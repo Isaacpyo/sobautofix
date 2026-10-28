@@ -4,6 +4,7 @@ import { buildSellerSubmissionPayload, buildVehicleEnquiryPayload, mapRpcError }
 import { sellerSubmissionRequestSchema, vehicleEnquiryRequestSchema } from "@/lib/exchange/public/schemas";
 import { createSellerUploadToken, verifySellerUploadToken } from "@/lib/exchange/public/upload-token";
 import { createUploadToken } from "@/lib/enquiries/upload-token";
+import type { SaleVehicle } from "@/types/domain";
 
 const submitVehicleEnquiry = vi.fn();
 vi.mock("@/lib/rate-limit", () => ({ consumeRateLimit: vi.fn(async () => true) }));
@@ -76,7 +77,7 @@ describe("POST /api/exchange/vehicle-enquiries", () => {
   it("maps an unavailable car to 409 with similar cars and the current status", async () => {
     const { POST } = await import("@/app/api/exchange/vehicle-enquiries/route");
     const { ExchangeServiceError } = await import("@/lib/exchange/public/enquiry-service");
-    submitVehicleEnquiry.mockRejectedValueOnce(new ExchangeServiceError("VEHICLE_UNAVAILABLE", "Reserved", undefined, [{ slug: "demo-astra", year: 2017, make: "Vauxhall", model: "Astra", price: 6750 }], "reserved"));
+    submitVehicleEnquiry.mockRejectedValueOnce(new ExchangeServiceError("VEHICLE_UNAVAILABLE", "Reserved", undefined, [{ slug: "demo-astra", year: 2017, make: "Vauxhall", model: "Astra", price: 6750 }] as unknown as SaleVehicle[], "reserved"));
     const response = await POST(post(viewing));
     expect(response.status).toBe(409);
     const body = await response.json();
