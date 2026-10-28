@@ -6,6 +6,7 @@ import { createContext, startTransition, useActionState, useContext, useEffect, 
 import { ConfirmActionDialog } from "@/components/admin/confirm-action-dialog";
 import { cn } from "@/lib/utils";
 import { idleState, type FormAction, type FormState } from "./form-state";
+import { announce } from "./toast";
 import { buttonStyles } from "./ui";
 
 const FormContext = createContext<{ state: FormState; pending: boolean }>({ state: idleState, pending: false });
@@ -18,7 +19,7 @@ export function useFormContext() {
  * A server-action form that shows field errors next to each control, keeps
  * the submitted values after a validation error and announces the result.
  */
-export function ActionForm({ action, children, className, hidden, successMessage = true, resetOnSuccess = false, id, "aria-label": ariaLabel }: {
+export function ActionForm({ action, children, className, hidden, successMessage = false, resetOnSuccess = false, id, "aria-label": ariaLabel }: {
   action: FormAction;
   children: React.ReactNode;
   className?: string;
@@ -32,7 +33,10 @@ export function ActionForm({ action, children, className, hidden, successMessage
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   useEffect(() => {
-    if (state.status === "success" && state.redirectTo) router.push(state.redirectTo);
+    if (state.status !== "success") return;
+    // Success is confirmed in the shared toast region, which outlives this form.
+    if (state.message) announce(state.message);
+    if (state.redirectTo) router.push(state.redirectTo);
   }, [router, state]);
   useEffect(() => {
     if (state.status !== "error" || !state.fieldErrors) return;
@@ -53,22 +57,7 @@ export function ActionForm({ action, children, className, hidden, successMessage
       {children}
       <FormMessage show={successMessage || state.status === "error"} />
     </form>
-    {!successMessage && <Toast state={state} />}
   </FormContext.Provider>;
-}
-
-/** Brief confirmation for compact controls (row buttons) that have no room for an inline message. */
-function Toast({ state }: { state: FormState }) {
-  const [dismissed, setDismissed] = useState<number | undefined>(undefined);
-  const visible = state.status === "success" && state.message && state.nonce !== dismissed ? state : null;
-  useEffect(() => {
-    if (state.status !== "success") return;
-    const timer = window.setTimeout(() => setDismissed(state.nonce), 4000);
-    return () => window.clearTimeout(timer);
-  }, [state]);
-  return <div aria-live="polite" role="status" className="pointer-events-none fixed inset-x-4 bottom-[calc(64px+env(safe-area-inset-bottom)+16px)] z-[90] flex justify-center lg:inset-x-auto lg:right-6 lg:bottom-6">
-    {visible && <p className="pointer-events-auto flex items-center gap-2 rounded-xl bg-[#071127] px-4 py-3 text-sm font-bold text-white shadow-2xl"><CheckCircle2 size={17} className="text-[#6CE9A6]" aria-hidden="true" />{visible.message}</p>}
-  </div>;
 }
 
 export function FormMessage({ show = true }: { show?: boolean }) {

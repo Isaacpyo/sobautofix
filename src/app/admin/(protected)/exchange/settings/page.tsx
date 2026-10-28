@@ -60,7 +60,7 @@ export default async function ExchangeSettingsPage() {
     <Card id="roles" className="mt-6" title="Staff roles" description="Who can see costs, change prices, publish and change settings. Sign-in access itself is controlled by the staff allowlist.">
       <ul className="divide-y divide-[#EEF2F6]">{people.map((person) => <li key={person.id} className="flex flex-wrap items-end justify-between gap-3 py-3">
         <div className="min-w-0"><p className="font-bold text-[#071127]">{person.name}{person.id === staff.userId && <span className="ml-2 text-xs font-semibold text-[#586575]">(you)</span>}</p><p className="text-xs text-[#586575]">{staffRoleLabels[person.role]}</p></div>
-        {person.id === staff.userId ? <p className="text-xs text-[#586575]">You cannot change your own role.</p> : <ActionForm action={changeStaffRoleAction} hidden={{ userId: person.id }} className="flex flex-wrap items-end gap-2" successMessage>
+        {person.id === staff.userId ? <p className="text-xs text-[#586575]">You cannot change your own role.</p> : <ActionForm action={changeStaffRoleAction} hidden={{ userId: person.id }} className="flex flex-wrap items-end gap-2">
           <SelectField name="role" label={<span className="sr-only">Role for {person.name}</span>} defaultValue={person.role} options={staffRoles.map((role) => ({ value: role, label: staffRoleLabels[role] }))} />
           <SubmitButton variant="secondary" pendingLabel="Saving…">Change role</SubmitButton>
         </ActionForm>}

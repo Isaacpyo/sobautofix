@@ -1,5 +1,6 @@
 import { NoAccess, Notice } from "@/components/admin/exchange/ui";
 import { ExchangeSubtabNav, type ExchangeTab } from "@/components/admin/exchange/subtab-nav";
+import { ToastRegion } from "@/components/admin/exchange/toast";
 import { isMissingSchemaError, SCHEMA_MISSING_MESSAGE } from "@/lib/exchange/schema";
 import { requireStaffPage } from "@/lib/exchange/staff";
 
@@ -28,5 +29,6 @@ export default async function ExchangeAdminLayout({ children }: { children: Reac
     <div className="mt-6">
       {!allowed ? <NoAccess area="Vehicle Buying & Selling" /> : schemaMissing ? <Notice title="Database update needed">{SCHEMA_MISSING_MESSAGE}</Notice> : children}
     </div>
+    <ToastRegion />
   </div>;
 }
