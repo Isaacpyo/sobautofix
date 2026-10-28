@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, ArrowRight, Check, CheckCircle2, LoaderCircle, Mail, MessageCircle, Pencil, Phone, Search, Send } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useForm, type FieldPath } from "react-hook-form";
 import { TurnstileField } from "@/components/forms/turnstile-field";
@@ -11,6 +12,7 @@ import { formatPrice } from "@/lib/exchange/public/format";
 import { sellerFormSchema, type SellerFormInput, type SellerFormOutput } from "@/lib/exchange/public/schemas";
 import { cn } from "@/lib/utils";
 import { useExchangeHref } from "../exchange-base";
+import { prefersReducedMotion, useToast } from "../feedback";
 import { takeSellRegistration } from "../sell-handoff";
 import { buttonClass, inputClass, labelClass, linkClass, Notice } from "../ui";
 import { ChoiceGroup, FieldError, TextAreaField, TextField } from "./fields";
@@ -50,10 +52,22 @@ const emptyValues: SellerFormInput = {
   privacyAccepted: false as unknown as true,
 };
 
-type Draft = { values: SellerFormInput; step: number; idempotencyKey: string; photoCount: number };
+type Draft = { values: SellerFormInput; step: number; furthest?: number; idempotencyKey: string; photoCount: number };
 type Phase = "form" | "uploading" | "complete";
 type Saved = { submissionId: string; reference: string; uploadToken: string };
 type LookupState = { status: "idle" | "loading" | "found" | "failed" | "manual"; message?: string };
+
+/** Put the step in the URL through the native History API, which Next.js keeps in sync with useSearchParams. */
+function writeStep(index: number, mode: "push" | "replace") {
+  const params = new URLSearchParams(window.location.search);
+  const key = steps[index]?.key;
+  if (!key || index === 0) params.delete("step");
+  else params.set("step", key);
+  const query = params.toString();
+  const url = `${window.location.pathname}${query ? `?${query}` : ""}`;
+  if (mode === "push") window.history.pushState(null, "", url);
+  else window.history.replaceState(null, "", url);
+}
 
 function readDraft(): Draft | null {
   try {
@@ -69,7 +83,13 @@ export function SellForm({ interestedVehicle, contact, links, responsePromise }:
   const id = useId();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
-  const [step, setStep] = useState(0);
+  // The current step lives in the URL (?step=condition), so browser back and
+  // forward move between steps without losing answers. It can never run
+  // ahead of the furthest step the visitor has validated.
+  const searchParams = useSearchParams();
+  const [furthest, setFurthest] = useState(0);
+  const requestedStep = steps.findIndex((candidate) => candidate.key === searchParams.get("step"));
+  const step = Math.max(0, Math.min(requestedStep < 0 ? 0 : requestedStep, furthest));
   const [phase, setPhase] = useState<Phase>("form");
   const [idempotencyKey, setIdempotencyKey] = useState("");
   const [photos, setPhotos] = useState<SellerPhoto[]>([]);
@@ -79,6 +99,8 @@ export function SellForm({ interestedVehicle, contact, links, responsePromise }:
   const [restored, setRestored] = useState<{ photoCount: number } | null>(null);
   const [saved, setSaved] = useState<Saved | null>(null);
   const startedRef = useRef(false);
+  const toast = useToast();
+  const inFlight = useRef(false);
   const photosRef = useRef<SellerPhoto[]>([]);
   const movedRef = useRef(false);
 
@@ -91,7 +113,9 @@ export function SellForm({ interestedVehicle, contact, links, responsePromise }:
     const draft = readDraft();
     if (draft?.values) {
       reset({ ...emptyValues, ...draft.values, vehicle: { ...emptyValues.vehicle, ...draft.values.vehicle, registration: "" }, privacyAccepted: false as unknown as true });
-      setStep(Math.min(Math.max(0, draft.step || 0), steps.length - 1));
+      const draftStep = Math.min(Math.max(0, draft.step || 0), steps.length - 1);
+      setFurthest(Math.min(Math.max(draftStep, draft.furthest || 0), steps.length - 1));
+      if (!new URLSearchParams(window.location.search).get("step")) writeStep(draftStep, "replace");
       if (draft.values.vehicle?.make) setLookup({ status: "manual" });
       setRestored({ photoCount: draft.photoCount || 0 });
     }
@@ -110,18 +134,18 @@ export function SellForm({ interestedVehicle, contact, links, responsePromise }:
       }
       try {
         const draftValues = { ...current, vehicle: { ...current.vehicle, registration: "" }, privacyAccepted: false };
-        sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ values: draftValues, step, idempotencyKey, photoCount: photos.length } satisfies Omit<Draft, "values"> & { values: unknown }));
+        sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ values: draftValues, step, furthest, idempotencyKey, photoCount: photos.length } satisfies Omit<Draft, "values"> & { values: unknown }));
       } catch {
         // Storage unavailable: the form still works, the draft just is not kept.
       }
     });
     return () => subscription.unsubscribe();
-  }, [watch, step, idempotencyKey, phase, photos.length, interestedVehicle]);
+  }, [watch, step, furthest, idempotencyKey, phase, photos.length, interestedVehicle]);
 
   // Move focus to the step heading when the step changes, so screen reader and keyboard users start at the top.
   useEffect(() => {
     if (!movedRef.current) return;
-    topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    topRef.current?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
     headingRef.current?.focus({ preventScroll: true });
   }, [step, phase]);
 
@@ -153,6 +177,7 @@ export function SellForm({ interestedVehicle, contact, links, responsePromise }:
       setValue("vehicle.colour", found.colour || "");
       setValue("vehicle.lookupSource", "lookup");
       setLookup({ status: "found" });
+      toast("Car found. Please check the details.");
     } catch {
       setLookup({ status: "failed", message: "Vehicle lookup is unavailable right now. Please enter the details yourself." });
     }
@@ -169,12 +194,14 @@ export function SellForm({ interestedVehicle, contact, links, responsePromise }:
     const fields = (steps[step] ?? steps[0]).fields as readonly FieldPath<SellerFormInput>[];
     const valid = fields.length ? await trigger(fields as FieldPath<SellerFormInput>[], { shouldFocus: true }) : true;
     if (!valid) return;
-    setStep((current) => Math.min(current + 1, steps.length - 1));
+    const target = Math.min(step + 1, steps.length - 1);
+    setFurthest((current) => Math.max(current, target));
+    writeStep(target, "push");
   }
 
   function goTo(index: number) {
     movedRef.current = true;
-    setStep(index);
+    writeStep(Math.min(index, furthest), "push");
   }
 
   async function uploadAll(context: Saved, list: SellerPhoto[]) {
@@ -204,6 +231,18 @@ export function SellForm({ interestedVehicle, contact, links, responsePromise }:
   }
 
   async function onSubmit(formValues: SellerFormOutput) {
+    // One request at a time. The idempotency key stays the same across retries
+    // of this submission and is only replaced after a successful send.
+    if (inFlight.current) return;
+    inFlight.current = true;
+    try {
+      await send(formValues);
+    } finally {
+      inFlight.current = false;
+    }
+  }
+
+  async function send(formValues: SellerFormOutput) {
     setSubmitError("");
     if (!turnstileToken) {
       setSubmitError("Please complete the security check, then send again.");

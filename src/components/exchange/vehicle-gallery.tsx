@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Expand, ImageIcon, X } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { prefersReducedMotion } from "./feedback";
 import type { SaleVehicle } from "@/types/domain";
 
 type GalleryImage = SaleVehicle["images"][number];
@@ -44,7 +45,7 @@ export function VehicleGallery({ images, vehicleName, sold = false }: { images: 
   }, [viewerOpen]);
 
   useEffect(() => {
-    thumbsRef.current?.querySelector<HTMLElement>(`[data-index="${index}"]`)?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+    thumbsRef.current?.querySelector<HTMLElement>(`[data-index="${index}"]`)?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: prefersReducedMotion() ? "auto" : "smooth" });
   }, [index]);
 
   function onKeyDown(event: React.KeyboardEvent) {

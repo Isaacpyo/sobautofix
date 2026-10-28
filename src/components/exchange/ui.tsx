@@ -13,10 +13,10 @@ import type { SaleVehicle } from "@/types/domain";
 export const focusRing = "focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[rgba(22,139,255,.55)]";
 
 export const buttonStyles = {
-  base: cn("inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 text-[15px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60", focusRing),
-  primary: "bg-[#1974E2] text-white hover:bg-[#1462C4]",
-  secondary: "border border-[#C9D3E0] bg-white text-[#0B1220] hover:border-[#1974E2] hover:text-[#1462C4]",
-  ghost: "text-[#1462C4] hover:bg-[#EAF2FD]",
+  base: cn("inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 text-[15px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 motion-safe:active:scale-[.98]", focusRing),
+  primary: "bg-[#1974E2] text-white hover:bg-[#1462C4] active:bg-[#0F4FA0]",
+  secondary: "border border-[#C9D3E0] bg-white text-[#0B1220] hover:border-[#1974E2] hover:text-[#1462C4] active:bg-[#EAF2FD]",
+  ghost: "text-[#1462C4] hover:bg-[#EAF2FD] active:bg-[#D9E8FB]",
   dark: "bg-[#0B1220] text-white hover:bg-[#1F2937]",
   inverse: "bg-white text-[#0B1220] hover:bg-[#EAF2FD]",
 };

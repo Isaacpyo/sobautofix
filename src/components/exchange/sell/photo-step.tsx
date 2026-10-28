@@ -4,6 +4,7 @@ import { Camera, CheckCircle2, ImagePlus, LoaderCircle, RotateCcw, Trash2, Trian
 import { useId, useRef, useState } from "react";
 import { SELLER_PHOTO_LIMIT, type SellerPhotoCategory } from "@/lib/exchange/public/schemas";
 import { cn } from "@/lib/utils";
+import { useToast } from "../feedback";
 import { buttonClass, inputClass, Notice } from "../ui";
 import { preparePhoto, type SellerPhoto } from "./photo-upload";
 
@@ -24,6 +25,7 @@ export function PhotoPicker({ photos, onChange }: { photos: SellerPhoto[]; onCha
   const [busy, setBusy] = useState(false);
   const [messages, setMessages] = useState<string[]>([]);
   const id = useId();
+  const toast = useToast();
   const remaining = SELLER_PHOTO_LIMIT - photos.length;
 
   async function addFiles(list: FileList | null) {
@@ -38,11 +40,12 @@ export function PhotoPicker({ photos, onChange }: { photos: SellerPhoto[]; onCha
         const prepared = await preparePhoto(file);
         added.push({ key: crypto.randomUUID(), blob: prepared.blob, contentType: prepared.contentType, previewUrl: URL.createObjectURL(prepared.blob), category: photos.length + added.length === 0 ? "exterior" : "other", status: "ready", progress: 0 });
       } catch (error) {
-        problems.push(error instanceof Error && error.message.length < 120 ? error.message : "One photo could not be added. Please choose a JPG, PNG or WebP image up to 8 MB.");
+        problems.push(error instanceof Error && error.message.length < 400 ? error.message : "One photo could not be added. Please choose a JPG, PNG or WebP image up to 8 MB.");
       }
     }
     onChange((current) => [...current, ...added].slice(0, SELLER_PHOTO_LIMIT));
-    setMessages(problems);
+    setMessages([...new Set(problems)]);
+    if (added.length) toast(`${added.length} ${added.length === 1 ? "photo" : "photos"} added`);
     setBusy(false);
     if (galleryRef.current) galleryRef.current.value = "";
     if (cameraRef.current) cameraRef.current.value = "";
@@ -54,6 +57,7 @@ export function PhotoPicker({ photos, onChange }: { photos: SellerPhoto[]; onCha
       if (photo) URL.revokeObjectURL(photo.previewUrl);
       return current.filter((item) => item.key !== key);
     });
+    toast("Photo removed", "info");
   }
 
   return (
@@ -61,13 +65,13 @@ export function PhotoPicker({ photos, onChange }: { photos: SellerPhoto[]; onCha
       <div className="rounded-2xl bg-[#F3F5F8] p-4">
         <p className="font-semibold text-[#0B1220]">Helpful photos</p>
         <ul className="mt-2 grid gap-1 text-[15px] text-[#344054]">{suggestions.map((item) => <li key={item} className="flex gap-2"><span aria-hidden="true" className="mt-2.5 size-1.5 shrink-0 rounded-full bg-[#1974E2]" />{item}</li>)}</ul>
-        <p className="mt-2 text-sm text-[#5B6575]">Up to {SELLER_PHOTO_LIMIT} JPG, PNG or WebP photos, 8 MB each. We shrink them on your phone before sending to save data, and remove location details on our server.</p>
+        <p className="mt-2 text-sm text-[#5B6575]">Up to {SELLER_PHOTO_LIMIT} photos. We shrink them on your phone before sending to save data (iPhone HEIC photos are converted where your browser allows), and remove location details on our server.</p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <input ref={cameraRef} id={`${id}-camera`} type="file" accept="image/jpeg,image/png,image/webp" capture="environment" className="sr-only" onChange={(event) => addFiles(event.target.files)} disabled={remaining <= 0 || busy} />
+        <input ref={cameraRef} id={`${id}-camera`} type="file" accept="image/*" capture="environment" className="sr-only" onChange={(event) => addFiles(event.target.files)} disabled={remaining <= 0 || busy} />
         <label htmlFor={`${id}-camera`} className={cn(buttonClass("primary", "w-full cursor-pointer sm:hidden"), (remaining <= 0 || busy) && "pointer-events-none opacity-60")}><Camera size={20} aria-hidden="true" /> Take a photo</label>
-        <input ref={galleryRef} id={`${id}-gallery`} type="file" accept="image/jpeg,image/png,image/webp" multiple className="sr-only" onChange={(event) => addFiles(event.target.files)} disabled={remaining <= 0 || busy} />
+        <input ref={galleryRef} id={`${id}-gallery`} type="file" accept="image/*,.heic,.heif" multiple className="sr-only" onChange={(event) => addFiles(event.target.files)} disabled={remaining <= 0 || busy} />
         <label htmlFor={`${id}-gallery`} className={cn(buttonClass("secondary", "w-full cursor-pointer sm:col-span-2"), (remaining <= 0 || busy) && "pointer-events-none opacity-60")}>
           {busy ? <LoaderCircle size={20} className="animate-spin" aria-hidden="true" /> : <ImagePlus size={20} aria-hidden="true" />} {busy ? "Preparing photos" : "Choose photos"}
         </label>

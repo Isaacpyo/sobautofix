@@ -146,14 +146,68 @@ export function CatalogueToolbar(props: Omit<PanelProps, "idPrefix" | "onDone">)
   );
 }
 
-/** Remember the exact catalogue URL so a vehicle page can link back to the same filtered results. */
+const CATALOGUE_KEY = "sob-exchange-catalogue";
+const RESTORE_KEY = "sob-exchange-catalogue-restore";
+
+/**
+ * Remember the exact catalogue URL and scroll position, so "Back to results"
+ * on a vehicle page returns to the same filtered list at the same place.
+ * Filters live in the query string, so the URL is also shareable.
+ */
 export function RememberCatalogueUrl() {
   useEffect(() => {
+    const url = `${window.location.pathname}${window.location.search}`;
+    const save = () => {
+      try {
+        sessionStorage.setItem(CATALOGUE_KEY, JSON.stringify({ url, y: Math.round(window.scrollY) }));
+      } catch {
+        // Storage unavailable: the back link falls back to the unfiltered catalogue.
+      }
+    };
+    // Returning from a vehicle page: restore where they were.
     try {
-      sessionStorage.setItem("sob-exchange-catalogue-url", `${window.location.pathname}${window.location.search}`);
+      const restore = sessionStorage.getItem(RESTORE_KEY);
+      sessionStorage.removeItem(RESTORE_KEY);
+      const saved = JSON.parse(sessionStorage.getItem(CATALOGUE_KEY) || "null") as { url?: string; y?: number } | null;
+      if (restore === url && saved?.url === url && typeof saved.y === "number") {
+        const y = saved.y;
+        requestAnimationFrame(() => window.scrollTo({ top: y, behavior: "instant" as ScrollBehavior }));
+      }
     } catch {
-      // Storage unavailable: the back link falls back to the unfiltered catalogue.
+      // Ignore unreadable storage.
     }
+    save();
+    let frame = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(save);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("pagehide", save);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("pagehide", save);
+    };
   });
   return null;
+}
+
+/** The remembered catalogue URL, and a function that asks the catalogue to restore its scroll position. */
+export function readRememberedCatalogue(fallback: string) {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(CATALOGUE_KEY) || "null") as { url?: string } | null;
+    if (saved?.url && saved.url.startsWith(fallback) && !saved.url.startsWith("//")) return saved.url;
+  } catch {
+    // Ignore unreadable storage.
+  }
+  return fallback;
+}
+
+export function requestCatalogueRestore(url: string) {
+  try {
+    sessionStorage.setItem(RESTORE_KEY, url);
+  } catch {
+    // Ignore unavailable storage.
+  }
 }

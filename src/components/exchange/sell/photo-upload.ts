@@ -24,31 +24,53 @@ export function isAllowedPhotoType(type: string): type is SellerPhoto["contentTy
   return (sellerPhotoTypes as readonly string[]).includes(type);
 }
 
-/** Resize to at most 2048px on the long edge as JPEG. Falls back to the original when resizing is unavailable. */
+/** iPhones save HEIC/HEIF by default; some browsers report it with an empty type. */
+export function isHeicLike(file: Pick<File, "type" | "name">) {
+  return /^image\/hei[cf]/i.test(file.type) || (!file.type && /\.(heic|heif)$/i.test(file.name));
+}
+
+export const HEIC_HELP = "This photo is in the iPhone HEIC format, which your browser cannot convert. On iPhone, go to Settings, Camera, Formats and choose Most Compatible, then take the photo again. Or send your photos to us on WhatsApp.";
+
+async function reencodeAsJpeg(file: File) {
+  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+  const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
+  const width = Math.max(1, Math.round(bitmap.width * scale));
+  const height = Math.max(1, Math.round(bitmap.height * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("no canvas");
+  context.drawImage(bitmap, 0, 0, width, height);
+  bitmap.close();
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.85));
+  if (!blob) throw new Error("encode failed");
+  return blob;
+}
+
+/**
+ * Prepare a photo for upload: resize to at most 2048px on the long edge and
+ * re-encode as JPEG on the phone (saves mobile data, and converts HEIC/HEIF
+ * where the browser can decode it). JPG, PNG and WebP fall back to the
+ * original file when the browser cannot resize; anything else gets a clear
+ * instruction instead. The server still checks the real file type.
+ */
 export async function preparePhoto(file: File): Promise<{ blob: Blob; contentType: SellerPhoto["contentType"] }> {
-  if (!isAllowedPhotoType(file.type)) throw new Error("Choose a JPG, PNG or WebP photo.");
+  const heic = isHeicLike(file);
+  const supported = isAllowedPhotoType(file.type);
+  if (!heic && !supported && !file.type.startsWith("image/")) throw new Error("Choose a photo (JPG, PNG, WebP or iPhone HEIC).");
   try {
-    const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
-    const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
-    const width = Math.max(1, Math.round(bitmap.width * scale));
-    const height = Math.max(1, Math.round(bitmap.height * scale));
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-    const context = canvas.getContext("2d");
-    if (!context) throw new Error("no canvas");
-    context.drawImage(bitmap, 0, 0, width, height);
-    bitmap.close();
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.85));
-    if (blob && (blob.size < file.size || file.size > SELLER_PHOTO_MAX_BYTES)) {
-      if (blob.size > SELLER_PHOTO_MAX_BYTES) throw new Error("too large");
-      return { blob, contentType: "image/jpeg" };
-    }
+    const blob = await reencodeAsJpeg(file);
+    if (blob.size > SELLER_PHOTO_MAX_BYTES) throw new Error("too large");
+    // Keep the original only when it is already an accepted type and smaller.
+    if (supported && file.size <= blob.size && file.size <= SELLER_PHOTO_MAX_BYTES) return { blob: file, contentType: file.type as SellerPhoto["contentType"] };
+    return { blob, contentType: "image/jpeg" };
   } catch {
-    // Fall through to the original file.
+    if (heic) throw new Error(HEIC_HELP);
+    if (!supported) throw new Error("This photo format is not supported. Please choose a JPG, PNG or WebP photo, or send it to us on WhatsApp.");
+    if (file.size > SELLER_PHOTO_MAX_BYTES) throw new Error("This photo is larger than 8 MB. Please choose a smaller one.");
+    return { blob: file, contentType: file.type as SellerPhoto["contentType"] };
   }
-  if (file.size > SELLER_PHOTO_MAX_BYTES) throw new Error("This photo is larger than 8 MB. Please choose a smaller one.");
-  return { blob: file, contentType: file.type as SellerPhoto["contentType"] };
 }
 
 /** PUT a blob to a Supabase signed upload URL, reporting progress from 0 to 1. */

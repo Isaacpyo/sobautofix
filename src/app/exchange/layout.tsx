@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { ExchangeBaseProvider } from "@/components/exchange/exchange-base";
 import { ExchangeBottomNav } from "@/components/exchange/exchange-bottom-nav";
+import { ExchangeFeedbackProvider } from "@/components/exchange/feedback";
 import { ExchangeFooter } from "@/components/exchange/exchange-footer";
 import { ExchangeHeader } from "@/components/exchange/exchange-header";
 import { getExchangeBase } from "@/lib/exchange/links";
@@ -21,6 +22,7 @@ export default async function ExchangeLayout({ children }: Readonly<{ children: 
 
   return (
     <ExchangeBaseProvider base={base}>
+      <ExchangeFeedbackProvider>
       <div className="exchange-app flex min-h-dvh flex-col bg-white text-[#344054] [--exchange-bottom-space:calc(64px_+_env(safe-area-inset-bottom))] has-[[data-exchange-action-bar]]:[--exchange-bottom-space:calc(136px_+_env(safe-area-inset-bottom))]">
         <a href="#exchange-main" className="sr-only z-50 rounded-lg bg-[#0B1220] px-4 py-3 font-semibold text-white focus:not-sr-only focus:fixed focus:top-3 focus:left-3">Skip to content</a>
         <ExchangeHeader
@@ -36,6 +38,7 @@ export default async function ExchangeLayout({ children }: Readonly<{ children: 
         </div>
         <ExchangeBottomNav />
       </div>
+      </ExchangeFeedbackProvider>
     </ExchangeBaseProvider>
   );
 }

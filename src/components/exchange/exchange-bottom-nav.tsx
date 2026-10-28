@@ -25,7 +25,7 @@ export function ExchangeBottomNav() {
   const current = bottomNavSection(pathname);
 
   return (
-    <nav aria-label="Mobile navigation" className="fixed inset-x-0 bottom-0 z-40 border-t border-[#E3E8EF] bg-white pb-[env(safe-area-inset-bottom)] lg:hidden">
+    <nav aria-label="Mobile navigation" data-exchange-fixed className="fixed inset-x-0 bottom-0 z-40 border-t border-[#E3E8EF] bg-white pb-[env(safe-area-inset-bottom)] lg:hidden">
       <ul className="mx-auto grid h-16 max-w-xl grid-cols-5">
         {items.map((item) => {
           const active = current === item.key;

@@ -7,7 +7,7 @@ import { AvailabilityChip, Container, DisclosureBadges, linkClass, Notice, Price
 import { VehicleCard } from "@/components/exchange/vehicle-card";
 import { VehicleActions } from "@/components/exchange/vehicle-enquiry";
 import { VehicleGallery } from "@/components/exchange/vehicle-gallery";
-import { BackToResults, TrackVehicleView } from "@/components/exchange/vehicle-page-client";
+import { BackToResults, ShareLink, TrackVehicleView } from "@/components/exchange/vehicle-page-client";
 import { NOT_CONFIRMED, NOT_PUBLISHED_COPY } from "@/config/exchange";
 import { exchangeHref } from "@/lib/exchange/host";
 import { exchangeCanonical, getExchangeBase } from "@/lib/exchange/links";
@@ -129,7 +129,10 @@ export default async function VehiclePage({ params }: Props) {
         }}
       />
       <Container className="pt-3 pb-12 sm:pt-5">
-        <BackToResults />
+        <div className="flex items-center justify-between gap-3">
+          <BackToResults />
+          <ShareLink title={`${name} for sale`} />
+        </div>
         {sold && (
           <Notice tone="error" role="status" className="mt-3" title="This car has been sold">It is shown here for reference only. Have a look at our similar cars below or browse everything we have listed.</Notice>
         )}

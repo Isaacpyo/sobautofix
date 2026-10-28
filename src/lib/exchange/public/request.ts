@@ -19,6 +19,7 @@ export function serviceErrorResponse(error: ExchangeServiceError) {
     case "VEHICLE_UNAVAILABLE":
       return jsonError(409, error.message, {
         code: "VEHICLE_UNAVAILABLE",
+        currentStatus: error.currentStatus || "unavailable",
         similar: (error.similar || []).map((vehicle) => ({ slug: vehicle.slug, name: vehicleName(vehicle), price: vehicle.price, priceLabel: formatPrice(vehicle.price) })),
       });
     case "INVALID":

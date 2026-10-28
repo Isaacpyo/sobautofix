@@ -15,13 +15,17 @@ import { resolveViewingTime } from "./viewing-time";
 export type ServiceFailureCode = "SCHEMA_MISSING" | "VEHICLE_UNAVAILABLE" | "NOT_CONFIGURED" | "FAILED" | "INVALID";
 
 export class ExchangeServiceError extends Error {
-  constructor(readonly code: ServiceFailureCode, message: string, readonly fields?: Record<string, string[]>, readonly similar?: SaleVehicle[]) {
+  constructor(readonly code: ServiceFailureCode, message: string, readonly fields?: Record<string, string[]>, readonly similar?: SaleVehicle[], readonly currentStatus?: string) {
     super(message);
     this.name = "ExchangeServiceError";
   }
 }
 
-export const VEHICLE_UNAVAILABLE_MESSAGE = "Sorry, this car has just been reserved or sold, so we cannot take a viewing request for it. Have a look at similar cars instead.";
+export function vehicleUnavailableMessage(status?: string) {
+  if (status === "reserved") return "This car has just been reserved for another buyer, so we cannot take a viewing request for it. You can still send us a question, or look at similar cars.";
+  if (status === "sold") return "Sorry, this car has just been sold. Have a look at similar cars instead.";
+  return "Sorry, this car is no longer available. Have a look at similar cars instead.";
+}
 
 /**
  * Save a viewing request or a question through create_vehicle_enquiry()
@@ -31,7 +35,7 @@ export const VEHICLE_UNAVAILABLE_MESSAGE = "Sorry, this car has just been reserv
  */
 export async function submitVehicleEnquiry(input: VehicleEnquiryRequest, now = new Date()) {
   const vehicle = await getListedVehicleById(input.vehicleId);
-  const unavailable = async (target: SaleVehicle | null) => new ExchangeServiceError("VEHICLE_UNAVAILABLE", VEHICLE_UNAVAILABLE_MESSAGE, undefined, target ? await getSimilarVehicles(target, 3) : []);
+  const unavailable = async (target: SaleVehicle | null, status: string | undefined = target?.status) => new ExchangeServiceError("VEHICLE_UNAVAILABLE", vehicleUnavailableMessage(status), undefined, target ? await getSimilarVehicles(target, 3) : [], status || "unavailable");
   if (!vehicle) throw await unavailable(null);
   if (input.intent === "viewing" && vehicle.status !== "available") throw await unavailable(vehicle);
   if (input.intent === "question" && !["available", "reserved"].includes(vehicle.status)) throw await unavailable(vehicle);
@@ -56,7 +60,7 @@ export async function submitVehicleEnquiry(input: VehicleEnquiryRequest, now = n
   const { data, error } = await admin.rpc("create_vehicle_enquiry", { p_payload: payload });
   if (error) {
     const failure = mapRpcError(error);
-    if (failure === "VEHICLE_UNAVAILABLE") throw await unavailable(vehicle);
+    if (failure === "VEHICLE_UNAVAILABLE") throw await unavailable(vehicle, (await getListedVehicleById(vehicle.id))?.status || "unavailable");
     throw new ExchangeServiceError(failure, failure === "SCHEMA_MISSING" ? "Enquiries are temporarily unavailable." : "We could not save your request.");
   }
   const row = (Array.isArray(data) ? data[0] : data) as { enquiry_id: string; appointment_id: string | null; created: boolean } | undefined;

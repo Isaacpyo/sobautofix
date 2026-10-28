@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarClock, CheckCircle2, LoaderCircle, MessageCircle, MessageSquareText, Phone, Repeat, Send, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useForm, type FieldPath } from "react-hook-form";
 import type { z } from "zod";
@@ -24,10 +25,8 @@ type FormInput = z.input<typeof vehicleEnquiryFormSchema>;
 type FormOutput = z.output<typeof vehicleEnquiryFormSchema>;
 
 type Similar = { slug: string; name: string; price: number };
-type Outcome =
-  | { kind: "success"; intent: VehicleEnquiryIntent; requestedStart?: string; alternativeStart?: string; preferredContact: string }
-  | { kind: "unavailable"; message: string; similar: Similar[] }
-  | null;
+type Outcome = { kind: "success"; intent: VehicleEnquiryIntent; requestedStart?: string; alternativeStart?: string; preferredContact: string } | null;
+type Unavailable = { message: string; similar: Similar[]; currentStatus: string };
 
 const contactLabels: Record<string, string> = { phone: "phone", whatsapp: "WhatsApp", email: "email" };
 
@@ -52,12 +51,26 @@ export function VehicleActions({ vehicle, contact, links }: { vehicle: EnquiryVe
 
   const contactClick = (channel: string) => () => track("vehicle_contact_clicked", { channel, status: vehicle.status });
 
+  const dialog = (
+    <dialog
+      ref={dialogRef}
+      onClose={() => setIntent(null)}
+      aria-labelledby="vehicle-enquiry-title"
+      className="m-0 mt-auto max-h-[100dvh] w-full max-w-none overflow-hidden rounded-t-3xl bg-white p-0 text-[#344054] shadow-2xl sm:m-auto sm:max-h-[92dvh] sm:max-w-xl sm:rounded-3xl"
+    >
+      {intent && <EnquiryDialogBody vehicle={vehicle} initialIntent={intent} canView={canView} links={links} contact={contact} onClose={() => setIntent(null)} />}
+    </dialog>
+  );
+
   if (!canAsk) {
     return (
-      <div className="grid gap-3">
-        <Link href={href("/cars")} className={buttonClass("primary", "w-full")}>Browse available cars</Link>
-        {contact.phoneHref && <a href={contact.phoneHref} onClick={contactClick("phone")} className={buttonClass("secondary", "w-full")}><Phone size={18} aria-hidden="true" /> Call {contact.phoneLabel}</a>}
-      </div>
+      <>
+        <div className="grid gap-3">
+          <Link href={href("/cars")} className={buttonClass("primary", "w-full")}>Browse available cars</Link>
+          {contact.phoneHref && <a href={contact.phoneHref} onClick={contactClick("phone")} className={buttonClass("secondary", "w-full")}><Phone size={18} aria-hidden="true" /> Call {contact.phoneLabel}</a>}
+        </div>
+        {dialog}
+      </>
     );
   }
 
@@ -74,7 +87,7 @@ export function VehicleActions({ vehicle, contact, links }: { vehicle: EnquiryVe
       </div>
 
       {/* Compact action bar directly above the mobile bottom navigation. */}
-      <div data-exchange-action-bar className="fixed inset-x-0 bottom-[calc(64px+env(safe-area-inset-bottom))] z-30 border-t border-[#E3E8EF] bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
+      <div data-exchange-action-bar data-exchange-fixed className="fixed inset-x-0 bottom-[calc(64px+env(safe-area-inset-bottom))] z-30 border-t border-[#E3E8EF] bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
         <div className="mx-auto flex max-w-xl items-center gap-2">
           <p className="mr-auto min-w-0">
             <span className="block truncate text-[13px] text-[#5B6575]">{vehicle.name}</span>
@@ -85,20 +98,12 @@ export function VehicleActions({ vehicle, contact, links }: { vehicle: EnquiryVe
         </div>
       </div>
 
-      <dialog
-        ref={dialogRef}
-        onClose={() => setIntent(null)}
-        aria-labelledby="vehicle-enquiry-title"
-        className="m-0 mt-auto max-h-[100dvh] w-full max-w-none overflow-hidden rounded-t-3xl bg-white p-0 text-[#344054] shadow-2xl sm:m-auto sm:max-h-[92dvh] sm:max-w-xl sm:rounded-3xl"
-      >
-        {intent && <EnquiryDialogBody vehicle={vehicle} initialIntent={intent} canView={canView} links={links} contact={contact} onClose={() => setIntent(null)} />}
-      </dialog>
+      {dialog}
     </>
   );
 }
 
 function EnquiryDialogBody({ vehicle, initialIntent, canView, links, contact, onClose }: { vehicle: EnquiryVehicle; initialIntent: VehicleEnquiryIntent; canView: boolean; links: Links; contact: Contact; onClose: () => void }) {
-  const href = useExchangeHref();
   const [outcome, setOutcome] = useState<Outcome>(null);
   return (
     <div className="flex max-h-[100dvh] flex-col sm:max-h-[92dvh]">
@@ -141,21 +146,6 @@ function EnquiryDialogBody({ vehicle, initialIntent, canView, links, contact, on
             <p className="text-sm leading-6 text-[#5B6575]">We do not take payments or reservations online. Please wait for us to confirm before travelling.</p>
             <button type="button" onClick={onClose} className={buttonClass("primary", "w-full")}>Done</button>
           </div>
-        ) : outcome?.kind === "unavailable" ? (
-          <div className="grid gap-4">
-            <Notice tone="warning" role="alert" title="This car is no longer available">{outcome.message}</Notice>
-            {outcome.similar.length > 0 && (
-              <div>
-                <h3 className="text-[20px] font-bold text-[#0B1220]">Similar cars you could look at</h3>
-                <ul className="mt-2 grid gap-2">
-                  {outcome.similar.map((car) => (
-                    <li key={car.slug}><Link href={href(`/cars/${car.slug}`)} className="flex min-h-12 items-center justify-between gap-3 rounded-xl border border-[#E3E8EF] px-4 py-2 font-semibold text-[#0B1220] hover:border-[#1974E2]">{car.name}<span className="exchange-display text-xl">{formatPrice(car.price)}</span></Link></li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            <Link href={href("/cars")} className={buttonClass("primary", "w-full")}>Browse all cars</Link>
-          </div>
         ) : (
           <VehicleEnquiryForm vehicle={vehicle} initialIntent={initialIntent} canView={canView} links={links} contact={contact} onOutcome={setOutcome} />
         )}
@@ -164,8 +154,15 @@ function EnquiryDialogBody({ vehicle, initialIntent, canView, links, contact, on
   );
 }
 
-function VehicleEnquiryForm({ vehicle, initialIntent, canView, links, contact, onOutcome }: { vehicle: EnquiryVehicle; initialIntent: VehicleEnquiryIntent; canView: boolean; links: Links; contact: Contact; onOutcome: (outcome: Outcome) => void }) {
+function VehicleEnquiryForm({ vehicle, initialIntent, canView: initialCanView, links, contact, onOutcome }: { vehicle: EnquiryVehicle; initialIntent: VehicleEnquiryIntent; canView: boolean; links: Links; contact: Contact; onOutcome: (outcome: Outcome) => void }) {
   const id = useId();
+  const href = useExchangeHref();
+  const router = useRouter();
+  const inFlight = useRef(false);
+  const unavailableRef = useRef<HTMLDivElement>(null);
+  const [unavailable, setUnavailable] = useState<Unavailable | null>(null);
+  // Availability can change while the dialog is open; a 409 turns viewings off without losing what was typed.
+  const canView = initialCanView && !unavailable;
   // One key per form: a retry after a network error reuses it, so the server never creates a duplicate.
   const [idempotencyKey] = useState(() => crypto.randomUUID());
   const [turnstileToken, setTurnstileToken] = useState("");
@@ -181,6 +178,16 @@ function VehicleEnquiryForm({ vehicle, initialIntent, canView, links, contact, o
   const onToken = useCallback((token: string) => setTurnstileToken(token), []);
 
   async function onSubmit(values: FormOutput) {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    try {
+      await send(values);
+    } finally {
+      inFlight.current = false;
+    }
+  }
+
+  async function send(values: FormOutput) {
     setSubmitError("");
     if (!turnstileToken) {
       setSubmitError("Please complete the security check, then send again.");
@@ -192,9 +199,15 @@ function VehicleEnquiryForm({ vehicle, initialIntent, canView, links, contact, o
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...values, vehicleId: vehicle.id, idempotencyKey, turnstileToken }),
       });
-      const body = await response.json().catch(() => null) as null | { success?: boolean; requestedStart?: string; alternativeStart?: string; error?: { code?: string; message?: string; fields?: Record<string, string[] | undefined> }; similar?: Similar[] };
+      const body = await response.json().catch(() => null) as null | { success?: boolean; requestedStart?: string; alternativeStart?: string; currentStatus?: string; error?: { code?: string; message?: string; fields?: Record<string, string[] | undefined> }; similar?: Similar[] };
       if (response.status === 409 && body?.error?.code === "VEHICLE_UNAVAILABLE") {
-        onOutcome({ kind: "unavailable", message: body.error.message || "This car has just been reserved or sold.", similar: body.similar || [] });
+        const currentStatus = body.currentStatus || "unavailable";
+        setUnavailable({ message: body.error.message || "This car has just been reserved or sold.", similar: body.similar || [], currentStatus });
+        // Questions are still welcome on a reserved car; keep everything they typed.
+        if (currentStatus === "reserved") setValue("intent", "question");
+        // Refresh the page behind the dialog so the availability shown is current.
+        router.refresh();
+        setTimeout(() => unavailableRef.current?.focus(), 30);
         return;
       }
       if (!response.ok || !body?.success) {
@@ -222,6 +235,22 @@ function VehicleEnquiryForm({ vehicle, initialIntent, canView, links, contact, o
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="grid gap-5" aria-describedby={`${id}-reference`}>
       <p id={`${id}-reference`} className="sr-only">This enquiry is about the {vehicle.name}.</p>
+      {unavailable && (
+        <div ref={unavailableRef} tabIndex={-1} className="grid gap-3 outline-none">
+          <Notice tone="warning" role="alert" title={unavailable.currentStatus === "reserved" ? "This car has just been reserved" : "This car is no longer available"}>{unavailable.message}</Notice>
+          {unavailable.similar.length > 0 && (
+            <div>
+              <p className="text-[15px] font-semibold text-[#0B1220]">Similar cars</p>
+              <ul className="mt-2 grid gap-2">
+                {unavailable.similar.map((car) => (
+                  <li key={car.slug}><Link href={href(`/cars/${car.slug}`)} className="flex min-h-12 items-center justify-between gap-3 rounded-xl border border-[#E3E8EF] px-4 py-2 font-semibold text-[#0B1220] hover:border-[#1974E2]">{car.name}<span className="exchange-display text-xl">{formatPrice(car.price)}</span></Link></li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {unavailable.currentStatus !== "reserved" && <Link href={href("/cars")} className={buttonClass("secondary", "w-full")}>Browse all cars</Link>}
+        </div>
+      )}
       {canView && (
         <fieldset>
           <legend className={labelClass}>What would you like to do?</legend>
