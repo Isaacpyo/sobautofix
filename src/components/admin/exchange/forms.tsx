@@ -59,11 +59,11 @@ export function ActionForm({ action, children, className, hidden, successMessage
 
 /** Brief confirmation for compact controls (row buttons) that have no room for an inline message. */
 function Toast({ state }: { state: FormState }) {
-  const [visible, setVisible] = useState<FormState | null>(null);
+  const [dismissed, setDismissed] = useState<number | undefined>(undefined);
+  const visible = state.status === "success" && state.message && state.nonce !== dismissed ? state : null;
   useEffect(() => {
-    if (state.status !== "success" || !state.message) return;
-    setVisible(state);
-    const timer = window.setTimeout(() => setVisible(null), 4000);
+    if (state.status !== "success") return;
+    const timer = window.setTimeout(() => setDismissed(state.nonce), 4000);
     return () => window.clearTimeout(timer);
   }, [state]);
   return <div aria-live="polite" role="status" className="pointer-events-none fixed inset-x-4 bottom-[calc(64px+env(safe-area-inset-bottom)+16px)] z-[90] flex justify-center lg:inset-x-auto lg:right-6 lg:bottom-6">
@@ -148,7 +148,8 @@ export function CheckboxField({ name, label, hint, defaultChecked, className }: 
 export function SubmitButton({ children, pendingLabel = "Saving…", variant = "primary", className, name, value, disabled }: { children: React.ReactNode; pendingLabel?: string; variant?: keyof typeof buttonStyles; className?: string; name?: string; value?: string; disabled?: boolean }) {
   const { pending } = useFormContext();
   const [clicked, setClicked] = useState(false);
-  useEffect(() => { if (!pending) setClicked(false); }, [pending]);
+  // Reset during render (not in an effect) once the submission finishes.
+  if (!pending && clicked) setClicked(false);
   const busy = pending && (clicked || !name);
   return <button type="submit" name={name} value={value} disabled={pending || disabled} onClick={() => setClicked(true)} aria-busy={busy || undefined} className={cn(buttonStyles[variant], className)}>
     {busy && <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />}{busy ? pendingLabel : children}
@@ -160,7 +161,12 @@ export function ConfirmButton({ children, title, message, confirmLabel, variant 
   const [open, setOpen] = useState(false);
   const { pending, state } = useFormContext();
   const hiddenRef = useRef<HTMLInputElement>(null);
-  useEffect(() => { setOpen(false); }, [state]);
+  // Close the dialog when a result arrives (adjusting state during render).
+  const [seen, setSeen] = useState(state);
+  if (seen !== state) {
+    setSeen(state);
+    setOpen(false);
+  }
   return <>
     {name && <input ref={hiddenRef} type="hidden" name={name} value={value} />}
     <button type="button" onClick={() => setOpen(true)} disabled={pending} className={cn(buttonStyles[variant], className)}>{children}</button>

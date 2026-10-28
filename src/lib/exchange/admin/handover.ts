@@ -9,7 +9,7 @@ import { assertCan, checkbox, ExchangeUserError, fieldError, moneyPence, must, m
 
 export type SaleListItem = {
   id: string; status: VehicleSaleStatus; agreedPricePence: number; amountPaidPence: number; paymentStatus: string; reservedAt: string; reservationExpiresAt: string | null;
-  handoverMethod: string; handoverAt: string | null; completedAt: string | null; vehicle: { id: string; title: string; slug: string; stockReference: string | null } | null; customerName: string | null; partExchange: boolean;
+  handoverMethod: string; handoverAt: string | null; completedAt: string | null; reservationPassed: boolean; vehicle: { id: string; title: string; slug: string; stockReference: string | null } | null; customerName: string | null; partExchange: boolean;
 };
 
 type SaleRow = {
@@ -39,13 +39,13 @@ export function defaultReservationExpiry(holdDays: number, now = new Date()) {
 
 const SALE_SELECT = "*, sale_vehicles(id,year,make,model,slug,stock_reference,price,status), customers(name,email,phone)";
 
-export async function listSales(staff: StaffContext, filters: { status?: string; q?: string }) {
+export async function listSales(staff: StaffContext, filters: { status?: string; q?: string }, now = new Date()) {
   const rows = must(await staff.client.from("vehicle_sales").select(SALE_SELECT).order("updated_at", { ascending: false }).limit(500), "Sales could not be loaded.") as unknown as SaleRow[];
   const showNames = staff.can("customers.view");
   const query = (filters.q || "").trim().toLowerCase();
   return (rows || []).map((row): SaleListItem => ({
     id: row.id, status: row.status, agreedPricePence: row.agreed_price_pence, amountPaidPence: row.amount_paid_pence, paymentStatus: row.payment_status, reservedAt: row.reserved_at, reservationExpiresAt: row.reservation_expires_at,
-    handoverMethod: row.handover_method, handoverAt: row.handover_at, completedAt: row.completed_at,
+    handoverMethod: row.handover_method, handoverAt: row.handover_at, completedAt: row.completed_at, reservationPassed: Boolean(row.reservation_expires_at && new Date(row.reservation_expires_at) < now && (activeSaleStatuses as string[]).includes(row.status)),
     vehicle: row.sale_vehicles ? { id: row.sale_vehicles.id, title: `${row.sale_vehicles.year} ${row.sale_vehicles.make} ${row.sale_vehicles.model}`, slug: row.sale_vehicles.slug, stockReference: row.sale_vehicles.stock_reference } : null,
     customerName: showNames ? row.customers?.name || null : null, partExchange: Boolean(row.part_exchange_submission_id),
   })).filter((item) => {
