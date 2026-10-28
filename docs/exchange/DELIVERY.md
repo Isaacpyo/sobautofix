@@ -62,6 +62,8 @@ Also: mobile layouts, keyboard use, reduced motion; validation keeps input; pric
 | 28 Oct | Migrations 090000-090300 apply from scratch and re-apply | Pass |
 | 28 Oct | pgTAP: 7 files, 174 tests (incl. exchange RLS/roles) | Pass |
 | 28 Oct | Unit tests: 87 files, 475 tests; lint; typecheck; build | Pass |
+| 28 Oct | Merged branch: lint, typecheck, 648 unit tests, production build | Pass |
+| 28 Oct | Fresh `db reset` with migrations 090000-090400; pgTAP 8 files, 180 tests | Pass |
 | 28 Oct | Vercel preview of branch | Failed: commit author `Claude <noreply@anthropic.com>` is not a Vercel project member (Hobby). Production merges are squash-merged by the GitHub user, so authored by the owner. |
 
 ## Blockers (exact next actions)
@@ -77,6 +79,8 @@ Also: mobile layouts, keyboard use, reduced motion; validation keeps input; pric
 
 - Foundation committed `542cbc2`, docs `c21cfcf`. The first agent attempt was lost in a session restart; agents relaunched and now commit WIP regularly.
 - Lifecycle migration 090300 (offer history, handover checklist, override audit, notification retries, purchase-to-stock uniqueness) and settings `reservationHoldDays` and `handoverChecklist` added after the governing brief.
+
+- 28 Oct 19:20: all three lanes merged into the delivery branch (customer `0031dc7`, diary and reliability, staff operations). Security pass defects fixed: document EXIF, idempotent document finalize, unfinalised seller photos, invoice access (lane 2); role-aware RLS migration 090400, production upload secrets, stock trash permission (lead). Staff guide added. Next: e2e merge gate (92 tests), then PR, CI, merge.
 
 ## Release and rollback
 
