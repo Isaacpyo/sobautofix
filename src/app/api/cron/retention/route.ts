@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getExchangePrivateSettings } from "@/lib/exchange/settings";
 import { isMissingSchemaError } from "@/lib/exchange/schema";
+import { cleanupStagedStockPhotos } from "@/lib/exchange/admin/staging-cleanup";
 import { runNotificationRetrySweep } from "@/lib/notifications/retry-sweep";
 import { createAdminClient } from "@/lib/supabase/server";
 
@@ -28,7 +29,9 @@ export async function GET(request: NextRequest) {
   const sellerCandidates = (sellerRows || []) as Array<{ submission_id: string; photo_paths: string[]; document_paths: string[] }>;
 
   if (dryRun) {
+    const stagedPhotos = await cleanupStagedStockPhotos({ dryRun: true, storage: admin.storage }).catch(() => null);
     return NextResponse.json({
+      stagedPhotos: stagedPhotos?.expired ?? null,
       success: true,
       dryRun: true,
       enquiryAttachments: attachmentPaths.length,
@@ -71,5 +74,8 @@ export async function GET(request: NextRequest) {
     notificationRetries = { error: "Notification retry step failed" };
   }
 
-  return NextResponse.json({ success: true, anonymisedRecords: anonymised, sellerSubmissions, sellerCandidates: sellerCandidates.length, notificationRetries });
+  // Separate step: abandoned staff photo uploads older than 24 hours.
+  const stagedPhotos = await cleanupStagedStockPhotos({ storage: admin.storage }).catch(() => ({ error: "Staging cleanup failed" }));
+
+  return NextResponse.json({ success: true, anonymisedRecords: anonymised, sellerSubmissions, sellerCandidates: sellerCandidates.length, notificationRetries, stagedPhotos });
 }

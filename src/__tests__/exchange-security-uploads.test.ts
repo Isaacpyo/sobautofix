@@ -128,7 +128,7 @@ describe.skipIf(!has("../lib/exchange/admin/uploads.ts"))("staff photos and docu
 
   // Reported to the coordinator: JPG/PNG/WebP files uploaded as documents are
   // stored as uploaded, so their EXIF/GPS metadata is kept (rule 5 says re-encode).
-  it.todo("re-encodes image documents to remove metadata before storing them");
+  // Image documents are re-encoded: covered in admin-exchange-documents.test.ts ("document finalize").
 });
 
 describe.skipIf(!has("../lib/exchange/admin/documents.ts"))("upload paths and limits (staff operations lane)", () => {
@@ -152,8 +152,8 @@ describe.skipIf(!has("../lib/exchange/admin/documents.ts"))("upload paths and li
 
   // Reported to the coordinator: submissionPhotoUrl signs any seller photo row,
   // including ones never finalised (not yet checked or re-encoded).
-  it.todo("only issues signed links for finalised seller photos");
+  // Only finalised seller photos are signed: covered in admin-exchange-documents.test.ts ("seller photos").
   // Reported: a retried finalize hits the unique object_path, and the error path
   // then deletes the file the first row still points to.
-  it.todo("treats a repeated document finalize as success without deleting the stored file");
+  // Idempotent document finalize: covered in admin-exchange-documents.test.ts ("document finalize").
 });

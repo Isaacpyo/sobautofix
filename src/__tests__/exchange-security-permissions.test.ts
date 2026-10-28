@@ -88,5 +88,5 @@ describe.skipIf(!laneModules["../lib/exchange/admin/documents.ts"])("private doc
 
   // Reported to the coordinator: purchase and sale invoices show what SOB paid,
   // but canViewDocuments does not require finance.view for those kinds.
-  it.todo("requires finance.view to open purchase_invoice and sale_invoice documents");
+  // Finance-only invoices: covered in admin-exchange-documents.test.ts ("finance-only documents").
 });
