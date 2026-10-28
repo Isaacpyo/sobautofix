@@ -6,6 +6,18 @@ import { useEffect, useId, useRef, useState } from "react";
 import type { DiaryFormState } from "@/lib/diary/form-state";
 import { cn } from "@/lib/utils";
 
+const VISIBLE = 3;
+
+function ConflictItem({ conflict }: { conflict: NonNullable<DiaryFormState["conflicts"]>[number] }) {
+  return (
+    <li className="rounded-xl bg-white/80 p-3 text-sm ring-1 ring-[#FEDF89]">
+      <p className="font-bold text-[#0B1220]">{conflict.reason}</p>
+      <p className="mt-0.5 text-[#344054]"><Link href={conflict.href} className="font-semibold text-[#1462C4] underline" target="_blank" rel="noopener">{conflict.title}<span className="sr-only"> (opens in a new tab)</span></Link> ({conflict.type}, {conflict.status})</p>
+      <p className="text-[#344054]">{conflict.when}{conflict.staff ? ` · ${conflict.staff}` : ""}{conflict.vehicle ? ` · ${conflict.vehicle}` : ""}</p>
+    </li>
+  );
+}
+
 const focusRing = "focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[rgba(22,139,255,.55)]";
 
 /**
@@ -53,14 +65,16 @@ export function ConflictPanel({ state, pending, formId, actionLabel = "Save anyw
           <h2 id={`${id}-title`} className="font-extrabold">Check before saving</h2>
           <p className="mt-1 text-sm">{state.message}</p>
           <ul className="mt-3 grid grid-cols-1 gap-2">
-            {state.conflicts.map((conflict) => (
-              <li key={conflict.key} className="rounded-xl bg-white/80 p-3 text-sm ring-1 ring-[#FEDF89]">
-                <p className="font-bold text-[#0B1220]">{conflict.reason}</p>
-                <p className="mt-0.5 text-[#344054]"><Link href={conflict.href} className="font-semibold text-[#1462C4] underline" target="_blank" rel="noopener">{conflict.title}<span className="sr-only"> (opens in a new tab)</span></Link> ({conflict.type}, {conflict.status})</p>
-                <p className="text-[#344054]">{conflict.when}{conflict.staff ? ` · ${conflict.staff}` : ""}{conflict.vehicle ? ` · ${conflict.vehicle}` : ""}</p>
-              </li>
-            ))}
+            {state.conflicts.slice(0, VISIBLE).map((conflict) => <ConflictItem key={conflict.key} conflict={conflict} />)}
           </ul>
+          {state.conflicts.length > VISIBLE && (
+            <details className="mt-2 rounded-xl bg-white/60 px-3 py-2 text-sm ring-1 ring-[#FEDF89]">
+              <summary className={cn("min-h-11 cursor-pointer content-center font-bold text-[#93370D]", focusRing)}>Show {state.conflicts.length - VISIBLE} more</summary>
+              <ul className="mt-2 grid grid-cols-1 gap-2">
+                {state.conflicts.slice(VISIBLE).map((conflict) => <ConflictItem key={conflict.key} conflict={conflict} />)}
+              </ul>
+            </details>
+          )}
           <div className="mt-3">
             <label htmlFor={`${id}-reason`} className="mb-1 block text-sm font-bold text-[#0B1220]">Reason for going ahead</label>
             <textarea id={`${id}-reason`} value={reason} onChange={(event) => setReason(event.target.value)} rows={2} maxLength={500} aria-invalid={Boolean(reasonError)} aria-describedby={`${id}-reason-hint`} className="w-full rounded-xl border border-[#D0D5DD] bg-white px-3 py-2 text-sm text-[#0B1220] focus:border-[#1974E2] focus:outline-3 focus:outline-[rgba(22,139,255,.35)]" />

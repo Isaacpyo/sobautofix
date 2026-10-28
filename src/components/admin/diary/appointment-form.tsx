@@ -221,7 +221,7 @@ export function AppointmentForm({ initial, staff, permissions, customerHasEmail,
         </div>
       )}
 
-      <div className="sticky bottom-[calc(64px_+_env(safe-area-inset-bottom))] z-20 -mx-1 flex flex-wrap items-center gap-3 rounded-2xl border border-[#E3E8EF] bg-white/95 p-3 shadow-[0_-6px_20px_rgba(11,18,32,.06)] backdrop-blur lg:bottom-4">
+      <div className={cn("z-20 -mx-1 flex flex-wrap items-center gap-3 rounded-2xl border border-[#E3E8EF] bg-white/95 p-3 shadow-[0_-6px_20px_rgba(11,18,32,.06)] backdrop-blur", state.status === "conflict" ? "relative" : "sticky bottom-[calc(64px_+_env(safe-area-inset-bottom))] lg:bottom-4")}>
         <button type="submit" disabled={pending} className={cn("inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#1974E2] px-5 text-sm font-bold text-white hover:bg-[#1462C4] disabled:opacity-60 sm:flex-none", focusRing)}>
           {pending && <LoaderCircle size={17} className="animate-spin" aria-hidden="true" />}
           {editing ? "Save changes" : "Save appointment"}
