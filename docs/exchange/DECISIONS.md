@@ -17,3 +17,7 @@
 | D13 | Main-site redirects to the exchange host stay off until `EXCHANGE_REDIRECTS_ENABLED=true` is set after DNS and HTTPS are verified. | A redirect to a host that does not resolve would break existing stock links. |
 | D14 | Pages use the tentative name from settings (`SOB Auto Exchange` by default). | Easy to rename without a deploy. |
 | D15 | Branch `claude/nifty-wright-3axbzi` instead of `feature/sob-auto-exchange`. | This session's tooling requires that branch name. |
+| D16 | Offers to sellers need `buying.manage` (sales can make offers). Marking purchased, creating or linking stock from a purchase, and recording payments need `finance.edit`. Prices other than the advertised one need `stock.price`. | Sales staff run seller conversations; money commitments stay with owners and managers. |
+| D17 | Role-aware RLS (migration 090400): customer contacts and customer vehicles are readable only by owner, manager and sales; purchase and sale invoices only by finance roles. | Enforced in the database as well as the app, so a staff session token cannot bypass the role. |
+| D18 | Completing a sale needs every handover checklist item ticked, not "paid in full". Staff are warned when payment is not recorded as paid in full. | The business has not defined a payment rule; the checklist is where it will be defined. |
+| D19 | No AI features. | No AI integration is authorised for SOB; every workflow is complete manually. |

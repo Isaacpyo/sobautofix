@@ -10,7 +10,11 @@ const SCOPE = "seller-photos";
 const LIFETIME_SECONDS = 2 * 60 * 60; // slow mobile connections, retries
 
 function secret() {
-  return process.env.SUPABASE_SECRET_KEY || process.env.CRON_SECRET || "local-development-secret";
+  const configured = process.env.SUPABASE_SECRET_KEY || process.env.CRON_SECRET;
+  if (configured) return configured;
+  // A predictable signing key must never protect production uploads.
+  if (process.env.NODE_ENV === "production") throw new Error("Upload signing is not configured");
+  return "local-development-secret";
 }
 
 function sign(payload: string) {

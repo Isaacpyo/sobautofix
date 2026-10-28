@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { can } from "@/lib/exchange/permissions";
+import { getStaffRole } from "@/lib/exchange/staff";
 import { createAdminClient, getAdminUser } from "@/lib/supabase/server";
 
 const entitySchema = z.enum(["enquiries", "bookings", "invoices", "inventory", "news", "media", "reviews", "offers", "catalogue_systems", "catalogue_services"]);
@@ -30,6 +32,11 @@ export async function manageTrashAction(formData: FormData): Promise<TrashAction
 
   const service = createAdminClient();
   if (!service) return { success: false, message: "Trash is temporarily unavailable." };
+  // Removing or restoring stock changes what is for sale, so it needs the
+  // same permission as publishing.
+  if (parsed.data.entity === "inventory" && !can(await getStaffRole(service, admin.user.id), "stock.publish")) {
+    return { success: false, message: "You do not have permission to remove or restore stock." };
+  }
 
   let objectPaths: string[] = [];
   if (parsed.data.intent === "delete" && parsed.data.entity === "media") {
