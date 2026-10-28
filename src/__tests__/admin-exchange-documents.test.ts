@@ -68,7 +68,7 @@ const client = {
 vi.mock("@/lib/exchange/staff", () => ({ auditStaffAction: async () => undefined }));
 vi.mock("@/lib/supabase/server", () => ({ createAdminClient: () => client }));
 
-import { finalizeUpload } from "@/lib/exchange/admin/documents";
+import { finalizeUpload, submissionPhotoUrl } from "@/lib/exchange/admin/documents";
 
 const vehicleId = "00000000-0000-4000-8000-000000000010";
 const docPath = `stock/${vehicleId}/11111111-1111-4111-8111-111111111111.jpg`;
@@ -131,5 +131,17 @@ describe("document finalize", () => {
     const result = await finalizeUpload(staffAs("owner"), { target: "document", vehicleId, path: docPath, fileName: "v5c.jpg", kind: "registration_document" });
     expect(result.id).toBe("doc-raced");
     expect(db.removed).not.toContain(docPath);
+  });
+});
+
+describe("seller photos", () => {
+  it("signs only finalised photos", async () => {
+    db.tables.seller_submission_photos = [
+      { id: "p-done", object_path: "sub/done.jpg", finalised: true },
+      { id: "p-raw", object_path: "sub/raw.jpg", finalised: false },
+    ];
+    await expect(submissionPhotoUrl(staffAs("sales"), "p-done")).resolves.toMatchObject({ status: 200, url: "https://signed.test/sub/done.jpg" });
+    await expect(submissionPhotoUrl(staffAs("sales"), "p-raw")).resolves.toEqual({ status: 409 });
+    await expect(submissionPhotoUrl(staffAs("workshop"), "p-done")).resolves.toEqual({ status: 403 });
   });
 });

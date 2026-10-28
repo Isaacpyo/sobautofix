@@ -219,10 +219,12 @@ export async function documentDownloadUrl(staff: StaffContext, documentId: strin
   return { status: 200 as const, url: data.signedUrl };
 }
 
+/** Signs only finalised seller photos: unfinished uploads are raw, unchecked files. */
 export async function submissionPhotoUrl(staff: StaffContext, photoId: string) {
   if (!staff.can("buying.manage")) return { status: 403 as const };
-  const { data: photo } = await staff.client.from("seller_submission_photos").select("object_path").eq("id", photoId).maybeSingle();
+  const { data: photo } = await staff.client.from("seller_submission_photos").select("object_path,finalised").eq("id", photoId).maybeSingle();
   if (!photo) return { status: 404 as const };
+  if (!photo.finalised) return { status: 409 as const };
   const { data, error } = await staff.client.storage.from("seller-submission-photos").createSignedUrl(photo.object_path, 60);
   if (error || !data) return { status: 502 as const };
   return { status: 200 as const, url: data.signedUrl };

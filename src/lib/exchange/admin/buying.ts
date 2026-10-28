@@ -56,7 +56,7 @@ export type SubmissionDetail = {
   customer: { id: string; name: string; email: string | null; phone: string; preferred_contact: string } | null;
   interestedVehicle: { id: string; title: string; status: string; price: number } | null;
   purchasedVehicle: { id: string; title: string; status: string } | null;
-  photos: Array<{ id: string; category: string; file_name: string }>;
+  photos: Array<{ id: string; category: string; file_name: string; finalised: boolean }>;
   documents: Array<{ id: string; kind: string; file_name: string; size_bytes: number; created_at: string }>;
   inspections: Array<{ id: string; inspected_on: string; inspector_name: string; scope: string; findings: string; faults: string[]; outcome: string }>;
   appointments: Array<{ id: string; kind: string; status: string; title: string; starts_at: string }>;
@@ -76,7 +76,7 @@ export async function getSubmissionDetail(staff: StaffContext, id: string): Prom
     staff.can("customers.view") ? client.from("customers").select("id,name,email,phone,preferred_contact").eq("id", submission.customer_id as string).maybeSingle() : Promise.resolve({ data: null }),
     submission.interested_vehicle_id ? client.from("sale_vehicles").select("id,year,make,model,status,price").eq("id", submission.interested_vehicle_id as string).maybeSingle() : Promise.resolve({ data: null }),
     submission.purchased_vehicle_id ? client.from("sale_vehicles").select("id,year,make,model,status").eq("id", submission.purchased_vehicle_id).maybeSingle() : Promise.resolve({ data: null }),
-    client.from("seller_submission_photos").select("id,category,file_name").eq("submission_id", id).eq("finalised", true).order("created_at"),
+    client.from("seller_submission_photos").select("id,category,file_name,finalised").eq("submission_id", id).order("created_at"),
     client.from("vehicle_documents").select("id,kind,file_name,size_bytes,created_at").eq("seller_submission_id", id).order("created_at", { ascending: false }),
     client.from("vehicle_inspections").select("id,inspected_on,inspector_name,scope,findings,faults,outcome").eq("seller_submission_id", id).order("inspected_on", { ascending: false }),
     client.from("diary_appointments").select("id,kind,status,title,starts_at").eq("seller_submission_id", id).is("deleted_at", null).order("starts_at"),

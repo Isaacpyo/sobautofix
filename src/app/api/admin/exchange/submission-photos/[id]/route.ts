@@ -11,6 +11,6 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   const { staff, status } = await getStaffForRoute("buying.manage");
   if (!staff) return new NextResponse(status === 401 ? "Sign in again." : "Forbidden", { status, headers: noStore });
   const result = await submissionPhotoUrl(staff, id);
-  if (result.status !== 200) return new NextResponse(result.status === 404 ? "Not found" : "The photo could not be opened.", { status: result.status, headers: noStore });
+  if (result.status !== 200) return new NextResponse(result.status === 404 ? "Not found" : result.status === 409 ? "Upload not completed" : "The photo could not be opened.", { status: result.status, headers: noStore });
   return NextResponse.redirect(result.url, { status: 303, headers: noStore });
 }

@@ -78,12 +78,12 @@ export default async function BuyingEnquiryPage({ params }: { params: Promise<{ 
           </li>; })}</ol> : <p className="text-sm text-[#586575]">No offers yet.</p>}
         </Card>
 
-        <Card title={`Seller photos (${detail.photos.length})`} description="Private. Each image is served through a link that expires after a minute.">
-          {detail.photos.length ? <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">{detail.photos.map((photo) => <li key={photo.id}><a href={`/api/admin/exchange/submission-photos/${photo.id}`} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-lg border border-[#E4EAF0]">
+        <Card title={`Seller photos (${detail.photos.filter((photo) => photo.finalised).length})`} description="Private. Each image is served through a link that expires after a minute.">
+          {detail.photos.length ? <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">{detail.photos.map((photo) => <li key={photo.id}>{!photo.finalised ? <div className="grid aspect-[4/3] place-items-center rounded-lg border border-dashed border-[#C9D5E2] bg-[#F8FAFC] p-2 text-center text-xs font-bold text-[#586575]"><span>Upload not completed<span className="block font-normal capitalize">{photo.category}</span></span></div> : <a href={`/api/admin/exchange/submission-photos/${photo.id}`} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-lg border border-[#E4EAF0]">
             {/* eslint-disable-next-line @next/next/no-img-element -- private photo through a short-lived signed redirect */}
             <img src={`/api/admin/exchange/submission-photos/${photo.id}`} alt={`Seller photo: ${photo.category}`} className="aspect-[4/3] w-full bg-[#E4EAF0] object-cover" loading="lazy" />
             <span className="block px-2 py-1 text-xs font-bold capitalize text-[#586575]">{photo.category}</span>
-          </a></li>)}</ul> : <p className="text-sm text-[#586575]">No photos were uploaded.</p>}
+          </a>}</li>)}</ul> : <p className="text-sm text-[#586575]">No photos were uploaded.</p>}
         </Card>
 
         <Card title="Inspections" actions={isOpen && staff.can("diary.manage") ? <LinkButton href={`/admin/diary/new?kind=purchase_inspection&submission=${s.id}`} className="min-h-10"><CalendarPlus size={15} aria-hidden="true" />Schedule inspection</LinkButton> : undefined}>
