@@ -29,7 +29,7 @@ export function CancelAppointment({ id, isViewing, customerHasEmail, action }: {
       <button ref={toggle} type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-controls={panelId} className={cn("inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#FDA29B] px-4 text-sm font-bold text-[#B42318] hover:bg-[#FEF3F2]", focusRing)}>
         <XCircle size={18} aria-hidden="true" /> Cancel appointment
       </button>
-      <form id={panelId} hidden={!open} action={formAction} className="mt-4 grid gap-3">
+      <form id={panelId} hidden={!open} action={formAction} className="mt-4 grid grid-cols-1 gap-3">
         <input type="hidden" name="id" value={id} />
         <div>
           <label htmlFor={`${panelId}-reason`} className="mb-1 block text-sm font-bold text-[#0B1220]">Reason for cancelling</label>
@@ -74,7 +74,7 @@ export function AssignBookingStaff({ bookingId, current, staff, action }: { book
   const ack = useRef<HTMLInputElement>(null);
   const form = useRef<HTMLFormElement>(null);
   return (
-    <form ref={form} action={formAction} className="grid gap-3">
+    <form ref={form} action={formAction} className="grid grid-cols-1 gap-3">
       <input type="hidden" name="bookingId" value={bookingId} />
       <input ref={ack} type="hidden" name="acknowledgedConflicts" defaultValue="" />
       <div>
@@ -94,7 +94,7 @@ export function AssignBookingStaff({ bookingId, current, staff, action }: { book
       {state.status === "conflict" && state.conflicts && (
         <div role="alert" className="rounded-xl border border-[#FEC84B] bg-[#FFFAEB] p-3 text-sm text-[#7A2E0E]">
           <p className="flex items-center gap-2 font-extrabold"><AlertTriangle size={17} aria-hidden="true" /> {state.message}</p>
-          <ul className="mt-2 grid gap-1">
+          <ul className="mt-2 grid grid-cols-1 gap-1">
             {state.conflicts.map((conflict) => <li key={conflict.key}><strong>{conflict.reason}:</strong> <Link href={conflict.href} className="font-semibold text-[#1462C4] underline">{conflict.title}</Link>, {conflict.when}</li>)}
           </ul>
           <button type="button" onClick={() => { if (ack.current) ack.current.value = state.signature ?? ""; form.current?.requestSubmit(); }} className={cn("mt-3 inline-flex min-h-11 items-center rounded-xl bg-[#B54708] px-4 text-sm font-bold text-white hover:bg-[#93370D]", focusRing)}>Assign anyway</button>

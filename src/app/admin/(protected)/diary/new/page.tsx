@@ -58,7 +58,7 @@ export default async function NewAppointmentPage({ searchParams }: { searchParam
   };
 
   return (
-    <div className="mx-auto grid max-w-3xl gap-5">
+    <div className="mx-auto grid grid-cols-1 max-w-3xl gap-5">
       <Link href={`/admin/diary?date=${start.date}`} className="inline-flex min-h-11 w-fit items-center gap-2 rounded-lg text-sm font-bold text-[#1462C4] hover:underline"><ArrowLeft size={17} aria-hidden="true" /> Back to the diary</Link>
       <header>
         <p className="text-xs font-extrabold tracking-widest text-[#1462C4] uppercase">Autofix Diary</p>

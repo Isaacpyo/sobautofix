@@ -110,7 +110,7 @@ export function LinkPicker({ kind, name, label, hint, value, onChange, search, d
             {pending && <LoaderCircle size={16} className="absolute top-1/2 right-3 -translate-y-1/2 animate-spin text-[#5B6575]" aria-hidden="true" />}
           </div>
           <p className="sr-only" aria-live="polite">{pending ? "Searching" : message ?? `${options.length} results`}</p>
-          <ul id={`${id}-results`} className="mt-2 grid max-h-64 gap-1 overflow-y-auto" aria-label={`${label} results`}>
+          <ul id={`${id}-results`} className="mt-2 grid grid-cols-1 max-h-64 gap-1 overflow-y-auto" aria-label={`${label} results`}>
             {options.map((option) => (
               <li key={option.id}>
                 <button

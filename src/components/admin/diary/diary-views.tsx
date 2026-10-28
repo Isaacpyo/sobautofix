@@ -31,7 +31,7 @@ export function AgendaView({ range, entries, today, newHref }: { range: DiaryRan
   const days = dateKeysInRange(range.date, range.end);
   const groups = groupByStartDate(entries);
   return (
-    <ol className="grid gap-5" aria-label="Agenda">
+    <ol className="grid grid-cols-1 gap-5" aria-label="Agenda">
       {days.map((date) => {
         const items = groups.get(date) ?? [];
         return (
@@ -49,7 +49,7 @@ export function AgendaView({ range, entries, today, newHref }: { range: DiaryRan
               </Link>
             </div>
             {items.length ? (
-              <ul className="mt-2 grid gap-3">
+              <ul className="mt-2 grid grid-cols-1 gap-3">
                 {items.map((entry) => <li key={entry.key}><DiaryEntryCard entry={entry} /></li>)}
               </ul>
             ) : (

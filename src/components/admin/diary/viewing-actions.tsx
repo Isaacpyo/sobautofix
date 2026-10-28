@@ -51,7 +51,7 @@ export function ViewingRequestActions({ id, defaultDate, defaultTime, confirm, p
   const busy = confirming || proposing || declining;
 
   return (
-    <div className="grid gap-3">
+    <div className="grid grid-cols-1 gap-3">
       <div className={cn("flex flex-wrap gap-2", compact && "gap-1.5")}>
         <form action={confirmAction}>
           <input type="hidden" name="id" value={id} />
@@ -67,9 +67,9 @@ export function ViewingRequestActions({ id, defaultDate, defaultTime, confirm, p
         </button>
       </div>
 
-      <form id={`${uid}-propose`} hidden={panel !== "propose"} action={proposeAction} className="grid gap-3 rounded-xl border border-[#E3E8EF] bg-[#F8FAFC] p-3">
+      <form id={`${uid}-propose`} hidden={panel !== "propose"} action={proposeAction} className="grid grid-cols-1 gap-3 rounded-xl border border-[#E3E8EF] bg-[#F8FAFC] p-3">
         <input type="hidden" name="id" value={id} />
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <label htmlFor={`${uid}-date`} className="mb-1 block text-sm font-bold text-[#0B1220]">New date</label>
             <input ref={firstField} id={`${uid}-date`} type="date" name="date" value={date} onChange={(event) => setDate(event.target.value)} required className="h-11 w-full rounded-xl border border-[#D0D5DD] bg-white px-3 text-sm" />
@@ -91,7 +91,7 @@ export function ViewingRequestActions({ id, defaultDate, defaultTime, confirm, p
         </button>
       </form>
 
-      <form id={`${uid}-decline`} hidden={panel !== "decline"} action={declineAction} className="grid gap-3 rounded-xl border border-[#FECDCA] bg-[#FEF3F2]/40 p-3">
+      <form id={`${uid}-decline`} hidden={panel !== "decline"} action={declineAction} className="grid grid-cols-1 gap-3 rounded-xl border border-[#FECDCA] bg-[#FEF3F2]/40 p-3">
         <input type="hidden" name="id" value={id} />
         <div>
           <label htmlFor={`${uid}-reason`} className="mb-1 block text-sm font-bold text-[#0B1220]">Reason (sent to the customer)</label>

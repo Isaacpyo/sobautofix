@@ -99,7 +99,7 @@ export function AppointmentForm({ initial, staff, permissions, customerHasEmail,
   const clockNote = clockChangeNote(values.date, values.startTime);
 
   return (
-    <form ref={formRef} action={formAction} className="grid gap-6" noValidate>
+    <form ref={formRef} action={formAction} className="grid grid-cols-1 gap-6" noValidate>
       {initial.id && <input type="hidden" name="id" value={initial.id} />}
       <input ref={acknowledgeInput} type="hidden" name="acknowledgedConflicts" defaultValue="" />
 
@@ -110,7 +110,7 @@ export function AppointmentForm({ initial, staff, permissions, customerHasEmail,
             <div className="min-w-0 flex-1">
               <h2 className="font-extrabold">Possible clash</h2>
               <p className="mt-1 text-sm">{state.message}</p>
-              <ul className="mt-3 grid gap-2">
+              <ul className="mt-3 grid grid-cols-1 gap-2">
                 {state.conflicts.map((conflict) => (
                   <li key={conflict.key} className="rounded-xl bg-white/70 p-3 text-sm ring-1 ring-[#FEDF89]">
                     <p className="font-bold text-[#0B1220]">{conflict.reason}</p>
@@ -138,9 +138,9 @@ export function AppointmentForm({ initial, staff, permissions, customerHasEmail,
         </div>
       )}
 
-      <section className="grid gap-4 rounded-2xl border border-[#E3E8EF] bg-white p-4 sm:p-6" aria-labelledby="appointment-what">
+      <section className="grid grid-cols-1 gap-4 rounded-2xl border border-[#E3E8EF] bg-white p-4 sm:p-6" aria-labelledby="appointment-what">
         <h2 id="appointment-what" className="text-lg font-extrabold text-[#0B1220]">Appointment</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor="appointment-kind" className={labelClass}>Type</label>
             <select id="appointment-kind" name="kind" value={values.kind} onChange={(event) => set("kind", event.target.value as AppointmentKind)} aria-invalid={Boolean(errors.kind)} aria-describedby={describe("kind")} className={cn(fieldClass, errors.kind ? "border-[#B42318]" : "border-[#D0D5DD]")}>
@@ -163,10 +163,10 @@ export function AppointmentForm({ initial, staff, permissions, customerHasEmail,
         </div>
       </section>
 
-      <section className="grid gap-4 rounded-2xl border border-[#E3E8EF] bg-white p-4 sm:p-6" aria-labelledby="appointment-when">
+      <section className="grid grid-cols-1 gap-4 rounded-2xl border border-[#E3E8EF] bg-white p-4 sm:p-6" aria-labelledby="appointment-when">
         <h2 id="appointment-when" className="flex items-center gap-2 text-lg font-extrabold text-[#0B1220]"><CalendarClock size={20} className="text-[#1974E2]" aria-hidden="true" /> When and who</h2>
         <p id="time-zone-hint" className="-mt-2 text-sm text-[#5B6575]">UK time (GMT in winter, BST in summer).</p>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
             <label htmlFor="appointment-date" className={labelClass}>Date</label>
             <input id="appointment-date" type="date" name="date" value={values.date} required onChange={(event) => set("date", event.target.value)} aria-invalid={Boolean(errors.date)} aria-describedby={describe("date", "time-zone-hint")} className={cn(fieldClass, errors.date ? "border-[#B42318]" : "border-[#D0D5DD]")} />
@@ -188,7 +188,7 @@ export function AppointmentForm({ initial, staff, permissions, customerHasEmail,
             {clockNote === "skipped" ? "The clocks go forward at 01:00 on this date, so 01:00 to 01:59 does not exist." : "The clocks go back at 02:00 on this date, so 01:00 to 01:59 happens twice. This time is saved as the first one (BST)."}
           </p>
         )}
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor="appointment-staff" className={labelClass}>Staff member</label>
             <select id="appointment-staff" name="assignedTo" value={values.assignedTo} onChange={(event) => set("assignedTo", event.target.value)} aria-invalid={Boolean(errors.assignedTo)} aria-describedby={describe("assignedTo")} className={cn(fieldClass, errors.assignedTo ? "border-[#B42318]" : "border-[#D0D5DD]")}>
@@ -205,9 +205,9 @@ export function AppointmentForm({ initial, staff, permissions, customerHasEmail,
         </div>
       </section>
 
-      <section className="grid gap-4 rounded-2xl border border-[#E3E8EF] bg-white p-4 sm:p-6" aria-labelledby="appointment-links">
+      <section className="grid grid-cols-1 gap-4 rounded-2xl border border-[#E3E8EF] bg-white p-4 sm:p-6" aria-labelledby="appointment-links">
         <h2 id="appointment-links" className="text-lg font-extrabold text-[#0B1220]">Linked records</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {linkFields.map((field) => (
             <LinkPicker
               key={field.kind}
@@ -225,7 +225,7 @@ export function AppointmentForm({ initial, staff, permissions, customerHasEmail,
         </div>
       </section>
 
-      <section className="grid gap-2 rounded-2xl border border-[#E3E8EF] bg-white p-4 sm:p-6" aria-labelledby="appointment-notes-heading">
+      <section className="grid grid-cols-1 gap-2 rounded-2xl border border-[#E3E8EF] bg-white p-4 sm:p-6" aria-labelledby="appointment-notes-heading">
         <h2 id="appointment-notes-heading" className="text-lg font-extrabold text-[#0B1220]">Internal notes</h2>
         {permissions.notes ? (
           <>

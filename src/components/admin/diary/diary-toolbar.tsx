@@ -47,7 +47,7 @@ export function DiaryToolbar({ view, date, title, mobileTitle, filters, staff, l
   const submit = () => form.current?.requestSubmit();
 
   return (
-    <div className="grid gap-3">
+    <div className="grid grid-cols-1 gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Link href={links.previous} aria-label="Previous" className={cn("grid size-11 place-items-center rounded-xl border border-[#D0D5DD] bg-white text-[#0B1220] hover:border-[#1974E2]", focusRing)}><ChevronLeft size={20} aria-hidden="true" /></Link>
@@ -85,7 +85,7 @@ export function DiaryToolbar({ view, date, title, mobileTitle, filters, staff, l
           {activeFilters > 0 && <Link href={links.clear} className={cn("inline-flex min-h-11 items-center px-2 text-sm font-bold text-[#1462C4] hover:underline", focusRing)}>Clear filters</Link>}
           <noscript><button type="submit" className="min-h-11 rounded-xl bg-[#1974E2] px-4 text-sm font-bold text-white">Show</button></noscript>
         </div>
-        <div id="diary-filters" hidden={!showFilters} className="mt-3 grid gap-3 sm:grid-cols-3">
+        <div id="diary-filters" hidden={!showFilters} className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div>
             <label htmlFor="diary-type" className="mb-1 block text-xs font-bold text-[#344054]">Type</label>
             <select id="diary-type" name="type" defaultValue={filters.type} onChange={submit} className={fieldClass}>

@@ -35,7 +35,7 @@ export default async function DiaryPage({ searchParams }: { searchParams: Promis
   const newHref = (date: string) => `/admin/diary/new?start=${date}T09:00`;
 
   return (
-    <div className="mx-auto grid max-w-[1400px] gap-5">
+    <div className="mx-auto grid grid-cols-1 max-w-[1400px] gap-5">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-start gap-3">
           <span className="hidden size-12 shrink-0 place-items-center rounded-2xl bg-[#EAF2FD] text-[#1974E2] sm:grid"><CalendarDays size={23} aria-hidden="true" /></span>

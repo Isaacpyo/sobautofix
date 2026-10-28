@@ -70,7 +70,7 @@ function Contact({ customer, canView }: { customer: { name: string | null; email
   if (!customer || !name) return <p className="text-[#5B6575]">No customer linked</p>;
   if (customer.anonymised_at) return <p className="font-semibold text-[#0B1220]">Anonymised</p>;
   return (
-    <div className="grid gap-1">
+    <div className="grid grid-cols-1 gap-1">
       <p className="font-semibold text-[#0B1220]">{name}</p>
       {canView ? (
         <>
@@ -117,9 +117,9 @@ async function AppointmentPage({ staff, appointment, directory, saved, email }: 
   };
 
   return (
-    <div className="mx-auto grid max-w-3xl gap-5">
+    <div className="mx-auto grid grid-cols-1 max-w-3xl gap-5">
       <BackLink date={date} />
-      <header className="grid gap-2">
+      <header className="grid grid-cols-1 gap-2">
         <div className="flex flex-wrap items-center gap-2"><TypeBadge type={kind} /><StatusBadge status={status} label={appointmentStatusLabels[status]} /></div>
         <h1 className="text-2xl font-extrabold text-[#0B1220] sm:text-3xl">{appointment.title}</h1>
         <p className="text-[#344054]"><time dateTime={appointment.starts_at}>{formatDateKeyLong(date)}, {formatLondonTimeRange(appointment.starts_at, appointment.ends_at)}</time> (UK time)</p>
@@ -140,7 +140,7 @@ async function AppointmentPage({ staff, appointment, directory, saved, email }: 
       )}
 
       {isViewing && status === "requested" && (
-        <section className="grid gap-3 rounded-2xl border border-[#FEDF89] bg-[#FFFAEB] p-4 sm:p-5" aria-labelledby="request-heading">
+        <section className="grid grid-cols-1 gap-3 rounded-2xl border border-[#FEDF89] bg-[#FFFAEB] p-4 sm:p-5" aria-labelledby="request-heading">
           <h2 id="request-heading" className="text-lg font-extrabold text-[#0B1220]">Viewing request</h2>
           <p className="text-sm text-[#344054]">The customer asked for this time. They have been told it is a request until you confirm it.</p>
           {canSales && appointment.alternative_start && <p className="text-sm text-[#344054]"><strong>Alternative they offered:</strong> {formatLondonDateTime(appointment.alternative_start)}</p>}
@@ -153,7 +153,7 @@ async function AppointmentPage({ staff, appointment, directory, saved, email }: 
         </section>
       )}
 
-      <section className="grid gap-4 rounded-2xl border border-[#E3E8EF] bg-white p-4 sm:grid-cols-2 sm:p-5" aria-label="Customer and vehicle">
+      <section className="grid grid-cols-1 gap-4 rounded-2xl border border-[#E3E8EF] bg-white p-4 sm:grid-cols-2 sm:p-5" aria-label="Customer and vehicle">
         <div>
           <h2 className="mb-1 text-xs font-extrabold tracking-wide text-[#5B6575] uppercase">Customer</h2>
           <Contact customer={customer} canView={staff.can("customers.view")} />
@@ -191,7 +191,7 @@ async function AppointmentPage({ staff, appointment, directory, saved, email }: 
 
       <section className="rounded-2xl border border-[#E3E8EF] bg-white p-4 sm:p-5" aria-labelledby="history-heading">
         <h2 id="history-heading" className="text-lg font-extrabold text-[#0B1220]">History</h2>
-        <ol className="mt-3 grid gap-2 text-sm">
+        <ol className="mt-3 grid grid-cols-1 gap-2 text-sm">
           <li className="text-[#344054]">Created {formatLondonDateTime(appointment.created_at)}</li>
           {((history.data || []) as Array<{ id: number; action: string; detail: Record<string, unknown> | null; created_at: string }>).map((entry) => (
             <li key={entry.id} className="text-[#344054]"><span className="font-semibold text-[#0B1220]">{historyLabel(entry.action, entry.detail)}</span> · {formatLondonDateTime(entry.created_at)}{typeof entry.detail?.actorName === "string" ? ` · ${entry.detail.actorName}` : ""}</li>
@@ -221,9 +221,9 @@ function BookingPage({ staff, booking, directory, schemaMissing }: { staff: Staf
   const date = londonDateKey(booking.appointment_start);
   const canNotes = canSeeNotes(staff.role, "workshop_booking");
   return (
-    <div className="mx-auto grid max-w-3xl gap-5">
+    <div className="mx-auto grid grid-cols-1 max-w-3xl gap-5">
       <BackLink date={date} />
-      <header className="grid gap-2">
+      <header className="grid grid-cols-1 gap-2">
         <div className="flex flex-wrap items-center gap-2"><TypeBadge type="workshop_booking" /><StatusBadge status={entry.status} label={entry.statusLabel} /><span className="font-mono text-sm font-bold text-[#1462C4]">{booking.booking_reference}</span></div>
         <h1 className="text-2xl font-extrabold text-[#0B1220] sm:text-3xl">{booking.service_name}</h1>
         <p className="text-[#344054]"><time dateTime={booking.appointment_start}>{formatDateKeyLong(date)}, {formatLondonTimeRange(entry.start, entry.end)}</time> (UK time){booking.appointment_end ? "" : " · end time not recorded, shown as one hour"}</p>
@@ -231,7 +231,7 @@ function BookingPage({ staff, booking, directory, schemaMissing }: { staff: Staf
 
       {schemaMissing && <SchemaMissingNotice />}
 
-      <section className="grid gap-4 rounded-2xl border border-[#E3E8EF] bg-white p-4 sm:grid-cols-2 sm:p-5" aria-label="Booking details">
+      <section className="grid grid-cols-1 gap-4 rounded-2xl border border-[#E3E8EF] bg-white p-4 sm:grid-cols-2 sm:p-5" aria-label="Booking details">
         <div>
           <h2 className="mb-1 text-xs font-extrabold tracking-wide text-[#5B6575] uppercase">Customer</h2>
           <Contact customer={booking.customers} canView={staff.can("customers.view")} />
@@ -258,7 +258,7 @@ function BookingPage({ staff, booking, directory, schemaMissing }: { staff: Staf
         )}
       </section>
 
-      <section className="grid gap-3 rounded-2xl border border-[#E3E8EF] bg-white p-4 sm:p-5" aria-labelledby="assign-heading">
+      <section className="grid grid-cols-1 gap-3 rounded-2xl border border-[#E3E8EF] bg-white p-4 sm:p-5" aria-labelledby="assign-heading">
         <h2 id="assign-heading" className="text-lg font-extrabold text-[#0B1220]">Who is doing this job?</h2>
         {schemaMissing ? <p className="text-sm text-[#5B6575]">Assigning staff becomes available after the database update.</p> : <AssignBookingStaff bookingId={booking.id} current={booking.assigned_to ?? ""} staff={directory.map((member) => ({ id: member.id, name: member.name }))} action={assignBookingStaffAction} />}
       </section>

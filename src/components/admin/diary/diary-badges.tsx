@@ -31,7 +31,7 @@ export function DiaryEntryCard({ entry, showDate = false, dateLabel }: { entry: 
           <StatusBadge status={entry.status} label={entry.statusLabel} />
         </div>
         <h3 className={cn("mt-2 text-base leading-snug font-extrabold text-[#0B1220]", muted && "line-through decoration-1")}>{entry.title}</h3>
-        <dl className="mt-2 grid gap-1 text-sm text-[#344054]">
+        <dl className="mt-2 grid grid-cols-1 gap-1 text-sm text-[#344054]">
           <Detail label="Time" icon={Clock3}><span className={showDate ? "font-semibold" : "sr-only"}>{dateLabel} </span><time dateTime={entry.start} className="font-semibold">{formatLondonTimeRange(entry.start, entry.end)}</time></Detail>
           {entry.vehicleLabel && <Detail label="Vehicle" icon={CarFront}>{entry.vehicleLabel}</Detail>}
           {entry.customerName && <Detail label="Customer" icon={UserRound}>{entry.customerName}</Detail>}
