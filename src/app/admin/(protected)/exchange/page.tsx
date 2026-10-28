@@ -65,6 +65,6 @@ function AttentionCard({ group }: { group: AttentionGroup }) {
       <span className="min-w-0"><span className="block truncate text-sm font-bold text-[#071127]">{item.title}</span><span className="block truncate text-xs text-[#586575]">{item.detail}</span></span>
       {item.when && <span className={cn("shrink-0 text-xs font-bold", item.tone === "danger" ? "text-[#B42318]" : "text-[#586575]")}>{item.when.length === 10 ? formatDate(item.when) : formatDateTime(item.when)}</span>}
     </Link></li>)}</ul>
-    {group.count > group.items.length && <Link href={group.href} className="mt-2 inline-flex min-h-10 items-center gap-1 text-sm font-extrabold text-[#1462C4]">View all {group.count}<ArrowRight size={15} aria-hidden="true" /></Link>}
+    <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-[#EEF2F6] pt-2"><p className="text-xs font-bold text-[#344054]"><span className="text-[#586575]">Next:</span> {group.action}</p>{group.count > group.items.length && <Link href={group.href} className="inline-flex min-h-10 items-center gap-1 text-sm font-extrabold text-[#1462C4]">View all {group.count}<ArrowRight size={15} aria-hidden="true" /></Link>}</div>
   </section>;
 }
