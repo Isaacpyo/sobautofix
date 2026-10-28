@@ -4,7 +4,7 @@ import { auditStaffAction, type StaffContext } from "@/lib/exchange/staff";
 import { isMissingSchemaError, SCHEMA_MISSING_MESSAGE } from "@/lib/exchange/schema";
 import { conflictSignature, type DiaryConflict } from "./conflicts";
 import { canSeeNotes } from "./mapping";
-import { sendViewingEmail, type EmailOutcome } from "./notifications";
+import { latestViewingEmails, sendViewingEmail, type EmailOutcome } from "./notifications";
 import { canUseLink, findConflicts, getAppointment, getBookingForDiary, loadStaffDirectory, staffNameMap, type AppointmentDetail } from "./repository";
 import { appointmentTimes, type AppointmentFormInput } from "./schema";
 import { londonToUtc } from "./time";
@@ -56,8 +56,10 @@ export async function saveAppointment(staff: StaffContext, input: AppointmentFor
     if (existing.status === "cancelled") return { ok: false, kind: "error", message: "This appointment is cancelled. Create a new appointment instead." };
   }
 
-  // Links a role cannot use (for example customers for workshop staff) keep their current value.
-  const keep = <T,>(allowed: boolean, next: T, current: T) => (allowed ? next : current);
+  // Links a role cannot change (for example customers for workshop staff) keep
+  // their current value. On a new appointment, links prefilled from the page
+  // that sent them here are kept.
+  const keep = <T,>(allowed: boolean, next: T, current: T) => (allowed || !existing ? next : current);
   const record = {
     kind: input.kind,
     status: input.status,
@@ -214,6 +216,10 @@ export async function declineViewing(staff: StaffContext, input: { id: string; r
   return cancelAppointment(staff, { id: input.id, reason: input.reason, notifyCustomer: true });
 }
 
-export async function retryViewingEmail(staff: StaffContext, id: string, template: "confirmed" | "rescheduled" | "proposed" | "cancelled", previousStart: string | null, message: string | null) {
-  return sendViewingEmail(staff, id, template, { previousStart, message });
+/** Resends the most recent customer email for an appointment, exactly as it was first attempted. */
+export async function retryViewingEmail(staff: StaffContext, id: string): Promise<EmailOutcome> {
+  const latest = (await latestViewingEmails(staff.client, [id])).get(id);
+  if (!latest) return { status: "skipped", message: "There is no email to retry for this appointment." };
+  if (latest.status === "sent") return { status: "sent", message: "This email has already been sent." };
+  return sendViewingEmail(staff, id, latest.template, { previousStart: latest.previousStart, message: latest.message });
 }
