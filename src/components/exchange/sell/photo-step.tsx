@@ -69,7 +69,7 @@ export function PhotoPicker({ photos, onChange }: { photos: SellerPhoto[]; onCha
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <input ref={cameraRef} id={`${id}-camera`} type="file" accept="image/*" capture="environment" className="sr-only" onChange={(event) => addFiles(event.target.files)} disabled={remaining <= 0 || busy} />
+        <input ref={cameraRef} id={`${id}-camera`} type="file" accept="image/*" capture="environment" aria-label="Take a photo with your camera" className="sr-only sm:hidden" onChange={(event) => addFiles(event.target.files)} disabled={remaining <= 0 || busy} />
         <label htmlFor={`${id}-camera`} className={cn(buttonClass("primary", "w-full cursor-pointer sm:hidden"), (remaining <= 0 || busy) && "pointer-events-none opacity-60")}><Camera size={20} aria-hidden="true" /> Take a photo</label>
         <input ref={galleryRef} id={`${id}-gallery`} type="file" accept="image/*,.heic,.heif" multiple className="sr-only" onChange={(event) => addFiles(event.target.files)} disabled={remaining <= 0 || busy} />
         <label htmlFor={`${id}-gallery`} className={cn(buttonClass("secondary", "w-full cursor-pointer sm:col-span-2"), (remaining <= 0 || busy) && "pointer-events-none opacity-60")}>

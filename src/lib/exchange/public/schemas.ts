@@ -6,6 +6,13 @@ import { viewingSlots } from "./viewing-time";
 
 const phonePattern = /^[+()0-9\s-]{7,30}$/;
 
+/**
+ * Run cross-field checks even when other fields are invalid, so a visitor
+ * sees every problem at once (zod otherwise skips refinements after the
+ * first failure). The refinements below tolerate partially invalid input.
+ */
+const alwaysCheck = { when: () => true };
+
 export const preferredContactValues = ["phone", "whatsapp", "email"] as const;
 
 const contactFields = {
@@ -48,7 +55,7 @@ function refineVehicleEnquiry(value: VehicleEnquiryShape, context: z.RefinementC
 }
 
 /** What the visitor fills in. */
-export const vehicleEnquiryFormSchema = z.object(vehicleEnquiryFields).superRefine(refineVehicleEnquiry);
+export const vehicleEnquiryFormSchema = z.object(vehicleEnquiryFields).superRefine(refineVehicleEnquiry, alwaysCheck);
 
 /** What the API accepts: the form plus the vehicle, an idempotency key and the security token. */
 export const vehicleEnquiryRequestSchema = z.object({
@@ -56,7 +63,7 @@ export const vehicleEnquiryRequestSchema = z.object({
   idempotencyKey: z.uuid(),
   vehicleId: z.uuid(),
   turnstileToken: z.string().max(4096).optional(),
-}).superRefine(refineVehicleEnquiry);
+}).superRefine(refineVehicleEnquiry, alwaysCheck);
 
 export type VehicleEnquiryFormInput = z.input<typeof vehicleEnquiryFormSchema>;
 export type VehicleEnquiryRequest = z.infer<typeof vehicleEnquiryRequestSchema>;
@@ -106,7 +113,7 @@ const sellerContactBase = z.object({
   marketingConsent: z.boolean().default(false),
 });
 
-export const sellerContactSchema = sellerContactBase.superRefine(emailRequiredForEmailContact);
+export const sellerContactSchema = sellerContactBase.superRefine(emailRequiredForEmailContact, alwaysCheck);
 
 /** Everything the visitor fills in across the five steps. */
 export const sellerFormSchema = z.object({

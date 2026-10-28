@@ -104,7 +104,9 @@ export function SellForm({ interestedVehicle, contact, links, responsePromise }:
   const photosRef = useRef<SellerPhoto[]>([]);
   const movedRef = useRef(false);
 
-  const form = useForm<SellerFormInput, unknown, SellerFormOutput>({ resolver: zodResolver(sellerFormSchema), defaultValues: emptyValues, mode: "onTouched", shouldFocusError: true });
+  const form = useForm<SellerFormInput, unknown, SellerFormOutput>({ resolver: zodResolver(sellerFormSchema), defaultValues: emptyValues, // Validate as they type, never on blur: a blur-time error clearing would
+    // shift the layout under the pointer and swallow the Continue tap.
+    mode: "onChange", delayError: 500, shouldFocusError: true });
   const { register, handleSubmit, trigger, control, subscribe, setValue, getValues, setError, setFocus, reset, formState: { errors, isSubmitting } } = form;
   const values = useWatch({ control }) as SellerFormInput;
 
