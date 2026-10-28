@@ -5,6 +5,7 @@ import {
   ShieldCheck,
   Wrench,
 } from "lucide-react";
+import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { PageHero } from "@/components/marketing/page-hero";
 import { ServiceRegistrationCta } from "@/components/marketing/service-registration-cta";
 import { ServiceCard } from "@/components/marketing/service-card";
@@ -97,6 +98,7 @@ export default function RepairsMaintenancePage() {
         showTrustFacts={false}
       />
 
+      <section className="py-7"><Container><Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Services", href: "/services" }, { label: "Repairs & Maintenance", href: "/services/repairs-maintenance" }]} /></Container></section>
       <ServiceCategoryNavigation current="repairs" />
 
       <section className="py-20 sm:py-24">

@@ -6,6 +6,9 @@ type BookingService = {
   name: string;
   description: string;
   locationMode: "workshop" | "mobile" | "both";
+  systemKey: string;
+  systemName: string;
+  systemDescription: string;
 };
 
 type CreateBookingRequest = {
@@ -37,6 +40,9 @@ const diagnosticService: BookingService = {
   name: "Vehicle Diagnostics",
   description: "System testing and fault investigation for warning lights and running concerns.",
   locationMode: "both",
+  systemKey: "diagnostics-electrical",
+  systemName: "Diagnostics & Electrical",
+  systemDescription: "Warning lights, electrical and running faults.",
 };
 
 const servicingService: BookingService = {
@@ -44,7 +50,16 @@ const servicingService: BookingService = {
   name: "Vehicle Servicing",
   description: "Scheduled servicing and vehicle health checks at the SOB Autofix workshop.",
   locationMode: "workshop",
+  systemKey: "servicing",
+  systemName: "Servicing",
+  systemDescription: "Scheduled servicing and health checks.",
 };
+
+// The wizard asks for the vehicle system first, then the service within it.
+async function chooseService(page: Page, service: BookingService) {
+  await page.getByRole("button", { name: service.systemName, exact: true }).click();
+  await page.getByRole("checkbox", { name: service.name }).check();
+}
 
 async function setEssentialCookies(page: Page) {
   await page.addInitScript(() => {
@@ -101,7 +116,7 @@ async function reachWorkshopAppointment(page: Page) {
   await page.goto("/book");
   await expect(page.getByText("Vauxhall Astra", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByRole("radio", { name: /Vehicle Servicing/ }).check();
+  await chooseService(page, servicingService);
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("textbox", { name: "Tell us what is happening" }).fill("The vehicle is due for its scheduled service and health check.");
   await page.getByRole("button", { name: "Continue" }).click();
@@ -146,7 +161,7 @@ test.describe("SOB Autofix booking wizard", () => {
     await page.getByLabel("Model").fill("Astra");
     await page.getByRole("button", { name: /Continue with these details/ }).click();
 
-    await page.getByRole("radio", { name: /Vehicle Servicing/ }).check();
+    await chooseService(page, servicingService);
     await page.getByRole("button", { name: "Continue" }).click();
     await expect(page.getByLabel("Current mileage (optional)")).toBeVisible();
     await expect(page.getByLabel(/Which warning light/)).toHaveCount(0);
@@ -196,7 +211,7 @@ test.describe("SOB Autofix booking wizard", () => {
     await page.getByRole("button", { name: "Find vehicle" }).click();
     await expect(page.getByText("Vauxhall Astra", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: /Yes, this is my vehicle/ }).click();
-    await page.getByRole("radio", { name: /Vehicle Diagnostics/ }).check();
+    await chooseService(page, diagnosticService);
     await page.getByRole("button", { name: "Continue" }).click();
 
     await expect(page.getByLabel(/Which warning light/)).toBeVisible();
