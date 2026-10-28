@@ -2,22 +2,20 @@
 
 import { ArrowLeft, Share2 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { track } from "@/lib/analytics/events";
 import { readRememberedCatalogue, requestCatalogueRestore } from "./catalogue-filters";
 import { useExchangeHref } from "./exchange-base";
 import { useToast } from "./feedback";
 
+const subscribeNever = () => () => {};
+
 /** Back link to the exact filtered catalogue the visitor came from (remembered in sessionStorage). */
 export function BackToResults() {
   const href = useExchangeHref();
   const fallback = href("/cars");
-  const [target, setTarget] = useState(fallback);
-
-  useEffect(() => {
-    // Only ever follow a same-site catalogue path.
-    setTarget(readRememberedCatalogue(fallback));
-  }, [fallback]);
+  // Server render uses the plain catalogue; the browser swaps in the remembered, filtered URL.
+  const target = useSyncExternalStore(subscribeNever, () => readRememberedCatalogue(fallback), () => fallback);
 
   return (
     <Link href={target} scroll={false} onClick={() => requestCatalogueRestore(target)} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg text-[15px] font-semibold text-[#1462C4] hover:underline">

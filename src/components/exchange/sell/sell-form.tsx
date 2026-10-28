@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight, Check, CheckCircle2, LoaderCircle, Mail, Message
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { useForm, type FieldPath } from "react-hook-form";
+import { useForm, useWatch, type FieldPath } from "react-hook-form";
 import { TurnstileField } from "@/components/forms/turnstile-field";
 import { track } from "@/lib/analytics/events";
 import { formatPrice } from "@/lib/exchange/public/format";
@@ -105,10 +105,12 @@ export function SellForm({ interestedVehicle, contact, links, responsePromise }:
   const movedRef = useRef(false);
 
   const form = useForm<SellerFormInput, unknown, SellerFormOutput>({ resolver: zodResolver(sellerFormSchema), defaultValues: emptyValues, mode: "onTouched", shouldFocusError: true });
-  const { register, handleSubmit, trigger, watch, setValue, getValues, setError, setFocus, reset, formState: { errors, isSubmitting } } = form;
-  const values = watch();
+  const { register, handleSubmit, trigger, control, subscribe, setValue, getValues, setError, setFocus, reset, formState: { errors, isSubmitting } } = form;
+  const values = useWatch({ control }) as SellerFormInput;
 
   // Restore a draft (never photos or the registration) and pick up a registration handed over from the home page.
+  // sessionStorage only exists in the browser, so this runs once after hydration.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     const draft = readDraft();
     if (draft?.values) {
@@ -123,11 +125,12 @@ export function SellForm({ interestedVehicle, contact, links, responsePromise }:
     const registration = takeSellRegistration();
     if (registration) setValue("vehicle.registration", registration);
   }, [reset, setValue]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Save a draft as they go, without the registration or photos.
   useEffect(() => {
     if (!idempotencyKey || phase !== "form") return;
-    const subscription = watch((current) => {
+    return subscribe({ formState: { values: true }, callback: ({ values: current }) => {
       if (!startedRef.current) {
         startedRef.current = true;
         track("seller_form_started", { kind: interestedVehicle ? "part_exchange" : "sell" });
@@ -138,9 +141,8 @@ export function SellForm({ interestedVehicle, contact, links, responsePromise }:
       } catch {
         // Storage unavailable: the form still works, the draft just is not kept.
       }
-    });
-    return () => subscription.unsubscribe();
-  }, [watch, step, furthest, idempotencyKey, phase, photos.length, interestedVehicle]);
+    } });
+  }, [subscribe, step, furthest, idempotencyKey, phase, photos.length, interestedVehicle]);
 
   // Move focus to the step heading when the step changes, so screen reader and keyboard users start at the top.
   useEffect(() => {
@@ -391,7 +393,7 @@ export function SellForm({ interestedVehicle, contact, links, responsePromise }:
         <Notice className="mb-5" role="status">We kept your answers from earlier in this browser tab.{restored.photoCount > 0 ? " Photos are not kept, so please add them again." : ""} For your privacy, please enter the registration again.</Notice>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
+      <form onSubmit={(event) => handleSubmit(onSubmit)(event)} noValidate>
         <h2 ref={headingRef} tabIndex={-1} className="text-[32px] leading-tight font-bold text-[#0B1220] outline-none">{current.title}</h2>
 
         {current.key === "vehicle" && (

@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { useForm, type FieldPath } from "react-hook-form";
+import { useForm, useWatch, type FieldPath } from "react-hook-form";
 import type { z } from "zod";
 import { TurnstileField } from "@/components/forms/turnstile-field";
 import { track } from "@/lib/analytics/events";
@@ -169,12 +169,12 @@ function VehicleEnquiryForm({ vehicle, initialIntent, canView: initialCanView, l
   const [submitError, setSubmitError] = useState("");
   const [showAlternative, setShowAlternative] = useState(false);
   const dates = useMemo(() => viewingDates(), []);
-  const { register, handleSubmit, watch, setValue, setError, setFocus, formState: { errors, isSubmitting } } = useForm<FormInput, unknown, FormOutput>({
+  const { register, handleSubmit, control, setValue, setError, setFocus, formState: { errors, isSubmitting } } = useForm<FormInput, unknown, FormOutput>({
     resolver: zodResolver(vehicleEnquiryFormSchema),
     defaultValues: { intent: canView ? initialIntent : "question", name: "", phone: "", email: "", preferredContact: "phone", preferredDate: "", preferredTime: "", alternativeDate: "", alternativeTime: "", message: "", privacyAccepted: false as unknown as true },
     shouldFocusError: true,
   });
-  const intent = watch("intent");
+  const intent = useWatch({ control, name: "intent" });
   const onToken = useCallback((token: string) => setTurnstileToken(token), []);
 
   async function onSubmit(values: FormOutput) {
@@ -233,7 +233,7 @@ function VehicleEnquiryForm({ vehicle, initialIntent, canView: initialCanView, l
   const error = (name: keyof typeof errors) => errors[name]?.message ? <span id={`${id}-${name}-error`} className={errorClass}>{String(errors[name]?.message)}</span> : null;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="grid gap-5" aria-describedby={`${id}-reference`}>
+    <form onSubmit={(event) => handleSubmit(onSubmit)(event)} noValidate className="grid gap-5" aria-describedby={`${id}-reference`}>
       <p id={`${id}-reference`} className="sr-only">This enquiry is about the {vehicle.name}.</p>
       {unavailable && (
         <div ref={unavailableRef} tabIndex={-1} className="grid gap-3 outline-none">

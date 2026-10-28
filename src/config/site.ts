@@ -125,13 +125,24 @@ export const specialOffer = {
   active: true,
 } as const;
 
+/**
+ * Main-site links into SOB Auto Exchange. They use the /exchange path on the
+ * main site, which works before exchange.sobautofix.com is live and is
+ * permanently redirected there once EXCHANGE_REDIRECTS_ENABLED=true.
+ */
+export const exchangeEntryLinks = {
+  home: "/exchange",
+  cars: "/exchange/cars",
+  sell: "/exchange/sell",
+} as const;
+
 export const mainNavigation = [
   { label: "Services", href: "/services" },
   { label: "Diagnostics", href: "/diagnostics" },
   { label: "Mobile Mechanic", href: "/services/mobile-specialist/mobile-mechanic" },
   { label: "Vehicle Inspections", href: "/services/mobile-specialist/vehicle-inspections" },
   { label: "Fleet", href: "/services/mobile-specialist/fleet" },
-  { label: "Cars for Sale", href: "/cars-for-sale" },
+  { label: "Cars for Sale", href: exchangeEntryLinks.cars },
   { label: "Manage a Booking", href: "/manage-booking" },
   { label: "Areas", href: "/areas" },
   { label: "About", href: "/about" },
