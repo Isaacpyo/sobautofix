@@ -64,6 +64,8 @@ Also: mobile layouts, keyboard use, reduced motion; validation keeps input; pric
 | 28 Oct | Unit tests: 87 files, 475 tests; lint; typecheck; build | Pass |
 | 28 Oct | Merged branch: lint, typecheck, 648 unit tests, production build | Pass |
 | 28 Oct | Fresh `db reset` with migrations 090000-090400; pgTAP 8 files, 180 tests | Pass |
+| 28 Oct | Local e2e gate, 92 tests (desktop + mobile): 59 passed, 14 skipped (need local setup), 19 failed | All exchange, admin-exchange and diary journeys pass except one axe contrast hit on the toast fade-in (fixed: slide-only entrance). The 18 booking and marketing failures also fail on unmodified `main` in the same environment (32 failures there): no CMS content, local site URL, no booking catalogue seed. Not regressions. |
+| 28 Oct | CI history | No CI run had ever passed. `verify` failed at build: sitemap needs a non-localhost `NEXT_PUBLIC_SITE_URL`. Fixed in the workflow env (also least-privilege permissions and concurrency). |
 | 28 Oct | Vercel preview of branch | Failed: commit author `Claude <noreply@anthropic.com>` is not a Vercel project member (Hobby). Production merges are squash-merged by the GitHub user, so authored by the owner. |
 
 ## Blockers (exact next actions)

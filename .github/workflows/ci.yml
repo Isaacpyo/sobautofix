@@ -4,6 +4,18 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Production builds refuse a localhost canonical URL (src/app/sitemap.ts);
+  # CI builds and tests use the real public origin. No secrets here.
+  NEXT_PUBLIC_SITE_URL: https://sobautofix.com
+
 jobs:
   verify:
     runs-on: ubuntu-latest
