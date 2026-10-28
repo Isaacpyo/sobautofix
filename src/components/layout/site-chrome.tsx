@@ -13,5 +13,7 @@ export function SiteChrome({ children, settings, navigation }: { children: React
   const pathname = usePathname();
   const isBackOffice = pathname.startsWith("/admin") || pathname.startsWith("/auth");
   if (isBackOffice) return <main>{children}</main>;
+  // SOB Auto Exchange renders its own header, footer and mobile navigation.
+  if (pathname === "/exchange" || pathname.startsWith("/exchange/")) return <>{children}<ConsentManager /></>;
   return <><Header settings={settings} navigation={navigation} /><main data-public-site>{children}</main><PublicMotion /><Footer settings={settings} /><FloatingWhatsApp /><ConsentManager /></>;
 }

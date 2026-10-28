@@ -1,3 +1,4 @@
+import { isSupabaseConfigured } from "@/lib/supabase/server";
 import type { MetadataRoute } from "next";
 import { diagnostics, services, siteConfig } from "@/config/site";
 import { getPublishedContentByKinds } from "@/lib/content/repository";
@@ -86,7 +87,9 @@ export function buildSitemap({ baseUrl, content, vehicles, hasReviews, hasMedia 
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const strict = { throwOnError: true };
+  // Fail the sitemap loudly when a configured database errors, but let builds
+  // without database credentials (CI, local) produce the static entries.
+  const strict = { throwOnError: isSupabaseConfigured() };
   const [content, vehicles, reviews, media] = await Promise.all([
     getPublishedContentByKinds(["core_page", "area", "article", "service", "diagnostic"], strict),
     getPublicSaleVehicles(strict),

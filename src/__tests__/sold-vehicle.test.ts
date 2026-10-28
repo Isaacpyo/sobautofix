@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { isPublicDeliveryListing, isSoldPageExpired, isVisibleOnSalesPage } from "@/lib/sales/policy";
+import { isPublicDeliveryListing, isSoldPageExpired, isVisibleOnSalesPage, unconfirmedDisclosures } from "@/lib/sales/policy";
 import type { SaleVehicle } from "@/types/domain";
 
-const vehicle: SaleVehicle = { id: "1", slug: "test-car", make: "Ford", model: "Focus", year: 2020, mileage: 40000, price: 9000, fuelType: "Diesel", transmission: "Manual", description: "A genuine test vehicle used only by automated tests.", features: [], images: [], status: "sold", soldAt: "2026-01-01T00:00:00.000Z", createdAt: "2025-01-01T00:00:00.000Z", updatedAt: "2026-01-01T00:00:00.000Z" };
+const vehicle: SaleVehicle = { ...unconfirmedDisclosures, knownFaults: [], workCompleted: [], id: "1", slug: "test-car", make: "Ford", model: "Focus", year: 2020, mileage: 40000, price: 9000, fuelType: "Diesel", transmission: "Manual", description: "A genuine test vehicle used only by automated tests.", features: [], images: [], status: "sold", soldAt: "2026-01-01T00:00:00.000Z", createdAt: "2025-01-01T00:00:00.000Z", updatedAt: "2026-01-01T00:00:00.000Z" };
 
 describe("sold vehicle lifecycle", () => {
   afterEach(() => vi.useRealTimers());
