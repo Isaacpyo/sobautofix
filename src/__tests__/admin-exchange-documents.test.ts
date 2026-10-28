@@ -68,6 +68,7 @@ const client = {
 vi.mock("@/lib/exchange/staff", () => ({ auditStaffAction: async () => undefined }));
 vi.mock("@/lib/supabase/server", () => ({ createAdminClient: () => client }));
 
+import { cleanupStagedStockPhotos } from "@/lib/exchange/admin/staging-cleanup";
 import { canViewDocuments, documentDownloadUrl, finalizeUpload, submissionPhotoUrl, visibleDocuments } from "@/lib/exchange/admin/documents";
 
 const vehicleId = "00000000-0000-4000-8000-000000000010";
@@ -171,5 +172,22 @@ describe("finance-only documents", () => {
     db.objects.set(pdfPath, new TextEncoder().encode("%PDF-1.7"));
     await expect(finalizeUpload(staffAs("workshop"), { target: "document", vehicleId, path: pdfPath, fileName: "inv.pdf", kind: "purchase_invoice" })).rejects.toThrow(/owner or manager/);
     expect(db.tables.vehicle_documents).toHaveLength(0);
+  });
+});
+
+describe("staging cleanup", () => {
+  it("removes staged photos older than 24 hours through the Storage API", async () => {
+    const now = new Date("2026-10-29T03:00:00Z");
+    db.folders = {
+      "staging/stock-photos": [{ name: "vehicle-a", id: null }, { name: "vehicle-b", id: null }, { name: "stray.jpg", id: "f0", created_at: "2026-10-01T00:00:00Z" }],
+      "staging/stock-photos/vehicle-a": [{ name: "old.jpg", id: "f1", created_at: "2026-10-27T03:00:00Z" }, { name: "new.jpg", id: "f2", created_at: "2026-10-29T01:00:00Z" }],
+      "staging/stock-photos/vehicle-b": [{ name: "old.png", id: "f3", created_at: "2026-10-28T02:59:00Z" }],
+    };
+    const dry = await cleanupStagedStockPhotos({ now, dryRun: true });
+    expect(dry).toEqual({ scanned: 4, expired: 3, removed: 0, failed: 0, dryRun: true });
+    expect(db.removed).toEqual([]);
+    const result = await cleanupStagedStockPhotos({ now });
+    expect(result).toMatchObject({ expired: 3, removed: 3, failed: 0 });
+    expect(db.removed.sort()).toEqual(["staging/stock-photos/stray.jpg", "staging/stock-photos/vehicle-a/old.jpg", "staging/stock-photos/vehicle-b/old.png"]);
   });
 });
