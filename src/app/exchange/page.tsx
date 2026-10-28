@@ -67,22 +67,23 @@ export default async function ExchangeHomePage() {
       <section aria-labelledby="journeys-heading" className="py-14 sm:py-20">
         <Container>
           <h2 id="journeys-heading" className="sr-only">What would you like to do?</h2>
-          <ul className="grid gap-4 md:grid-cols-3">
+          {/* Two journeys side by side at every width; Repairs & Diagnostics has its own section further down. */}
+          <ul className="grid grid-cols-2 gap-3 sm:gap-4">
             {[
-              { title: "Buy a Car", body: "Browse used cars with the condition, inspection notes and known faults on every listing.", action: "Browse cars", link: href("/cars"), photo: workshopPhotos.buy, icon: Car, external: false },
-              { title: "Sell or Part Exchange", body: "Tell us about your car in a few steps and add photos from your phone. We review every enquiry.", action: "Sell your car", link: href("/sell"), photo: workshopPhotos.sell, icon: Repeat, external: false },
-              { title: "Repairs & Diagnostics", body: `Servicing, repairs and diagnostics at the ${settings.workshopName} workshop.`, action: "See workshop services", link: main("/services"), photo: workshopPhotos.repairs, icon: Wrench, external: true },
+              { title: "Buy a Car", summary: "Used cars with full condition notes.", body: "Browse used cars with the condition, inspection notes and known faults on every listing.", action: "Browse cars", link: href("/cars"), photo: workshopPhotos.buy, icon: Car },
+              { title: "Sell or Part Exchange", summary: "Get an offer for your car.", body: "Tell us about your car in a few steps and add photos from your phone. We review every enquiry.", action: "Sell your car", link: href("/sell"), photo: workshopPhotos.sell, icon: Repeat },
             ].map((journey) => (
               <li key={journey.title} className="group relative flex flex-col overflow-hidden rounded-2xl border border-[#E3E8EF] bg-white transition hover:shadow-[0_12px_32px_rgba(11,18,32,.10)]">
-                <div className="relative aspect-[16/9] overflow-hidden bg-[#F3F5F8]">
-                  <Image src={journey.photo.src} alt="" fill sizes="(max-width: 767px) 100vw, 380px" className="object-cover object-[50%_35%] transition duration-500 group-hover:scale-[1.03]" />
+                <div className="relative aspect-[4/3] overflow-hidden bg-[#F3F5F8] sm:aspect-[16/9]">
+                  <Image src={journey.photo.src} alt="" fill sizes="(max-width: 639px) 50vw, 600px" className="object-cover object-[50%_35%] transition duration-500 group-hover:scale-[1.03]" />
                 </div>
-                <div className="flex flex-1 flex-col p-5">
-                  <span className="grid size-10 place-items-center rounded-xl bg-[#EAF2FD] text-[#1462C4]"><journey.icon size={20} aria-hidden="true" /></span>
-                  <h3 className="mt-3 text-[26px] font-bold text-[#0B1220]">{journey.title}</h3>
-                  <p className="mt-2 leading-7 text-[#5B6575]">{journey.body}</p>
-                  <Link href={journey.link} className="mt-4 inline-flex min-h-11 items-center gap-1.5 font-semibold text-[#1462C4] after:absolute after:inset-0 after:content-['']">
-                    {journey.action} {journey.external ? <ArrowUpRight size={18} aria-hidden="true" /> : <ArrowRight size={18} aria-hidden="true" />}
+                <div className="flex flex-1 flex-col p-3.5 sm:p-5">
+                  <span className="grid size-8 place-items-center rounded-lg bg-[#EAF2FD] text-[#1462C4] sm:size-10 sm:rounded-xl"><journey.icon size={18} aria-hidden="true" /></span>
+                  <h3 className="mt-2.5 text-[19px] leading-tight font-bold text-[#0B1220] sm:mt-3 sm:text-[26px]">{journey.title}</h3>
+                  <p className="mt-1.5 text-sm leading-5 text-[#5B6575] sm:hidden">{journey.summary}</p>
+                  <p className="mt-2 hidden leading-7 text-[#5B6575] sm:block">{journey.body}</p>
+                  <Link href={journey.link} className="mt-auto inline-flex min-h-11 items-center gap-1.5 pt-2 text-[15px] font-semibold text-[#1462C4] after:absolute after:inset-0 after:content-[''] sm:pt-4 sm:text-base">
+                    {journey.action} <ArrowRight size={18} aria-hidden="true" />
                   </Link>
                 </div>
               </li>
