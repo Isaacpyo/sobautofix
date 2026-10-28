@@ -39,6 +39,14 @@ export type ExchangePrivateSettings = {
   viewingLengthMinutes: number;
   minimumPublishPhotos: number;
   sellerRetentionMonths: number;
+  /**
+   * Days a reservation is held before staff are prompted to review it.
+   * 0 means no automatic expiry: staff set an expiry per sale, if any.
+   * Never shown to customers as a promise.
+   */
+  reservationHoldDays: number;
+  /** Steps staff must tick before completing a handover. Empty until the business defines them. */
+  handoverChecklist: string[];
 };
 
 export const exchangePublicDefaults: ExchangePublicSettings = {
@@ -68,6 +76,8 @@ export const exchangePrivateDefaults: ExchangePrivateSettings = {
   viewingLengthMinutes: 45,
   minimumPublishPhotos: 4,
   sellerRetentionMonths: 12,
+  reservationHoldDays: 0,
+  handoverChecklist: [],
 };
 
 export const exchangePolicyPages: Array<{ key: ExchangePolicyKey; slug: string; title: string }> = [
