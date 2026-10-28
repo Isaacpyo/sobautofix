@@ -114,7 +114,7 @@ export function AppointmentForm({ initial, staff, permissions, customerHasEmail,
                 {state.conflicts.map((conflict) => (
                   <li key={conflict.key} className="rounded-xl bg-white/70 p-3 text-sm ring-1 ring-[#FEDF89]">
                     <p className="font-bold text-[#0B1220]">{conflict.reason}</p>
-                    <p className="mt-0.5 text-[#344054]"><Link href={conflict.href} className="font-semibold text-[#1462C4] underline" target="_blank">{conflict.title}</Link> ({conflict.type}, {conflict.status})</p>
+                    <p className="mt-0.5 text-[#344054]"><Link href={conflict.href} className="font-semibold text-[#1462C4] underline" target="_blank" rel="noopener">{conflict.title}<span className="sr-only"> (opens in a new tab)</span></Link> ({conflict.type}, {conflict.status})</p>
                     <p className="text-[#344054]">{conflict.when}{conflict.staff ? ` · ${conflict.staff}` : ""}{conflict.vehicle ? ` · ${conflict.vehicle}` : ""}</p>
                   </li>
                 ))}
