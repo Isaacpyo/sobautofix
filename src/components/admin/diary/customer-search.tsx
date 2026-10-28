@@ -68,7 +68,7 @@ export function CustomerSearch({ recent, search }: { recent: CustomerSummary[]; 
         <label htmlFor="customer-search" className="mb-1 block text-sm font-bold text-[#0B1220]">Search customers</label>
         <Search size={18} className="pointer-events-none absolute bottom-3.5 left-3.5 text-[#5B6575]" aria-hidden="true" />
         <input id="customer-search" type="search" value={query} onChange={(event) => { setQuery(event.target.value); if (event.target.value.trim().length < 2) { setResults(null); setMessage(null); } }} autoComplete="off" placeholder="Name, email or phone" aria-describedby="customer-search-status" className="h-12 w-full rounded-xl border border-[#D0D5DD] bg-white pr-10 pl-11 text-base text-[#0B1220] focus:border-[#1974E2] focus:outline-3 focus:outline-[rgba(22,139,255,.35)]" />
-        {pending && <LoaderCircle size={18} className="absolute right-3.5 bottom-3.5 animate-spin text-[#5B6575]" aria-hidden="true" />}
+        {pending && <LoaderCircle size={18} className="absolute right-3.5 bottom-3.5 animate-spin motion-reduce:animate-none text-[#5B6575]" aria-hidden="true" />}
       </form>
       <p id="customer-search-status" className="text-sm font-semibold text-[#344054]" aria-live="polite">{status}</p>
       {showing.length ? (

@@ -186,8 +186,8 @@ export function AdminNavigation({ displayName, notificationCount, collapsed, onT
       </div>
 
       <div className={cn("fixed inset-0 z-50 lg:hidden", mobileOpen ? "visible pointer-events-auto" : "invisible pointer-events-none")} aria-hidden={!mobileOpen} inert={!mobileOpen}>
-        <button type="button" tabIndex={-1} aria-label="Close admin menu" className={cn("absolute inset-0 bg-[#030712]/70 transition-opacity", mobileOpen ? "opacity-100" : "opacity-0")} onClick={() => setMobileOpen(false)} />
-        <aside id="mobile-admin-navigation" className={cn("absolute inset-y-0 left-0 flex w-[min(17rem,calc(100vw-3rem))] flex-col bg-[#030712] p-4 text-white shadow-2xl transition-transform duration-300", mobileOpen ? "translate-x-0" : "-translate-x-full")}>
+        <button type="button" tabIndex={-1} aria-label="Close admin menu" className={cn("absolute inset-0 bg-[#030712]/70 transition-opacity motion-reduce:transition-none", mobileOpen ? "opacity-100" : "opacity-0")} onClick={() => setMobileOpen(false)} />
+        <aside id="mobile-admin-navigation" className={cn("absolute inset-y-0 left-0 flex w-[min(17rem,calc(100vw-3rem))] flex-col bg-[#030712] p-4 text-white shadow-2xl transition-transform duration-300 motion-reduce:transition-none", mobileOpen ? "translate-x-0" : "-translate-x-full")}>
           <div className="flex shrink-0 items-center justify-between gap-4">
             <div className="w-24"><Logo inverse /></div>
             <button ref={drawerClose} type="button" className="grid size-11 place-items-center rounded-xl border border-white/15" onClick={() => setMobileOpen(false)} aria-label="Close admin menu"><X size={20} aria-hidden="true" /></button>

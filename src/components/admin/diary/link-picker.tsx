@@ -107,7 +107,7 @@ export function LinkPicker({ kind, name, label, hint, value, onChange, search, d
               aria-controls={`${id}-results`}
               className="h-11 w-full rounded-lg border border-[#D0D5DD] pr-10 pl-9 text-sm text-[#0B1220] focus:border-[#1974E2] focus:outline-none"
             />
-            {pending && <LoaderCircle size={16} className="absolute top-1/2 right-3 -translate-y-1/2 animate-spin text-[#5B6575]" aria-hidden="true" />}
+            {pending && <LoaderCircle size={16} className="absolute top-1/2 right-3 -translate-y-1/2 animate-spin motion-reduce:animate-none text-[#5B6575]" aria-hidden="true" />}
           </div>
           <p className="sr-only" aria-live="polite">{pending ? "Searching" : message ?? `${options.length} results`}</p>
           <ul id={`${id}-results`} className="mt-2 grid grid-cols-1 max-h-64 gap-1 overflow-y-auto" aria-label={`${label} results`}>

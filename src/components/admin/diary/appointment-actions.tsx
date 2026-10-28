@@ -60,7 +60,7 @@ export function CancelAppointment({ id, updatedAt, isViewing, customerHasEmail, 
         <ConflictPanel state={state} pending={pending} formId={panelId} compact />
         <div className="flex flex-wrap gap-2">
           <button type="submit" disabled={pending} className={cn("inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#B42318] px-4 text-sm font-bold text-white hover:bg-[#912018] disabled:opacity-60", focusRing)}>
-            {pending && <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />} Confirm cancellation
+            {pending && <LoaderCircle size={16} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />} Confirm cancellation
           </button>
           <button type="button" onClick={() => { setOpen(false); toggle.current?.focus(); }} className={cn("inline-flex min-h-11 items-center rounded-xl px-4 text-sm font-bold text-[#344054] hover:bg-[#F3F5F8]", focusRing)}>Keep appointment</button>
         </div>

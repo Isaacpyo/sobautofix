@@ -72,7 +72,7 @@ export function MobileBottomNav({ role, menuOpen, onOpenMenu }: { role: StaffRol
               aria-label="New: create an appointment, listing or enquiry"
               className="group -mt-8 flex flex-col items-center gap-1 rounded-2xl px-1 text-[11px] leading-tight font-semibold text-[#0B1220] focus-visible:outline-3 focus-visible:outline-[rgba(22,139,255,.55)]"
             >
-              <span className="grid size-14 place-items-center rounded-full bg-[#1974E2] text-white shadow-[0_8px_20px_rgba(25,116,226,.4)] ring-4 ring-white transition group-hover:bg-[#1462C4]">
+              <span className="grid size-14 place-items-center rounded-full bg-[#1974E2] text-white shadow-[0_8px_20px_rgba(25,116,226,.4)] ring-4 ring-white transition motion-reduce:transition-none group-hover:bg-[#1462C4]">
                 <Plus size={28} strokeWidth={2.6} aria-hidden="true" />
               </span>
               <span>New</span>
