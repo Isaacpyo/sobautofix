@@ -12,5 +12,7 @@ export default defineConfig([
     "test-results/**",
     "**/.wrangler/**",
     "**/.wrangler-dry-run/**",
+    // Agent worktrees are separate checkouts, linted in their own directories.
+    ".claude/**",
   ]),
 ]);
