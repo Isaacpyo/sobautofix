@@ -34,7 +34,10 @@ export function formatDate(value?: string | null) {
 /** "Saturday 31 October 2026 at 11:00" in UK time. */
 export function formatDateTime(value: string | Date) {
   const date = typeof value === "string" ? new Date(value) : value;
-  const day = new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: LONDON_TIME_ZONE }).format(date);
+  // Built from parts so the result is the same whichever ICU version formats it.
+  const parts = new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: LONDON_TIME_ZONE }).formatToParts(date);
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((item) => item.type === type)?.value ?? "";
+  const day = `${part("weekday")} ${part("day")} ${part("month")} ${part("year")}`;
   const time = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: LONDON_TIME_ZONE }).format(date);
   return `${day} at ${time}`;
 }
