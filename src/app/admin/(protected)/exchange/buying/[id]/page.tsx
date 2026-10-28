@@ -9,14 +9,14 @@ import { financeLabels, formatDate, formatDateTime, inspectionOutcomeLabels, ins
 import { DocumentList, DocumentUploader } from "@/components/admin/exchange/stock-editor";
 import { Badge, Card, KeyValues, LinkButton, NoAccess, Notice } from "@/components/admin/exchange/ui";
 import { BackLink } from "@/components/ui/back-link";
-import { getSubmissionDetail } from "@/lib/exchange/admin/buying";
+import { effectiveOfferStatus, getSubmissionDetail, type OfferStatus } from "@/lib/exchange/admin/buying";
 import { listStaff } from "@/lib/exchange/admin/core";
 import { formatPence } from "@/lib/exchange/margin";
 import { requireStaffPage } from "@/lib/exchange/staff";
 import { vehicleSalesOptions } from "@/lib/vehicle/sales-options";
 import { formatRegistration } from "@/lib/vehicle/registration-format";
 import { saveExchangeNoteAction, sendExchangeReplyAction } from "../../thread-actions";
-import { acceptOfferAction, assignSubmissionAction, closeSubmissionAction, createStockFromPurchaseAction, markPurchasedAction, moveSubmissionAction, recordOfferAction, recordPurchaseInspectionAction } from "../actions";
+import { assignSubmissionAction, closeSubmissionAction, createStockFromPurchaseAction, decideOfferAction, linkExistingStockAction, markPurchasedAction, moveSubmissionAction, recordOfferAction, recordPurchaseInspectionAction } from "../actions";
 
 const open: SubmissionStatus[] = ["new", "reviewing", "provisional_offer", "inspection", "final_offer"];
 
@@ -33,6 +33,8 @@ export default async function BuyingEnquiryPage({ params }: { params: Promise<{ 
   const today = new Date().toISOString().slice(0, 10);
   const whatsapp = detail.customer?.phone.replace(/[^+\d]/g, "").replace(/^\+/, "") || "";
   const canFinance = staff.can("finance.edit");
+  const openOffer = detail.offers.find((offer) => offer.status === "open");
+  const acceptedOffer = detail.offers.find((offer) => offer.status === "accepted");
 
   return <>
     <BackLink href="/admin/exchange/buying">Back to Buying Enquiries</BackLink>
@@ -65,6 +67,15 @@ export default async function BuyingEnquiryPage({ params }: { params: Promise<{ 
             <div className="rounded-lg bg-[#F4F7FA] p-3"><p className="text-xs font-extrabold tracking-wide text-[#586575] uppercase">Damage</p><p className="mt-1 text-sm whitespace-pre-wrap text-[#071127]">{s.damage || "None given"}</p></div>
           </div>
           {s.anonymised_at && <div className="mt-3"><Notice tone="info">Photos, registration and notes were removed under the retention policy on {formatDate(String(s.anonymised_at))}.</Notice></div>}
+        </Card>
+
+        <Card title="Offer history" description="Every offer is kept, with who made it and what the seller decided.">
+          {detail.offers.length ? <ol className="grid gap-2">{detail.offers.map((offer) => { const effective = effectiveOfferStatus(offer, today); return <li key={offer.id} className="rounded-lg border border-[#E4EAF0] p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-extrabold text-[#071127]">{formatPence(offer.amount_pence)} <span className="text-sm font-bold text-[#586575]">{offerStageLabels[offer.stage]}</span></p><Badge tone={offerStatusTones[effective]}>{offerStatusLabels[effective]}</Badge></div>
+            <p className="mt-0.5 text-xs text-[#586575]">Made {formatDateTime(offer.created_at)}{offer.createdByName ? ` by ${offer.createdByName}` : ""}{offer.expires_on ? ` · valid until ${formatDate(offer.expires_on)}` : ""}</p>
+            {offer.conditions && <p className="mt-1 text-sm whitespace-pre-wrap text-[#344054]">Conditions: {offer.conditions}</p>}
+            {offer.decided_at && offer.status !== "open" && <p className="mt-1 text-xs text-[#586575]">{offerStatusLabels[offer.status]} {formatDateTime(offer.decided_at)}{offer.decidedByName ? ` (recorded by ${offer.decidedByName})` : ""}{offer.decision_note ? `: ${offer.decision_note}` : ""}</p>}
+          </li>; })}</ol> : <p className="text-sm text-[#586575]">No offers yet.</p>}
         </Card>
 
         <Card title={`Seller photos (${detail.photos.length})`} description="Private. Each image is served through a link that expires after a minute.">
@@ -103,11 +114,19 @@ export default async function BuyingEnquiryPage({ params }: { params: Promise<{ 
             ...(staff.can("finance.view") ? [{ label: "Purchase price", value: s.purchase_price_pence != null ? formatPence(Number(s.purchase_price_pence)) : "Not recorded" }] : []),
           ]} />
           {status === "new" && <ActionForm action={moveSubmissionAction} hidden={{ submissionId: s.id, to: "reviewing" }} className="mt-4"><SubmitButton className="w-full">Start reviewing</SubmitButton></ActionForm>}
-          {["new", "reviewing", "provisional_offer", "inspection"].includes(status) && <OfferForm submissionId={s.id} stage="provisional" current={s.provisional_offer_pence as number | null} title={s.provisional_offer_pence != null ? "Update provisional offer" : "Make a provisional offer"} />}
-          {["reviewing", "provisional_offer", "inspection", "final_offer"].includes(status) && <OfferForm submissionId={s.id} stage="final" current={(s.final_offer_pence ?? s.provisional_offer_pence) as number | null} title={s.final_offer_pence != null ? "Change final offer" : "Make the final offer"} />}
-          {status === "final_offer" && !s.offer_accepted_at && <ActionForm action={acceptOfferAction} hidden={{ submissionId: s.id }} className="mt-4"><ConfirmButton variant="primary" tone="warning" className="w-full" title="Seller accepted?" message={`Record that the seller accepted the final offer of ${formatPence(Number(s.final_offer_pence))}?`} confirmLabel="Record acceptance">Seller accepted the offer</ConfirmButton></ActionForm>}
+          {openOffer && <div className="mt-4 rounded-lg border border-[#B9D8FF] bg-[#F7FAFE] p-3">
+            <p className="text-xs font-extrabold tracking-wide text-[#586575] uppercase">Open offer</p>
+            <p className="mt-0.5 text-lg font-extrabold text-[#071127]">{formatPence(openOffer.amount_pence)} <span className="text-sm font-bold text-[#586575]">{offerStageLabels[openOffer.stage]}</span></p>
+            <p className="text-xs text-[#586575]">{openOffer.expires_on ? `${effectiveOfferStatus(openOffer, today) === "expired" ? "Expired" : "Valid until"} ${formatDate(openOffer.expires_on)}` : "No expiry date"}</p>
+            <ActionForm action={decideOfferAction} hidden={{ submissionId: s.id, offerId: openOffer.id }} className="mt-3">
+              <SelectField name="decision" label="Record the outcome" defaultValue={openOffer.stage === "provisional" ? "declined" : "accepted"} options={[...(openOffer.stage !== "provisional" ? [{ value: "accepted", label: "Seller accepted" }] : []), { value: "declined", label: "Seller declined" }, { value: "withdrawn", label: "We withdrew it" }, { value: "expired", label: "It expired" }]} />
+              <TextField className="mt-2" name="note" label="Note (optional)" maxLength={1000} />
+              <div className="mt-2 flex justify-end"><ConfirmButton variant="secondary" tone="warning" title="Record this outcome?" message="The decision is added to the offer history with your name and the time." confirmLabel="Record outcome">Record outcome</ConfirmButton></div>
+            </ActionForm>
+          </div>}
+          {offerStagesFor(status).length > 0 && <OfferForm submissionId={s.id} stages={offerStagesFor(status)} current={openOffer?.amount_pence ?? (s.final_offer_pence ?? s.provisional_offer_pence) as number | null} title={openOffer ? "Make a new offer (replaces the open one)" : detail.offers.length ? "Make another offer" : "Make an offer"} startOpen={!detail.offers.length && status !== "new"} />}
           {status === "final_offer" && Boolean(s.offer_accepted_at) && (canFinance
-            ? <ActionForm action={markPurchasedAction} hidden={{ submissionId: s.id }} className="mt-4 rounded-lg border border-[#E4EAF0] p-3"><MoneyField name="purchasePrice" label="Price paid" defaultValue={penceToInput(Number(s.final_offer_pence))} required /><div className="mt-3"><ConfirmButton variant="primary" tone="warning" className="w-full" title="Mark as purchased?" message="This records the price paid. You can then create the stock draft." confirmLabel="Mark as purchased">Mark as purchased</ConfirmButton></div></ActionForm>
+            ? <ActionForm action={markPurchasedAction} hidden={{ submissionId: s.id }} className="mt-4 rounded-lg border border-[#E4EAF0] p-3"><MoneyField name="purchasePrice" label="Price paid" defaultValue={penceToInput(acceptedOffer?.amount_pence ?? Number(s.final_offer_pence))} required /><div className="mt-3"><ConfirmButton variant="primary" tone="warning" className="w-full" title="Mark as purchased?" message="This records the price paid. You can then create the stock record." confirmLabel="Mark as purchased">Mark as purchased</ConfirmButton></div></ActionForm>
             : <p className="mt-4 rounded-lg bg-[#F4F7FA] p-3 text-sm text-[#586575]">An owner or manager records the purchase price and marks the vehicle as purchased.</p>)}
           {status === "purchased" && (detail.purchasedVehicle
             ? <LinkButton href={`/admin/exchange/stock/${detail.purchasedVehicle.id}`} variant="primary" className="mt-4 w-full"><ExternalLink size={15} aria-hidden="true" />Open stock: {detail.purchasedVehicle.title}</LinkButton>
@@ -121,8 +140,13 @@ export default async function BuyingEnquiryPage({ params }: { params: Promise<{ 
                 <SelectField name="transmission" label="Transmission" defaultValue={s.transmission as string} placeholder="Choose" options={vehicleSalesOptions.transmission.map((value) => ({ value, label: value }))} required />
                 <TextField name="colour" label="Colour" defaultValue={s.colour as string} />
               </div>
+              <p className="mt-2 text-xs text-[#586575]">Only vehicle facts are copied. The seller&apos;s details, offers, photos and documents stay private.</p>
               <div className="mt-3"><SubmitButton className="w-full" pendingLabel="Creating…">Create stock draft</SubmitButton></div>
             </ActionForm> : <p className="mt-4 text-sm text-[#586575]">An owner or manager creates the stock record.</p>)}
+          {status === "purchased" && !detail.purchasedVehicle && staff.can("stock.edit") && canFinance && detail.linkable.length > 0 && <ActionForm action={linkExistingStockAction} hidden={{ submissionId: s.id }} className="mt-3 rounded-lg border border-[#E4EAF0] p-3">
+            <SelectField name="vehicleId" label="Or link an existing stock record" placeholder="Choose a draft or preparation vehicle" options={detail.linkable.map((item) => ({ value: item.id, label: item.label }))} />
+            <div className="mt-2 flex justify-end"><SubmitButton variant="secondary" pendingLabel="Linking…">Link stock record</SubmitButton></div>
+          </ActionForm>}
           {(status === "declined" || status === "closed") && <p className="mt-4 rounded-lg bg-[#F4F7FA] p-3 text-sm text-[#344054]">{status === "declined" ? `Declined${s.decline_reason ? `: ${s.decline_reason}` : "."}` : "Closed."} {s.closed_at ? `(${formatDate(String(s.closed_at))})` : ""}</p>}
         </Card>
 
@@ -150,12 +174,26 @@ export default async function BuyingEnquiryPage({ params }: { params: Promise<{ 
   </>;
 }
 
-function OfferForm({ submissionId, stage, current, title }: { submissionId: string; stage: "provisional" | "final"; current: number | null; title: string }) {
-  return <details className="mt-4 rounded-lg border border-[#E4EAF0] p-3" open={stage === "provisional" && current == null}>
+const offerStageLabels = { provisional: "Provisional", revised: "Revised", final: "Final" } as const;
+const offerStatusLabels: Record<OfferStatus, string> = { open: "Open", accepted: "Accepted", declined: "Declined", withdrawn: "Withdrawn", expired: "Expired", superseded: "Superseded" };
+const offerStatusTones = { open: "info", accepted: "success", declined: "danger", withdrawn: "muted", expired: "warning", superseded: "muted" } as const;
+
+function offerStagesFor(status: SubmissionStatus): Array<keyof typeof offerStageLabels> {
+  if (status === "new" || status === "reviewing" || status === "provisional_offer" || status === "inspection") return status === "new" ? ["provisional"] : ["provisional", "final"];
+  if (status === "final_offer") return ["revised", "final"];
+  return [];
+}
+
+function OfferForm({ submissionId, stages, current, title, startOpen }: { submissionId: string; stages: Array<keyof typeof offerStageLabels>; current: number | null; title: string; startOpen: boolean }) {
+  return <details className="mt-4 rounded-lg border border-[#E4EAF0] p-3" open={startOpen}>
     <summary className="min-h-10 cursor-pointer text-sm font-extrabold text-[#1462C4]">{title}</summary>
-    <ActionForm action={recordOfferAction} hidden={{ submissionId, stage }} className="mt-2">
-      <div className="grid grid-cols-2 gap-3"><MoneyField name="amount" label="Offer" defaultValue={penceToInput(current)} required /><TextField name="expiresOn" label="Valid until" type="date" /></div>
-      <div className="mt-3 flex justify-end"><SubmitButton>{stage === "final" ? "Record final offer" : "Record offer"}</SubmitButton></div>
+    <ActionForm action={recordOfferAction} hidden={{ submissionId }} resetOnSuccess className="mt-2">
+      <div className="grid gap-3">
+        <SelectField name="stage" label="Type of offer" defaultValue={stages[stages.length - 1]} options={stages.map((value) => ({ value, label: offerStageLabels[value] }))} hint="Provisional offers are subject to inspection. The seller accepts a final or revised offer." />
+        <div className="grid grid-cols-2 gap-3"><MoneyField name="amount" label="Offer" defaultValue={penceToInput(current)} required /><TextField name="expiresOn" label="Valid until" type="date" /></div>
+        <TextArea name="conditions" label="Conditions (optional)" rows={2} hint="For example: subject to the V5C and service book matching." />
+      </div>
+      <div className="mt-3 flex justify-end"><SubmitButton>Record offer</SubmitButton></div>
     </ActionForm>
   </details>;
 }

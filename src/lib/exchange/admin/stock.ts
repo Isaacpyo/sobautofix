@@ -340,7 +340,7 @@ export function stockSlug(input: { year?: number | null; make?: string | null; m
   return `${base}-${suffix}`;
 }
 
-export async function createStockDraft(staff: StaffContext, input: z.infer<typeof draftSchema>, extra: { status?: "draft" | "preparation"; source?: string } = {}) {
+export async function createStockDraft(staff: StaffContext, input: z.infer<typeof draftSchema>, extra: { status?: "draft" | "preparation"; source?: string; purchasedFromSubmissionId?: string } = {}) {
   assertCan(staff, "stock.edit");
   const price = staff.can("stock.price") ? input.price : 0;
   guardCopy({ description: input.description, features: input.features });
@@ -354,8 +354,11 @@ export async function createStockDraft(staff: StaffContext, input: z.infer<typeo
     registration, slug: stockSlug({ ...input, registration }), make: input.make, model: input.model, derivative: input.derivative, year: input.year, mileage: input.mileage, price,
     fuel_type: input.fuelType, transmission: input.transmission, engine_size: input.engineSize, colour: input.colour, body_type: input.bodyType,
     description: input.description, features: input.features, finance_available: false, warranty: { available: false }, status: extra.status || "draft",
+    ...(extra.purchasedFromSubmissionId ? { purchased_from_submission_id: extra.purchasedFromSubmissionId } : {}),
   };
-  const inserted = mustRow(await staff.client.from("sale_vehicles").insert(row).select("id,slug").single(), "The vehicle could not be created.");
+  const result = await staff.client.from("sale_vehicles").insert(row).select("id,slug").single();
+  if (result.error?.code === "23505") throw new ExchangeUserError(extra.purchasedFromSubmissionId ? "A stock record already exists for this purchase." : "This registration already exists in Vehicle Stock.");
+  const inserted = mustRow(result, "The vehicle could not be created.");
   await auditStaffAction(staff, "create", "sale_vehicle", inserted.id, { status: row.status, slug: inserted.slug, source: extra.source || "stock" });
   return inserted as { id: string; slug: string };
 }

@@ -3,11 +3,14 @@
 import { z } from "zod";
 import { success, type FormState } from "@/components/admin/exchange/form-state";
 import {
-  acceptOffer,
   assignSubmission,
   closeSubmission,
   createStockFromPurchase,
   declineSchema,
+  decideOffer,
+  linkExistingStock,
+  offerDecisionSchema,
+  offerStages,
   inspectionSchema,
   markPurchased,
   moveSubmission,
@@ -41,19 +44,20 @@ export async function assignSubmissionAction(_previous: FormState, formData: For
 
 export async function recordOfferAction(_previous: FormState, formData: FormData): Promise<FormState> {
   return runStaffAction("buying.manage", formData, async (staff) => {
-    const { submissionId, stage } = parseForm(idForm.extend({ stage: z.enum(["provisional", "final"]) }), formData);
+    const { submissionId, stage } = parseForm(idForm.extend({ stage: z.enum(offerStages) }), formData);
     await recordOffer(staff, submissionId, stage, parseForm(offerSchema, formData));
     revalidateExchangeAdmin();
-    return success(stage === "final" ? "Final offer recorded. Tell the seller using the conversation." : "Provisional offer recorded. Tell the seller using the conversation.");
+    return success(`${stage === "final" ? "Final" : stage === "revised" ? "Revised" : "Provisional"} offer recorded. Tell the seller using the conversation.`);
   });
 }
 
-export async function acceptOfferAction(_previous: FormState, formData: FormData): Promise<FormState> {
+export async function decideOfferAction(_previous: FormState, formData: FormData): Promise<FormState> {
   return runStaffAction("buying.manage", formData, async (staff) => {
-    const { submissionId } = parseForm(idForm, formData);
-    await acceptOffer(staff, submissionId);
+    const { submissionId, offerId } = parseForm(idForm.extend({ offerId: uuidField("offer") }), formData);
+    const decision = parseForm(offerDecisionSchema, formData);
+    await decideOffer(staff, submissionId, offerId, decision);
     revalidateExchangeAdmin();
-    return success("Offer marked as accepted.");
+    return success({ accepted: "Offer marked as accepted.", declined: "Offer marked as declined by the seller.", withdrawn: "Offer withdrawn.", expired: "Offer marked as expired." }[decision.decision]);
   });
 }
 
@@ -91,5 +95,14 @@ export async function createStockFromPurchaseAction(_previous: FormState, formDa
     const created = await createStockFromPurchase(staff, submissionId, parseForm(stockFromPurchaseSchema, formData));
     revalidateExchangeAdmin();
     return success("Stock draft created.", { redirectTo: `/admin/exchange/stock/${created.id}` });
+  });
+}
+
+export async function linkExistingStockAction(_previous: FormState, formData: FormData): Promise<FormState> {
+  return runStaffAction(["stock.edit", "finance.edit"], formData, async (staff) => {
+    const { submissionId, vehicleId } = parseForm(idForm.extend({ vehicleId: uuidField("stock record") }), formData);
+    await linkExistingStock(staff, submissionId, vehicleId);
+    revalidateExchangeAdmin();
+    return success("Stock record linked.", { redirectTo: `/admin/exchange/stock/${vehicleId}?tab=internal` });
   });
 }
