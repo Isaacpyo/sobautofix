@@ -2,7 +2,7 @@ import { ArrowRight, ChevronDown, Mail, MapPin, MessageCircle, Phone } from "luc
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { SocialLinks } from "@/components/marketing/social-links";
-import { diagnostics, formatPhone, services, siteConfig } from "@/config/site";
+import { diagnostics, exchangeEntryLinks, formatPhone, services, siteConfig } from "@/config/site";
 import { linksForSettings, type SiteSettings } from "@/config/settings";
 import { Logo } from "./logo";
 
@@ -27,7 +27,8 @@ const exploreLinks: FooterLink[] = [
   { label: "News & Blog", href: "/news" },
   { label: "FAQs", href: "/faqs" },
   { label: "Gallery", href: "/gallery" },
-  { label: "Cars for Sale", href: "/cars-for-sale" },
+  { label: "Cars for Sale", href: exchangeEntryLinks.cars },
+  { label: "Sell Your Car", href: exchangeEntryLinks.sell },
   { label: "Get a Quote", href: "/get-a-quote" },
   { label: "Book Appointment", href: "/book" },
   { label: "Contact", href: "/contact" },

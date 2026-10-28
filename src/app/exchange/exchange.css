@@ -1,0 +1,50 @@
+/* SOB Auto Exchange typography. The main site swaps to system fonts on small
+   screens (globals.css); the exchange keeps the root layout's Barlow
+   Condensed headings and Inter body at every width, with condensed system
+   fallbacks while the optional webfonts load. */
+.exchange-app {
+  font-family: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+.exchange-app h1,
+.exchange-app h2,
+.exchange-app h3,
+.exchange-app h4 {
+  font-family: var(--font-barlow), "Barlow Condensed", "Arial Narrow", "Roboto Condensed", ui-sans-serif, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.exchange-app :focus-visible {
+  outline: 3px solid rgba(22, 139, 255, 0.55);
+  outline-offset: 2px;
+}
+
+.exchange-app dialog::backdrop {
+  background: rgba(11, 18, 32, 0.6);
+}
+
+/* Display type outside headings (prices, wordmark). */
+.exchange-display {
+  font-family: var(--font-barlow), "Barlow Condensed", "Arial Narrow", "Roboto Condensed", ui-sans-serif, sans-serif;
+}
+
+/* Fixed bars step aside while the on-screen keyboard is open (feedback.tsx). */
+html[data-exchange-typing="true"] [data-exchange-fixed] {
+  display: none;
+}
+
+@keyframes exchange-toast-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .exchange-app *,
+  .exchange-app *::before,
+  .exchange-app *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

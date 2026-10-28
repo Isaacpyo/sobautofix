@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { ButtonLink } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { SocialLinks } from "@/components/marketing/social-links";
-import { diagnostics, services, siteConfig } from "@/config/site";
+import { diagnostics, exchangeEntryLinks, services, siteConfig } from "@/config/site";
 import { linksForSettings, type SiteSettings } from "@/config/settings";
 import type { PublicNavigationItem } from "@/lib/navigation/repository";
 import { cn } from "@/lib/utils";
@@ -191,7 +191,7 @@ export function Header({ settings = siteConfig }: HeaderProps) {
             </div>
           </DesktopDropdown>
 
-          <DesktopLink label="Cars for Sale" href="/cars-for-sale" pathname={pathname} />
+          <DesktopLink label="Cars for Sale" href={exchangeEntryLinks.cars} pathname={pathname} />
           <DesktopLink label="News & Blog" href="/news" pathname={pathname} />
           <DesktopLink label="Manage Booking" href="/manage-booking" pathname={pathname} />
           <DesktopLink label="Contact" href="/contact" pathname={pathname} />
@@ -293,7 +293,8 @@ export function Header({ settings = siteConfig }: HeaderProps) {
                 </div>
               </MobileAccordion>
 
-              <MobileNavigationItem label="Cars for Sale" href="/cars-for-sale" pathname={pathname} onNavigate={closeMobileMenu} />
+              <MobileNavigationItem label="Cars for Sale" href={exchangeEntryLinks.cars} pathname={pathname} onNavigate={closeMobileMenu} />
+              <MobileNavigationItem label="Sell Your Car" href={exchangeEntryLinks.sell} pathname={pathname} onNavigate={closeMobileMenu} />
               <MobileNavigationItem label="News & Blog" href="/news" pathname={pathname} onNavigate={closeMobileMenu} />
               <MobileNavigationItem label="Manage a Booking" href="/manage-booking" pathname={pathname} onNavigate={closeMobileMenu} />
               <MobileNavigationItem label="Contact" href="/contact" pathname={pathname} onNavigate={closeMobileMenu} />
