@@ -23,8 +23,10 @@ function Feedback({ state }: { state: DiaryFormState }) {
 }
 
 /** Confirm / Propose another time / Decline for a requested viewing. */
-export function ViewingRequestActions({ id, updatedAt, defaultDate, defaultTime, confirm, propose, decline, compact = false }: {
+export function ViewingRequestActions({ id, updatedAt, defaultDate, defaultTime, confirm, propose, decline, compact = false, returnTo = "viewings" }: {
   id: string;
+  /** Where to show the outcome afterwards. */
+  returnTo?: "viewings" | "diary";
   /** updated_at when the page loaded, so a stale page cannot overwrite someone else's change. */
   updatedAt?: string;
   defaultDate: string;
@@ -45,7 +47,12 @@ export function ViewingRequestActions({ id, updatedAt, defaultDate, defaultTime,
   const uid = useId();
   const firstField = useRef<HTMLInputElement>(null);
   const reasonField = useRef<HTMLTextAreaElement>(null);
-  const version = updatedAt ? <input type="hidden" name="updatedAt" value={updatedAt} /> : null;
+  const version = (
+    <>
+      {updatedAt && <input type="hidden" name="updatedAt" value={updatedAt} />}
+      <input type="hidden" name="returnTo" value={returnTo} />
+    </>
+  );
 
   useEffect(() => {
     if (panel === "propose") firstField.current?.focus();

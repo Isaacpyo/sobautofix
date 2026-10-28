@@ -26,6 +26,9 @@ const savedMessages: Record<string, string> = {
   created: "Appointment saved.",
   updated: "Changes saved.",
   cancelled: "Appointment cancelled.",
+  confirmed: "Viewing confirmed.",
+  proposed: "New time suggested. Confirm the viewing once the customer agrees.",
+  declined: "Viewing request declined.",
 };
 
 const emailMessages: Record<string, { text: string; tone: "ok" | "warn" }> = {
@@ -155,7 +158,7 @@ async function AppointmentPage({ staff, appointment, directory, saved, email }: 
           {canSales && appointment.alternative_start && <p className="text-sm text-[#344054]"><strong>Alternative they offered:</strong> {formatLondonDateTime(appointment.alternative_start)}</p>}
           {canSales && appointment.customer_message && <p className="text-sm text-[#344054]"><strong>Their message:</strong> {appointment.customer_message}</p>}
           {canSales ? (
-            <ViewingRequestActions id={appointment.id} updatedAt={appointment.updated_at} defaultDate={date} defaultTime={londonTimeKey(appointment.starts_at)} confirm={confirmViewingAction} propose={proposeViewingTimeAction} decline={declineViewingAction} />
+            <ViewingRequestActions id={appointment.id} returnTo="diary" updatedAt={appointment.updated_at} defaultDate={date} defaultTime={londonTimeKey(appointment.starts_at)} confirm={confirmViewingAction} propose={proposeViewingTimeAction} decline={declineViewingAction} />
           ) : (
             <p className="text-sm font-semibold text-[#93370D]">A member of the sales team confirms viewing requests.</p>
           )}

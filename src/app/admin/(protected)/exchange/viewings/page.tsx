@@ -24,7 +24,23 @@ function emailFailureLabel(email: ViewingEmailAudit) {
   return `The ${what} email was not sent${email.errorCode === "email_not_configured" ? " because email is not set up here" : ""}.`;
 }
 
-export default async function ViewingsPage() {
+const outcomeMessages: Record<string, string> = {
+  confirmed: "Viewing confirmed. It is now in the diary as confirmed.",
+  proposed: "New time suggested. The viewing stays a request until you confirm it.",
+  declined: "Viewing request declined.",
+};
+const emailOutcomes: Record<string, string> = {
+  sent: "The customer has been emailed.",
+  failed: "The email to the customer failed. Use Retry email on the viewing.",
+  skipped: "No email was sent because the customer did not give an email address. Call them instead.",
+};
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export default async function ViewingsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const query = await searchParams;
+  const outcome = typeof query.done === "string" ? outcomeMessages[query.done] : undefined;
+  const emailOutcome = typeof query.email === "string" ? emailOutcomes[query.email] : undefined;
+  const outcomeId = typeof query.appointment === "string" && UUID.test(query.appointment) ? query.appointment : null;
   const { staff, allowed } = await requireStaffPage("exchange.view");
   if (!allowed) return <NotPermitted what="Viewings & Appointments" />;
   const canSales = staff.can("sales.manage");
@@ -60,6 +76,14 @@ export default async function ViewingsPage() {
           <Link href="/admin/diary" className="inline-flex min-h-11 items-center rounded-xl border border-[#D0D5DD] bg-white px-4 text-sm font-bold text-[#0B1220] hover:border-[#1974E2] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[rgba(22,139,255,.55)]">Open the diary</Link>
         </div>
       </div>
+
+      {outcome && (
+        <div role="status" className="rounded-2xl border border-[#ABEFC6] bg-[#ECFDF3] p-4 text-sm font-semibold text-[#067647]">
+          {outcome}
+          {emailOutcome && <span className={query.email === "sent" ? "block" : "mt-1 block text-[#93370D]"}>{emailOutcome}</span>}
+          {outcomeId && <Link href={`/admin/diary/${outcomeId}`} className="mt-1 block font-bold text-[#1462C4] underline">Open the appointment</Link>}
+        </div>
+      )}
 
       {(upcoming.failed || requestsResult.error) && <LoadFailedNotice what="the appointments" />}
 
