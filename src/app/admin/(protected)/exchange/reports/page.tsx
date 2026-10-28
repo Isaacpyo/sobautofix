@@ -47,10 +47,10 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
     <Card className="mt-4" title="By vehicle" description="Everything in stock, plus vehicles sold in the period. Estimated figures use the advertised price or include estimated costs.">
       {rows.length ? <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-        <table className="w-full min-w-[60rem] text-left text-sm">
+        <table className="w-full min-w-[50rem] text-left text-sm">
           <caption className="sr-only">Costs and recorded gross margin by vehicle</caption>
           <thead className="text-xs font-extrabold tracking-wide text-[#586575] uppercase"><tr>
-            <th scope="col" className="py-2 pr-3">Vehicle</th><th scope="col" className="py-2 pr-3 text-right">Acquisition</th><th scope="col" className="py-2 pr-3 text-right">Transport</th><th scope="col" className="py-2 pr-3 text-right">Prep &amp; repair</th><th scope="col" className="py-2 pr-3 text-right">Other</th><th scope="col" className="py-2 pr-3 text-right">Sale price</th><th scope="col" className="py-2 pr-3 text-right">Gross margin</th><th scope="col" className="py-2 pr-3 text-right">Days</th>
+            <th scope="col" className="py-2 pr-3">Vehicle</th><th scope="col" className="py-2 pr-3 text-right">Acquisition</th><th scope="col" className="py-2 pr-3 text-right">Transport</th><th scope="col" className="py-2 pr-3 text-right">Prep &amp; repair</th><th scope="col" className="py-2 pr-3 text-right">Other</th><th scope="col" className="py-2 pr-3 text-right">Sale price</th><th scope="col" className="py-2 pr-3 text-right">Gross margin</th><th scope="col" className="py-2 text-right">Days</th>
           </tr></thead>
           <tbody>{rows.map((row) => <tr key={row.vehicleId} className="border-t border-[#EEF2F6] align-top">
             <td className="py-2 pr-3"><Link href={`/admin/exchange/stock/${row.vehicleId}?tab=costs`} className="font-bold text-[#071127] hover:text-[#1462C4]">{row.vehicle}</Link><p className="text-xs text-[#586575]">{row.stockReference} · {row.status}</p></td>

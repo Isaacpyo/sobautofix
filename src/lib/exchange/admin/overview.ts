@@ -33,7 +33,7 @@ export async function getExchangeOverview(staff: StaffContext, now = new Date())
     client.from("vehicle_sales").select("id,status,reservation_expires_at,handover_at,handover_method,sale_vehicles(year,make,model)").in("status", activeSaleStatuses).limit(200),
     client.from("sale_vehicles").select("*, sale_vehicle_images(*)").is("deleted_at", null).in("status", ["draft", "preparation", "available", "reserved"]).limit(500),
     client.from("vehicle_prep_items").select("id,title,status,due_on,sale_vehicle_id").in("status", ["todo", "in_progress"]).limit(1000),
-    client.from("enquiries").select("id,type,created_at,customers(name)").eq("notification_status", "failed").in("type", ["vehicle_sales", "vehicle_purchase"]).is("deleted_at", null).order("created_at", { ascending: false }).limit(20),
+    client.from("enquiries").select("id,type,created_at,customers(name)").eq("notification_status", "failed").in("type", ["vehicle_sales", "vehicle_purchase"]).is("deleted_at", null).order("created_at", { ascending: false }).limit(50),
     client.from("seller_offers").select("id,stage,amount_pence,expires_on,submission_id,seller_submissions(reference,year,make,model,status)").eq("status", "open").not("expires_on", "is", null).lte("expires_on", inThreeDays).order("expires_on").limit(50),
     client.from("diary_appointments").select("id,kind,title,starts_at,status,vehicle_sale_id").in("kind", ["collection", "handover"]).in("status", ["requested", "confirmed"]).is("deleted_at", null).gte("starts_at", now.toISOString()).lte("starts_at", weekAhead).order("starts_at").limit(50),
     minimumPublishPhotos(),

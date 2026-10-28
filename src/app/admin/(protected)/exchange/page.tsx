@@ -31,11 +31,12 @@ export default async function ExchangeOverviewPage() {
       <StatTile label="Active sales" value={overview.counts.activeSales} support="Reserved to handover" href="/admin/exchange/handover" icon={BadgeCheck} />
     </section>
 
-    {overview.notificationFailures.length > 0 && <Card className="mt-6 border-red-200" title={<span className="flex items-center gap-2"><MailWarning size={19} className="text-[#B42318]" aria-hidden="true" />Notification emails that failed</span>} description="The enquiry was saved, but the email to staff or the customer did not send. Retry once the email service is working.">
-      <ul className="divide-y divide-[#EEF2F6]">{overview.notificationFailures.map((failure) => <li key={failure.enquiryId} className="flex flex-wrap items-center justify-between gap-3 py-3">
+    {overview.notificationFailures.length > 0 && <Card className="mt-6 border-red-200" title={<span className="flex items-center gap-2"><MailWarning size={19} className="text-[#B42318]" aria-hidden="true" />Notification emails that failed ({overview.notificationFailures.length >= 50 ? "50+" : overview.notificationFailures.length})</span>} description="The enquiry was saved, but the email to staff or the customer did not send. Retry once the email service is working.">
+      <ul className="divide-y divide-[#EEF2F6]">{overview.notificationFailures.slice(0, 5).map((failure) => <li key={failure.enquiryId} className="flex flex-wrap items-center justify-between gap-3 py-3">
         <div className="min-w-0"><Link href={failure.href} className="font-bold text-[#071127] hover:text-[#1462C4]">{failure.title}</Link><p className="text-xs text-[#667586]">Received {formatDateTime(failure.createdAt)}</p></div>
         <ActionForm action={retryExchangeNotificationAction} hidden={{ enquiryId: failure.enquiryId }} className="max-w-xs"><SubmitButton variant="secondary" pendingLabel="Retrying…" className="min-h-10">Retry email</SubmitButton></ActionForm>
       </li>)}</ul>
+      {overview.notificationFailures.length > 5 && <Link href="/admin/enquiries?status=notification-failed" className="mt-2 inline-flex min-h-10 items-center gap-1 text-sm font-extrabold text-[#1462C4]">See all {overview.notificationFailures.length >= 50 ? "50+" : overview.notificationFailures.length} failed notifications<ArrowRight size={15} aria-hidden="true" /></Link>}
     </Card>}
 
     <h3 className="mt-8 text-lg font-extrabold text-[#071127]">Needs attention</h3>
