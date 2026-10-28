@@ -2,8 +2,7 @@
 
 import { CheckCircle2, LoaderCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { createContext, useActionState, useContext, useEffect, useId, useRef, useState } from "react";
-import { useFormStatus } from "react-dom";
+import { createContext, startTransition, useActionState, useContext, useEffect, useId, useRef, useState } from "react";
 import { ConfirmActionDialog } from "@/components/admin/confirm-action-dialog";
 import { cn } from "@/lib/utils";
 import { idleState, type FormAction, type FormState } from "./form-state";
@@ -41,7 +40,15 @@ export function ActionForm({ action, children, className, hidden, successMessage
     first?.focus();
   }, [state]);
   return <FormContext.Provider value={{ state, pending }}>
-    <form ref={formRef} id={id} aria-label={ariaLabel} action={formAction} noValidate className={className} key={resetOnSuccess && state.status === "success" ? state.nonce : undefined}>
+    {/* Submitting through onSubmit (not the action prop) stops React resetting the
+        form, so every control keeps what staff typed when validation fails. */}
+    <form ref={formRef} id={id} aria-label={ariaLabel} aria-busy={pending || undefined} noValidate className={className} key={resetOnSuccess && state.status === "success" ? state.nonce : undefined} onSubmit={(event) => {
+      event.preventDefault();
+      if (pending) return;
+      const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
+      const data = new FormData(event.currentTarget, submitter && submitter.form === event.currentTarget ? submitter : undefined);
+      startTransition(() => formAction(data));
+    }}>
       {Object.entries(hidden || {}).map(([name, value]) => value == null ? null : <input key={name} type="hidden" name={name} value={value} />)}
       {children}
       <FormMessage show={successMessage || state.status === "error"} />
@@ -84,9 +91,9 @@ type InputProps = { name: string; label: React.ReactNode; hint?: React.ReactNode
 
 export function TextField({ name, label, hint, defaultValue, required, className, ...props }: InputProps) {
   const id = useId();
-  const { error, value, state } = useField(name, defaultValue);
+  const { error, value } = useField(name, defaultValue);
   return <FieldShell id={id} label={label} hint={hint} error={error} required={required} className={className}>
-    <input key={`${state.nonce ?? 0}-${value}`} id={id} name={name} defaultValue={value} aria-invalid={error ? true : undefined} aria-describedby={describedBy(id, hint, error)} aria-required={required || undefined} className={cn(controlClass, "min-h-11", error ? "border-red-400" : "border-[#D7E0E9]")} {...props} />
+    <input id={id} name={name} defaultValue={value} aria-invalid={error ? true : undefined} aria-describedby={describedBy(id, hint, error)} aria-required={required || undefined} className={cn(controlClass, "min-h-11", error ? "border-red-400" : "border-[#D7E0E9]")} {...props} />
   </FieldShell>;
 }
 
@@ -96,17 +103,17 @@ export function MoneyField(props: Omit<InputProps, "type" | "inputMode">) {
 
 export function TextArea({ name, label, hint, defaultValue, required, className, rows = 4, ...props }: { name: string; label: React.ReactNode; hint?: React.ReactNode; defaultValue?: string | null; required?: boolean; className?: string; rows?: number } & Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, "name" | "defaultValue" | "required" | "className">) {
   const id = useId();
-  const { error, value, state } = useField(name, defaultValue);
+  const { error, value } = useField(name, defaultValue);
   return <FieldShell id={id} label={label} hint={hint} error={error} required={required} className={className}>
-    <textarea key={`${state.nonce ?? 0}-${value.length}`} id={id} name={name} rows={rows} defaultValue={value} aria-invalid={error ? true : undefined} aria-describedby={describedBy(id, hint, error)} aria-required={required || undefined} className={cn(controlClass, "py-2.5 leading-6", error ? "border-red-400" : "border-[#D7E0E9]")} {...props} />
+    <textarea id={id} name={name} rows={rows} defaultValue={value} aria-invalid={error ? true : undefined} aria-describedby={describedBy(id, hint, error)} aria-required={required || undefined} className={cn(controlClass, "py-2.5 leading-6", error ? "border-red-400" : "border-[#D7E0E9]")} {...props} />
   </FieldShell>;
 }
 
 export function SelectField({ name, label, hint, defaultValue, required, className, options, placeholder, ...props }: { name: string; label: React.ReactNode; hint?: React.ReactNode; defaultValue?: string | null; required?: boolean; className?: string; options: ReadonlyArray<{ value: string; label: string }>; placeholder?: string } & Omit<React.SelectHTMLAttributes<HTMLSelectElement>, "name" | "defaultValue" | "required" | "className">) {
   const id = useId();
-  const { error, value, state } = useField(name, defaultValue);
+  const { error, value } = useField(name, defaultValue);
   return <FieldShell id={id} label={label} hint={hint} error={error} required={required} className={className}>
-    <select key={`${state.nonce ?? 0}-${value}`} id={id} name={name} defaultValue={value} aria-invalid={error ? true : undefined} aria-describedby={describedBy(id, hint, error)} aria-required={required || undefined} className={cn(controlClass, "min-h-11 font-semibold", error ? "border-red-400" : "border-[#D7E0E9]")} {...props}>
+    <select id={id} name={name} defaultValue={value} aria-invalid={error ? true : undefined} aria-describedby={describedBy(id, hint, error)} aria-required={required || undefined} className={cn(controlClass, "min-h-11 font-semibold", error ? "border-red-400" : "border-[#D7E0E9]")} {...props}>
       {placeholder !== undefined && <option value="">{placeholder}</option>}
       {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
     </select>
@@ -118,13 +125,13 @@ export function CheckboxField({ name, label, hint, defaultChecked, className }: 
   const { state } = useFormContext();
   const checked = state.status === "error" && state.values ? state.values[name] === "on" : Boolean(defaultChecked);
   return <div className={cn("flex items-start gap-3", className)}>
-    <input key={`${state.nonce ?? 0}-${checked}`} id={id} type="checkbox" name={name} defaultChecked={checked} aria-describedby={hint ? `${id}-hint` : undefined} className="mt-0.5 size-5 shrink-0 accent-[#1974E2]" />
+    <input id={id} type="checkbox" name={name} defaultChecked={checked} aria-describedby={hint ? `${id}-hint` : undefined} className="mt-0.5 size-5 shrink-0 accent-[#1974E2]" />
     <div><label htmlFor={id} className="text-sm font-bold text-[#071127]">{label}</label>{hint && <p id={`${id}-hint`} className="text-xs leading-5 text-[#667586]">{hint}</p>}</div>
   </div>;
 }
 
 export function SubmitButton({ children, pendingLabel = "Saving…", variant = "primary", className, name, value, disabled }: { children: React.ReactNode; pendingLabel?: string; variant?: keyof typeof buttonStyles; className?: string; name?: string; value?: string; disabled?: boolean }) {
-  const { pending } = useFormStatus();
+  const { pending } = useFormContext();
   const [clicked, setClicked] = useState(false);
   useEffect(() => { if (!pending) setClicked(false); }, [pending]);
   const busy = pending && (clicked || !name);
@@ -136,9 +143,9 @@ export function SubmitButton({ children, pendingLabel = "Saving…", variant = "
 /** A submit button that asks first. Use for destructive or customer-visible changes. */
 export function ConfirmButton({ children, title, message, confirmLabel, variant = "danger", tone = "danger", name, value, className }: { children: React.ReactNode; title: string; message: string; confirmLabel?: string; variant?: keyof typeof buttonStyles; tone?: "danger" | "warning"; name?: string; value?: string; className?: string }) {
   const [open, setOpen] = useState(false);
-  const { pending } = useFormStatus();
+  const { pending, state } = useFormContext();
   const hiddenRef = useRef<HTMLInputElement>(null);
-  useEffect(() => { if (!pending) setOpen(false); }, [pending]);
+  useEffect(() => { setOpen(false); }, [state]);
   return <>
     {name && <input ref={hiddenRef} type="hidden" name={name} value={value} />}
     <button type="button" onClick={() => setOpen(true)} disabled={pending} className={cn(buttonStyles[variant], className)}>{children}</button>
