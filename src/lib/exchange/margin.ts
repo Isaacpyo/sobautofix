@@ -85,3 +85,43 @@ export function formatPence(pence: number) {
 function sum(lines: CostLine[]) {
   return lines.reduce((total, line) => total + line.amountPence, 0);
 }
+
+// ---------------------------------------------------------------------------
+// Costs & Reporting (delivery brief). Added functions only; the definitions
+// below are shown on the reporting page next to the figures.
+// ---------------------------------------------------------------------------
+
+export const REPORT_DEFINITIONS: Array<{ term: string; definition: string }> = [
+  { term: "Acquisition cost", definition: "The purchase cost lines recorded against the vehicle." },
+  { term: "Transport", definition: "Transport cost lines." },
+  { term: "Preparation and repair", definition: "Preparation, repair, parts and valeting cost lines." },
+  { term: "Other direct costs", definition: "Fees and other cost lines." },
+  { term: "Sale price", definition: "The agreed price of the completed sale. Before a sale completes, the advertised price is used and the figure is marked Estimated." },
+  { term: "Recorded gross margin", definition: "Sale price minus acquisition, transport, preparation and repair, and other direct costs. Overheads, staff time, finance charges and tax are not included, so this is not net profit." },
+  { term: "Days in stock", definition: "From the acquisition date (or the first listing date, or the date the record was created) to the sale date (or today)." },
+];
+
+export type CostBreakdown = { acquisitionPence: number; transportPence: number; preparationRepairPence: number; otherDirectPence: number; totalPence: number; allActual: boolean };
+
+export function breakdownCosts(costs: CostLine[]): CostBreakdown {
+  const total = (categories: CostCategory[]) => sum(costs.filter((cost) => categories.includes(cost.category)));
+  const acquisitionPence = total(["purchase"]);
+  const transportPence = total(["transport"]);
+  const preparationRepairPence = total(["preparation", "repair", "parts", "valeting"]);
+  const otherDirectPence = total(["fees", "other"]);
+  return { acquisitionPence, transportPence, preparationRepairPence, otherDirectPence, totalPence: acquisitionPence + transportPence + preparationRepairPence + otherDirectPence, allActual: costs.every((cost) => cost.basis === "actual") };
+}
+
+/** Recorded gross margin in integer pence, per REPORT_DEFINITIONS. */
+export function recordedGrossMargin(input: { costs: CostLine[]; advertisedPricePounds: number; completedSalePence?: number | null }) {
+  const breakdown = breakdownCosts(input.costs);
+  const completed = input.completedSalePence != null;
+  const salePricePence = completed ? input.completedSalePence! : poundsToPence(input.advertisedPricePounds);
+  return {
+    ...breakdown,
+    salePricePence,
+    salePriceBasis: (completed ? "actual" : "estimated") as CostBasis,
+    grossMarginPence: salePricePence - breakdown.totalPence,
+    basis: (completed && breakdown.allActual ? "actual" : "estimated") as CostBasis,
+  };
+}

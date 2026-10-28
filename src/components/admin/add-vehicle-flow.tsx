@@ -19,7 +19,16 @@ type LookupResponse = { success: true; vehicle: VehicleDetails; duplicate: Dupli
 type VehicleSaveState = { status: "idle" | "error" | "saved"; message: string; vehicleId?: string };
 type NewVehicleAction = (previous: VehicleSaveState, formData: FormData) => Promise<VehicleSaveState>;
 
-export function AddVehicleFlow({ action, inventoryReady = true }: { action: NewVehicleAction; inventoryReady?: boolean }) {
+type FlowOptions = {
+  /** Where saved vehicles and duplicates open. */
+  editorBasePath?: string;
+  /** Create a draft only: no publish button and no photo picker (photos are added in the editor). */
+  draftOnly?: boolean;
+  /** Staff without price permission create drafts without an advertised price. */
+  canSetPrice?: boolean;
+};
+
+export function AddVehicleFlow({ action, inventoryReady = true, editorBasePath = "/admin/inventory", draftOnly = false, canSetPrice = true }: { action: NewVehicleAction; inventoryReady?: boolean } & FlowOptions) {
   const [registration, setRegistration] = useState("");
   const [vehicle, setVehicle] = useState<VehicleDetails | null>(null);
   const [duplicate, setDuplicate] = useState<Duplicate | null>(null);
@@ -76,11 +85,11 @@ export function AddVehicleFlow({ action, inventoryReady = true }: { action: NewV
     {stage === "verify" && vehicle && <section className="rounded-2xl border border-[#B9D8FF] bg-white p-6 sm:p-8">
       <p className="text-xs font-extrabold tracking-widest text-[#1974E2] uppercase">Vehicle found</p>
       <div className="mt-4 flex flex-wrap items-start justify-between gap-5"><div><div className="inline-block rounded-md bg-[#FFD43B] px-4 py-2 font-mono text-xl font-black tracking-[0.12em] text-[#071127]">{formatRegistration(vehicle.registration)}</div><h2 className="mt-4 text-3xl font-extrabold text-[#071127]">{[vehicle.make, vehicle.model].filter(Boolean).join(" ") || "Vehicle details returned"}</h2><VehicleFacts vehicle={vehicle} /></div></div>
-      {duplicate && <div role="alert" className="mt-6 rounded-xl border border-amber-300 bg-amber-50 p-5"><strong className="text-[#071127]">This vehicle already exists in Vehicle Stock.</strong><p className="mt-1 text-sm text-[#5B6472]">{duplicate.label || formatRegistration(vehicle.registration)} · Status: <span className="capitalize">{duplicate.status}</span></p><Link href={`/admin/inventory/${duplicate.id}`} className="mt-3 inline-block text-sm font-bold text-[#1974E2] underline">View existing vehicle</Link></div>}
+      {duplicate && <div role="alert" className="mt-6 rounded-xl border border-amber-300 bg-amber-50 p-5"><strong className="text-[#071127]">This vehicle already exists in Vehicle Stock.</strong><p className="mt-1 text-sm text-[#5B6472]">{duplicate.label || formatRegistration(vehicle.registration)} · Status: <span className="capitalize">{duplicate.status}</span></p><Link href={`${editorBasePath}/${duplicate.id}`} className="mt-3 inline-block text-sm font-bold text-[#1974E2] underline">View existing vehicle</Link></div>}
       <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><Button type="button" variant="outline" onClick={searchAgain}><ArrowLeft aria-hidden="true" size={17} /> Not the right vehicle</Button><Button type="button" disabled={Boolean(duplicate)} onClick={() => { setEditingIdentity(!vehicle.make || !vehicle.model || !vehicle.year || !vehicle.fuelType || !vehicle.transmission); setStage("sales"); }}>Confirm &amp; continue</Button></div>
     </section>}
 
-    {stage === "sales" && vehicle && <SalesForm action={action} initial={vehicle} editing={editingIdentity} setEditing={setEditingIdentity} onSearchAgain={searchAgain} inventoryReady={inventoryReady} />}
+    {stage === "sales" && vehicle && <SalesForm action={action} initial={vehicle} editing={editingIdentity} setEditing={setEditingIdentity} onSearchAgain={searchAgain} inventoryReady={inventoryReady} editorBasePath={editorBasePath} draftOnly={draftOnly} canSetPrice={canSetPrice} />}
   </div>;
 }
 
@@ -89,12 +98,12 @@ function VehicleFacts({ vehicle }: { vehicle: VehicleDetails }) {
   return facts.length ? <p className="mt-3 text-sm leading-7 text-[#667586]">{facts.join(" · ")}</p> : null;
 }
 
-function SalesForm({ action, initial, editing, setEditing, onSearchAgain, inventoryReady }: { action: NewVehicleAction; initial: VehicleDetails; editing: boolean; setEditing: (value: boolean) => void; onSearchAgain: () => void; inventoryReady: boolean }) {
+function SalesForm({ action, initial, editing, setEditing, onSearchAgain, inventoryReady, editorBasePath, draftOnly, canSetPrice }: { action: NewVehicleAction; initial: VehicleDetails; editing: boolean; setEditing: (value: boolean) => void; onSearchAgain: () => void; inventoryReady: boolean } & Required<FlowOptions>) {
   const slug = useMemo(() => [initial.year, initial.make, initial.model, initial.registration].filter(Boolean).join("-").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""), [initial]);
   const router = useRouter();
   const [saveState, formAction, saving] = useActionState(action, { status: "idle", message: "" });
   const [saveIntent, setSaveIntent] = useState<"draft" | "publish">("draft");
-  useEffect(() => { if (saveState.status === "saved" && saveState.vehicleId) router.push(`/admin/inventory/${saveState.vehicleId}`); }, [router, saveState]);
+  useEffect(() => { if (saveState.status === "saved" && saveState.vehicleId) router.push(`${editorBasePath}/${saveState.vehicleId}`); }, [editorBasePath, router, saveState]);
   return <form action={formAction} className="grid gap-6">
     <input type="hidden" name="registration" value={normalizeRegistration(initial.registration)} />
     <input type="hidden" name="slug" value={slug || normalizeRegistration(initial.registration).toLowerCase()} />
@@ -106,11 +115,11 @@ function SalesForm({ action, initial, editing, setEditing, onSearchAgain, invent
         {!editing && <><input type="hidden" name="make" value={initial.make || ""} /><input type="hidden" name="model" value={initial.model || ""} /><input type="hidden" name="derivative" value={initial.derivative || ""} /><input type="hidden" name="year" value={initial.year || ""} /><input type="hidden" name="fuelType" value={initial.fuelType || ""} /><input type="hidden" name="transmission" value={initial.transmission || ""} /><input type="hidden" name="colour" value={initial.colour || ""} /><input type="hidden" name="bodyType" value={initial.bodyType || ""} /><input type="hidden" name="engineSize" value={initial.engineCapacityCc ? `${initial.engineCapacityCc} cc` : ""} /></>}
       </div>
     </section>
-    <section className="grid gap-5 rounded-2xl border border-[#E4EAF0] bg-white p-6 sm:p-8 md:grid-cols-2"><div className="md:col-span-2"><h3 className="text-xl font-extrabold text-[#071127]">Sales details</h3><p className="mt-1 text-sm text-[#667586]">Enter the information specific to this sale. Mileage and price are never inferred.</p></div><AdminField label="Current mileage"><input name="mileage" required type="number" min="0" inputMode="numeric" placeholder="83000" /></AdminField><AdminField label="Asking price (£)"><input name="price" required type="number" min="0" inputMode="numeric" placeholder="6995" /></AdminField><div className="md:col-span-2"><AdminField label="Description"><textarea name="description" required minLength={20} rows={6} placeholder="Describe verified condition, equipment, service information and relevant sale details." /></AdminField></div><div className="md:col-span-2"><VehicleFeatureSelector /></div><input type="hidden" name="financeAvailable" value="" /><input type="hidden" name="warrantyAvailable" value="" /></section>
-    <PhotoPicker />
+    <section className="grid gap-5 rounded-2xl border border-[#E4EAF0] bg-white p-6 sm:p-8 md:grid-cols-2"><div className="md:col-span-2"><h3 className="text-xl font-extrabold text-[#071127]">Sales details</h3><p className="mt-1 text-sm text-[#667586]">Enter the information specific to this sale. Mileage and price are never inferred.</p></div><AdminField label="Current mileage"><input name="mileage" required type="number" min="0" inputMode="numeric" placeholder="83000" /></AdminField>{canSetPrice ? <AdminField label="Asking price (£)"><input name="price" required={!draftOnly} type="number" min="0" inputMode="numeric" placeholder="6995" /></AdminField> : <div className="rounded-xl bg-[#F4F7FA] p-4 text-sm text-[#586575]"><input type="hidden" name="price" value="0" /><strong className="block text-[#071127]">Asking price</strong>An owner or manager sets the advertised price before the vehicle is published.</div>}<div className="md:col-span-2"><AdminField label="Description"><textarea name="description" required={!draftOnly} minLength={draftOnly ? undefined : 20} rows={6} placeholder="Describe verified condition, equipment, service information and relevant sale details." /></AdminField></div><div className="md:col-span-2"><VehicleFeatureSelector /></div><input type="hidden" name="financeAvailable" value="" /><input type="hidden" name="warrantyAvailable" value="" /></section>
+    {draftOnly ? <section className="rounded-2xl border border-[#E4EAF0] bg-white p-6 sm:p-8"><h3 className="text-xl font-extrabold text-[#071127]">Next: photos and disclosures</h3><p className="mt-1 text-sm leading-6 text-[#667586]">The vehicle is saved as a Draft. In the editor you can add photos (re-encoded to remove location data), condition and history disclosures, then publish when the checklist is complete.</p></section> : <PhotoPicker />}
     {!inventoryReady && <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm font-semibold text-amber-900">Vehicle Stock is waiting for its database update. Saving is temporarily disabled so this page does not crash.</div>}
     {saveState.status === "error" && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800">{saveState.message}</div>}
-    <div className="sticky bottom-4 flex flex-col-reverse gap-3 rounded-2xl border border-[#E4EAF0] bg-white/95 p-4 shadow-xl backdrop-blur sm:flex-row sm:justify-end"><Button type="submit" name="inventoryIntent" value="draft" variant="outline" disabled={!inventoryReady || saving} onClick={() => setSaveIntent("draft")}>{saving && saveIntent === "draft" ? "Saving draft..." : "Save draft"}</Button><Button type="submit" name="inventoryIntent" value="publish" disabled={!inventoryReady || saving} onClick={() => setSaveIntent("publish")}>{saving && saveIntent === "publish" ? "Publishing..." : "Publish vehicle"}</Button></div>
+    <div className="sticky bottom-4 flex flex-col-reverse gap-3 rounded-2xl border border-[#E4EAF0] bg-white/95 p-4 shadow-xl backdrop-blur sm:flex-row sm:justify-end">{draftOnly ? <Button type="submit" name="inventoryIntent" value="draft" disabled={!inventoryReady || saving}>{saving ? "Creating draft..." : "Create draft"}</Button> : <><Button type="submit" name="inventoryIntent" value="draft" variant="outline" disabled={!inventoryReady || saving} onClick={() => setSaveIntent("draft")}>{saving && saveIntent === "draft" ? "Saving draft..." : "Save draft"}</Button><Button type="submit" name="inventoryIntent" value="publish" disabled={!inventoryReady || saving} onClick={() => setSaveIntent("publish")}>{saving && saveIntent === "publish" ? "Publishing..." : "Publish vehicle"}</Button></>}</div>
   </form>;
 }
 
