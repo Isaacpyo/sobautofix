@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { createServerClient } from "@supabase/ssr";
 import {
+  currentTotp,
   getLocalSupabaseConfig,
   invoiceDraftPayload,
   localAdminEmail,
@@ -32,6 +33,13 @@ test("an authenticated admin receives a private PDF document", async ({ context,
   await page.getByLabel("Email").fill(localAdminEmail);
   await page.getByLabel("Password").fill(localTestPassword);
   await page.getByRole("button", { name: "Sign in" }).click();
+  // The local admin is enrolled in TOTP (see provisionLocalTestUsers), so
+  // signing in stops at the verification step until a valid code is entered.
+  await expect(page).toHaveURL(/\/admin\/mfa/);
+  const totpSecret = users.adminIdentity.totpSecret;
+  if (!totpSecret) throw new Error("The local admin has no TOTP secret");
+  await page.getByLabel("Verification code").fill(currentTotp(totpSecret));
+  await page.getByRole("button", { name: "Verify" }).click();
   await expect(page).toHaveURL(/\/admin(?:\/)?$/);
 
   const response = await context.request.get(`${appOrigin}/api/admin/invoices/${invoiceId}/pdf`);

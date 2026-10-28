@@ -1,4 +1,5 @@
 import { Building2, CheckCircle2, Smartphone } from "lucide-react";
+import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { PageHero } from "@/components/marketing/page-hero";
 import { ServiceRegistrationCta } from "@/components/marketing/service-registration-cta";
 import { ServiceCard } from "@/components/marketing/service-card";
@@ -108,6 +109,7 @@ export default function MobileSpecialistPage() {
         showTrustFacts={false}
       />
 
+      <section className="py-7"><Container><Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Services", href: "/services" }, { label: "Mobile & Specialist", href: "/services/mobile-specialist" }]} /></Container></section>
       <ServiceCategoryNavigation current="mobile" />
 
       <section className="py-20 sm:py-24">

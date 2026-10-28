@@ -17,3 +17,12 @@ export function isSoldPageExpired(vehicle: SaleVehicle) {
 export function isVisibleOnSalesPage(vehicle: SaleVehicle) {
   return vehicle.status === "available" || vehicle.status === "reserved" || (vehicle.status === "sold" && !isSoldPageExpired(vehicle));
 }
+
+/** Disclosure values for a vehicle with nothing confirmed yet. */
+export const unconfirmedDisclosures = {
+  listingCondition: "ready_to_drive",
+  writeOffStatus: "not_confirmed",
+  knownFaults: [],
+  workCompleted: [],
+  serviceHistory: "not_confirmed",
+} as const satisfies Partial<SaleVehicle>;

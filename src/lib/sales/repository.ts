@@ -6,11 +6,15 @@ export { isSoldPageExpired } from "@/lib/sales/policy";
 import type { SaleVehicle } from "@/types/domain";
 
 type VehicleRow = {
-  id: string; registration: string | null; slug: string; make: string; model: string; derivative: string | null; year: number; mileage: number; price: number; fuel_type: string; transmission: string; engine_size: string | null; colour: string | null; body_type: string | null; description: string; features: string[]; warranty: { available: boolean; description?: string } | null; finance_available: boolean; status: "draft" | "available" | "reserved" | "sold" | "archived"; sold_at: string | null; created_at: string; updated_at: string;
+  id: string; registration: string | null; slug: string; make: string; model: string; derivative: string | null; year: number; mileage: number; price: number; fuel_type: string; transmission: string; engine_size: string | null; colour: string | null; body_type: string | null; description: string; features: string[]; warranty: { available: boolean; description?: string } | null; finance_available: boolean; status: SaleVehicle["status"]; sold_at: string | null; created_at: string; updated_at: string;
+  // Exchange disclosure columns; undefined until the exchange migration is applied.
+  stock_reference?: string | null; listing_condition?: SaleVehicle["listingCondition"] | null; write_off_status?: SaleVehicle["writeOffStatus"] | null; condition_summary?: string | null; known_faults?: string[] | null; work_completed?: string[] | null; inspection_date?: string | null; inspection_scope?: string | null; inspection_findings?: string | null; mot_expiry?: string | null; mot_notes?: string | null; service_history?: SaleVehicle["serviceHistory"] | null; service_history_notes?: string | null; previous_owners?: number | null; keys_count?: number | null; doors?: number | null; seats?: number | null; history_check_summary?: string | null; history_checked_on?: string | null; video_url?: string | null; collection_delivery?: string | null; after_sales?: string | null; listed_at?: string | null; reserved_at?: string | null;
   sale_vehicle_images?: Array<{ id: string; object_path: string; alt_text: string; position: number }>;
 };
 
-function mapVehicle(row: VehicleRow): SaleVehicle {
+export type { VehicleRow as SaleVehicleRow };
+
+export function mapVehicle(row: VehicleRow): SaleVehicle {
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
   return {
     id: row.id, registration: row.registration || undefined, slug: row.slug, make: row.make, model: row.model, derivative: row.derivative || undefined,
@@ -18,6 +22,13 @@ function mapVehicle(row: VehicleRow): SaleVehicle {
     transmission: row.transmission, engineSize: row.engine_size || undefined, colour: row.colour || undefined, bodyType: row.body_type || undefined,
     description: row.description, features: row.features, warranty: row.warranty || undefined,
     financeAvailable: row.finance_available, status: row.status, soldAt: row.sold_at || undefined, createdAt: row.created_at, updatedAt: row.updated_at,
+    stockReference: row.stock_reference || undefined, listingCondition: row.listing_condition || "ready_to_drive", writeOffStatus: row.write_off_status || "not_confirmed",
+    conditionSummary: row.condition_summary || undefined, knownFaults: row.known_faults || [], workCompleted: row.work_completed || [],
+    inspectionDate: row.inspection_date || undefined, inspectionScope: row.inspection_scope || undefined, inspectionFindings: row.inspection_findings || undefined,
+    motExpiry: row.mot_expiry || undefined, motNotes: row.mot_notes || undefined, serviceHistory: row.service_history || "not_confirmed", serviceHistoryNotes: row.service_history_notes || undefined,
+    previousOwners: row.previous_owners ?? undefined, keysCount: row.keys_count ?? undefined, doors: row.doors ?? undefined, seats: row.seats ?? undefined,
+    historyCheckSummary: row.history_check_summary || undefined, historyCheckedOn: row.history_checked_on || undefined, videoUrl: row.video_url || undefined,
+    collectionDelivery: row.collection_delivery || undefined, afterSales: row.after_sales || undefined, listedAt: row.listed_at || undefined, reservedAt: row.reserved_at || undefined,
     images: (row.sale_vehicle_images || []).sort((a, b) => a.position - b.position).map((image) => ({ id: image.id, alt: image.alt_text, position: image.position, url: `${base}/storage/v1/object/public/vehicle-sales/${image.object_path}` })),
   };
 }

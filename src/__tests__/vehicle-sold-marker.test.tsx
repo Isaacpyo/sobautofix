@@ -4,11 +4,15 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { VehicleEditor } from "@/components/admin/vehicle-editor";
 import { InventoryGrid } from "@/components/sales/inventory-grid";
+import { unconfirmedDisclosures } from "@/lib/sales/policy";
 import type { SaleVehicle } from "@/types/domain";
 
 vi.mock("next/image", () => ({ default: () => null }));
 
 const soldVehicle: SaleVehicle = {
+  ...unconfirmedDisclosures,
+  knownFaults: [],
+  workCompleted: [],
   id: "00000000-0000-0000-0000-000000000001",
   slug: "sold-ford-focus",
   make: "Ford",

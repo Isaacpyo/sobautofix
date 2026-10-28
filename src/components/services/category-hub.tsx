@@ -49,7 +49,7 @@ export function CategoryFaqs({ faqs, eyebrow = "Questions about this service cat
         <div>
           <Eyebrow>{eyebrow}</Eyebrow>
           <h2 className="text-balance text-4xl font-extrabold text-[#071127] sm:text-5xl">Useful answers before you get in touch.</h2>
-          {faqHref && <Link href={faqHref} className="mt-5 inline-flex items-center gap-2 font-bold text-[#1974E2] hover:text-[#145CAD]">View all FAQs <ArrowRight size={16} aria-hidden="true" /></Link>}
+          {faqHref && <Link href={faqHref} className="mt-5 inline-flex items-center gap-2 font-bold text-[#1462C4] hover:text-[#145CAD]">View all FAQs <ArrowRight size={16} aria-hidden="true" /></Link>}
         </div>
         <div className="grid content-start gap-3">
           {faqs.map((faq) => (

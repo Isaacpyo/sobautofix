@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { buildSitemap } from "@/app/sitemap";
+import { unconfirmedDisclosures } from "@/lib/sales/policy";
 import type { ContentEntry, SaleVehicle } from "@/types/domain";
 
 const content = (overrides: Partial<ContentEntry> = {}): ContentEntry => ({
@@ -19,6 +20,9 @@ const content = (overrides: Partial<ContentEntry> = {}): ContentEntry => ({
 });
 
 const vehicle = (overrides: Partial<SaleVehicle> = {}): SaleVehicle => ({
+  ...unconfirmedDisclosures,
+  knownFaults: [],
+  workCompleted: [],
   id: "00000000-0000-0000-0000-000000000002",
   slug: "ford-focus-2020",
   make: "Ford",

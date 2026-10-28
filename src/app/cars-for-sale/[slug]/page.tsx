@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { MessageCircle, Phone } from "lucide-react";
 import { notFound, permanentRedirect } from "next/navigation";
+import { VisitExchangeBanner } from "@/components/exchange/visit-exchange-banner";
 import { VehicleEnquiryModal } from "@/components/sales/vehicle-enquiry-modal";
 import { VehicleImageGallery } from "@/components/sales/vehicle-image-gallery";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -99,6 +100,7 @@ export default async function VehicleDetailPage({
           </div>
         </Container>
       </section>
+      {vehicle.status !== "sold" && <VisitExchangeBanner vehicleSlug={vehicle.slug} />}
       <section className="py-10 sm:py-14">
         <Container>
           <BackLink href="/cars-for-sale" className="mb-5">Back to stock</BackLink>

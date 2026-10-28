@@ -1,3 +1,4 @@
+import { VisitExchangeBanner } from "@/components/exchange/visit-exchange-banner";
 import { PageHero } from "@/components/marketing/page-hero";
 import { SectionIntro } from "@/components/marketing/experience";
 import { InventoryGrid } from "@/components/sales/inventory-grid";
@@ -14,6 +15,7 @@ export default async function CarsForSalePage() {
   return (
     <>
       <PageHero title="Used cars for sale in Doncaster." cta={false} compact showTrustFacts={false} />
+      <VisitExchangeBanner />
       <section className="py-8 sm:py-10 lg:py-12">
         <Container>
           <SectionIntro className="mb-8" eyebrow="Current stock" title="Vehicles for sale" />

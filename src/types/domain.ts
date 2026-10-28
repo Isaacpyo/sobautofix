@@ -64,7 +64,39 @@ export type Enquiry = {
   createdAt: string;
 };
 
-export type SaleVehicleStatus = "draft" | "available" | "reserved" | "sold" | "archived";
+export type SaleVehicleStatus = "draft" | "preparation" | "available" | "reserved" | "sold" | "archived";
+
+export type ListingCondition = "ready_to_drive" | "repair_project";
+export type WriteOffStatus = "not_confirmed" | "none_recorded" | "cat_s" | "cat_n" | "cat_c" | "cat_d" | "other_recorded";
+export type ServiceHistoryStatus = "not_confirmed" | "full" | "partial" | "none";
+
+/** Public disclosure fields added for SOB Auto Exchange. Absent until the exchange migration is applied. */
+export type SaleVehicleDisclosures = {
+  stockReference?: string;
+  listingCondition: ListingCondition;
+  writeOffStatus: WriteOffStatus;
+  conditionSummary?: string;
+  knownFaults: string[];
+  workCompleted: string[];
+  inspectionDate?: string;
+  inspectionScope?: string;
+  inspectionFindings?: string;
+  motExpiry?: string;
+  motNotes?: string;
+  serviceHistory: ServiceHistoryStatus;
+  serviceHistoryNotes?: string;
+  previousOwners?: number;
+  keysCount?: number;
+  doors?: number;
+  seats?: number;
+  historyCheckSummary?: string;
+  historyCheckedOn?: string;
+  videoUrl?: string;
+  collectionDelivery?: string;
+  afterSales?: string;
+  listedAt?: string;
+  reservedAt?: string;
+};
 
 export type SaleVehicle = {
   id: string;
@@ -90,7 +122,7 @@ export type SaleVehicle = {
   soldAt?: string;
   createdAt: string;
   updatedAt: string;
-};
+} & SaleVehicleDisclosures;
 
 export type ContentKind =
   | "core_page"

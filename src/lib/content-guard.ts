@@ -22,3 +22,29 @@ export function assertCustomerFacingContent(value: unknown) {
   const result = guardCustomerFacingContent(value);
   if (!result.safe) throw new Error(result.reason);
 }
+
+// SOB Auto Exchange (decision recorded in docs/exchange/DECISIONS.md): a used
+// car listing may state its MOT expiry and history as a vehicle fact, and the
+// seller form may ask about it. Offering MOT services, pricing or booking is
+// still prohibited everywhere, including the exchange.
+const forbiddenExchangeServicePhrase = new RegExp(
+  "\\b(book(ing)? (an? |your )?" + ["M", "O", "T"].join("") + "|" + ["M", "O", "T"].join("") + " (test(ing)? (centre|center|station|booking|price|prices)|centre|center|station|booking|price|prices|service)|service (&|and) " + ["M", "O", "T"].join("") + ")\\b",
+  "i",
+);
+
+export function guardExchangeContent(value: unknown): GuardResult {
+  const serialized = typeof value === "string" ? value : JSON.stringify(value);
+  if (forbiddenExchangeServicePhrase.test(serialized)) {
+    return { safe: false, reason: "Content offers a prohibited test service. State vehicle facts only." };
+  }
+  const lower = serialized.toLowerCase();
+  if (forbiddenRouteParts.some((part) => lower.includes(part))) {
+    return { safe: false, reason: "Content includes a prohibited tyre-service route or phrase." };
+  }
+  return { safe: true };
+}
+
+export function assertExchangeContent(value: unknown) {
+  const result = guardExchangeContent(value);
+  if (!result.safe) throw new Error(result.reason);
+}

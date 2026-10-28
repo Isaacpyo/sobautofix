@@ -70,7 +70,7 @@ test("service category hubs expose complete cards, breadcrumbs, canonicals and s
   const categories = [
     {
       route: "/diagnostics",
-      title: "Vehicle Diagnostics & Fault Finding in Doncaster",
+      title: "Vehicle Diagnostics & Fault Finding",
       cards: [
         ["Vehicle Diagnostics", "/diagnostics/car-diagnostics"],
         ["Electrical Fault Finding", "/diagnostics/electrical-fault-finding"],
@@ -83,7 +83,7 @@ test("service category hubs expose complete cards, breadcrumbs, canonicals and s
     },
     {
       route: "/services/repairs-maintenance",
-      title: "Vehicle Repairs & Maintenance in Doncaster",
+      title: "Vehicle Repairs & Maintenance",
       cards: [
         ["Vehicle Servicing", "/services/repairs-maintenance/vehicle-servicing"],
         ["Engine Repairs", "/services/repairs-maintenance/engine-repair"],
@@ -92,12 +92,12 @@ test("service category hubs expose complete cards, breadcrumbs, canonicals and s
     },
     {
       route: "/services/mobile-specialist",
-      title: "Mobile & Specialist Vehicle Services in Doncaster",
+      title: "Mobile & Specialist Vehicle Services",
       cards: [
         ["Mobile Mechanic", "/services/mobile-specialist/mobile-mechanic"],
         ["Vehicle Recovery", "/services/mobile-specialist/vehicle-recovery"],
         ["Pre-Purchase Inspection", "/services/mobile-specialist/vehicle-inspections"],
-        ["Fleet Servicing", "/fleet"],
+        ["Fleet Servicing", "/services/mobile-specialist/fleet"],
       ],
     },
   ] as const;
@@ -279,7 +279,7 @@ test("registration-first inventory creation is protected by admin authentication
 test("news listing, feed and former advice routes behave correctly", async ({ page, request }) => {
   const response = await page.goto("/news");
   expect(response?.ok()).toBe(true);
-  await expect(page.getByRole("heading", { level: 1, name: "News & Blog" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Automotive news, advice and guides." })).toBeVisible();
 
   const feed = await request.get("/news/feed.xml");
   expect(feed.status()).toBe(200);

@@ -31,7 +31,7 @@ describe("CMS trash", () => {
       "src/app/admin/(protected)/enquiries/page.tsx",
       "src/app/admin/(protected)/bookings/page.tsx",
       "src/app/admin/(protected)/invoices/page.tsx",
-      "src/app/admin/(protected)/inventory/page.tsx",
+      "src/app/admin/(protected)/exchange/stock/page.tsx",
       "src/app/admin/(protected)/news/page.tsx",
       "src/app/admin/(protected)/media/page.tsx",
       "src/app/admin/(protected)/reviews/page.tsx",
