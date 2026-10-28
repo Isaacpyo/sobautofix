@@ -13,11 +13,12 @@ const focusRing = "focus-visible:outline-3 focus-visible:outline-offset-2 focus-
  * ahead needs a reason, which is stored on the appointment. Also shows the
  * "changed by someone else" state for compare-and-set saves.
  */
-export function ConflictPanel({ state, pending, actionLabel = "Save anyway", onOverride, onChangeTime, compact = false }: {
+export function ConflictPanel({ state, pending, formId, actionLabel = "Save anyway", onChangeTime, compact = false }: {
   state: DiaryFormState;
   pending: boolean;
+  /** The form (containing <OverrideFields />) to resubmit with the override. */
+  formId: string;
   actionLabel?: string;
-  onOverride: (signature: string, reason: string) => void;
   onChangeTime?: () => void;
   compact?: boolean;
 }) {
@@ -66,7 +67,7 @@ export function ConflictPanel({ state, pending, actionLabel = "Save anyway", onO
             <p id={`${id}-reason-hint`} className={cn("mt-1 text-xs", reasonError ? "font-semibold text-[#B42318]" : "text-[#5B6575]")}>{reasonError ?? "Saved with the appointment and in its history, with your name."}</p>
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
-            <button type="button" disabled={pending || tooShort} onClick={() => onOverride(state.signature ?? "", reason)} className={cn("inline-flex min-h-11 items-center rounded-xl bg-[#B54708] px-4 text-sm font-bold text-white hover:bg-[#93370D] disabled:cursor-not-allowed disabled:opacity-60", focusRing)}>
+            <button type="button" disabled={pending || tooShort} onClick={() => submitWithOverride(formId, state.signature ?? "", reason)} className={cn("inline-flex min-h-11 items-center rounded-xl bg-[#B54708] px-4 text-sm font-bold text-white hover:bg-[#93370D] disabled:cursor-not-allowed disabled:opacity-60", focusRing)}>
               {actionLabel}
             </button>
             {onChangeTime && <button type="button" onClick={onChangeTime} className={cn("inline-flex min-h-11 items-center rounded-xl border border-[#B54708] bg-white px-4 text-sm font-bold text-[#93370D]", focusRing)}>Change the time</button>}
@@ -77,21 +78,23 @@ export function ConflictPanel({ state, pending, actionLabel = "Save anyway", onO
   );
 }
 
-/** Hidden fields a form needs to carry an override, plus a helper to resubmit with one. */
-export function useOverrideSubmit() {
-  const form = useRef<HTMLFormElement>(null);
-  const acknowledged = useRef<HTMLInputElement>(null);
-  const reason = useRef<HTMLInputElement>(null);
-  const fields = (
+/** Hidden fields a form needs so the ConflictPanel can resubmit it with an override. */
+export function OverrideFields() {
+  return (
     <>
-      <input ref={acknowledged} type="hidden" name="acknowledgedConflicts" defaultValue="" />
-      <input ref={reason} type="hidden" name="overrideReason" defaultValue="" />
+      <input type="hidden" name="acknowledgedConflicts" defaultValue="" />
+      <input type="hidden" name="overrideReason" defaultValue="" />
     </>
   );
-  function submitWithOverride(signature: string, why: string) {
-    if (acknowledged.current) acknowledged.current.value = signature;
-    if (reason.current) reason.current.value = why;
-    form.current?.requestSubmit();
-  }
-  return { form, fields, submitWithOverride };
+}
+
+/** Resubmits the form with the warnings acknowledged. Enter in a field never does this by accident. */
+function submitWithOverride(formId: string, signature: string, reason: string) {
+  const form = document.getElementById(formId);
+  if (!(form instanceof HTMLFormElement)) return;
+  const acknowledged = form.elements.namedItem("acknowledgedConflicts");
+  const why = form.elements.namedItem("overrideReason");
+  if (acknowledged instanceof HTMLInputElement) acknowledged.value = signature;
+  if (why instanceof HTMLInputElement) why.value = reason;
+  form.requestSubmit();
 }

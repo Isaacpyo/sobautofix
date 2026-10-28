@@ -35,7 +35,7 @@ export async function retryNotificationNowAction(_previous: DiaryFormState, form
   }
 }
 
-export async function runRetrySweepNowAction(_previous: DiaryFormState): Promise<DiaryFormState> {
+export async function runRetrySweepNowAction(): Promise<DiaryFormState> {
   try {
     const staff = await requireStaffAction("sales.manage");
     const result = await runNotificationRetrySweep(staff.client);

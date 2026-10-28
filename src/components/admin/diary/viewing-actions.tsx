@@ -2,7 +2,7 @@
 
 import { CalendarClock, Check, LoaderCircle, MailWarning, RotateCw, X } from "lucide-react";
 import { useActionState, useEffect, useId, useRef, useState } from "react";
-import { ConflictPanel, useOverrideSubmit } from "@/components/admin/diary/conflict-panel";
+import { ConflictPanel, OverrideFields } from "@/components/admin/diary/conflict-panel";
 import type { DiaryFormState } from "@/lib/diary/form-state";
 import { cn } from "@/lib/utils";
 
@@ -45,8 +45,6 @@ export function ViewingRequestActions({ id, updatedAt, defaultDate, defaultTime,
   const uid = useId();
   const firstField = useRef<HTMLInputElement>(null);
   const reasonField = useRef<HTMLTextAreaElement>(null);
-  const confirmOverride = useOverrideSubmit();
-  const proposeOverride = useOverrideSubmit();
   const version = updatedAt ? <input type="hidden" name="updatedAt" value={updatedAt} /> : null;
 
   useEffect(() => {
@@ -59,10 +57,10 @@ export function ViewingRequestActions({ id, updatedAt, defaultDate, defaultTime,
   return (
     <div className="grid grid-cols-1 gap-3">
       <div className={cn("flex flex-wrap gap-2", compact && "gap-1.5")}>
-        <form ref={confirmOverride.form} action={confirmAction}>
+        <form id={`${uid}-confirm`} action={confirmAction}>
           <input type="hidden" name="id" value={id} />
           {version}
-          {confirmOverride.fields}
+          <OverrideFields />
           <button type="submit" disabled={busy} className={cn("inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#067647] px-4 text-sm font-bold text-white hover:bg-[#05603A] disabled:opacity-60", focusRing)}>
             {confirming ? <LoaderCircle size={16} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Check size={17} aria-hidden="true" />} Confirm
           </button>
@@ -75,12 +73,12 @@ export function ViewingRequestActions({ id, updatedAt, defaultDate, defaultTime,
         </button>
       </div>
 
-      <ConflictPanel state={confirmState} pending={busy} actionLabel="Confirm anyway" onOverride={confirmOverride.submitWithOverride} compact />
+      <ConflictPanel state={confirmState} pending={busy} actionLabel="Confirm anyway" formId={`${uid}-confirm`} compact />
 
-      <form ref={proposeOverride.form} id={`${uid}-propose`} hidden={panel !== "propose"} action={proposeAction} className="grid grid-cols-1 gap-3 rounded-xl border border-[#E3E8EF] bg-[#F8FAFC] p-3">
+      <form id={`${uid}-propose`} hidden={panel !== "propose"} action={proposeAction} className="grid grid-cols-1 gap-3 rounded-xl border border-[#E3E8EF] bg-[#F8FAFC] p-3">
         <input type="hidden" name="id" value={id} />
         {version}
-        {proposeOverride.fields}
+        <OverrideFields />
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <label htmlFor={`${uid}-date`} className="mb-1 block text-sm font-bold text-[#0B1220]">New date</label>
@@ -101,7 +99,7 @@ export function ViewingRequestActions({ id, updatedAt, defaultDate, defaultTime,
         <button type="submit" disabled={busy} className={cn("inline-flex min-h-11 w-fit items-center gap-2 rounded-xl bg-[#1974E2] px-4 text-sm font-bold text-white hover:bg-[#1462C4] disabled:opacity-60", focusRing)}>
           {proposing && <LoaderCircle size={16} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />} Send suggested time
         </button>
-        <ConflictPanel state={proposeState} pending={busy} actionLabel="Suggest anyway" onOverride={proposeOverride.submitWithOverride} compact />
+        <ConflictPanel state={proposeState} pending={busy} actionLabel="Suggest anyway" formId={`${uid}-propose`} compact />
       </form>
 
       <form id={`${uid}-decline`} hidden={panel !== "decline"} action={declineAction} className="grid grid-cols-1 gap-3 rounded-xl border border-[#FECDCA] bg-[#FEF3F2]/40 p-3">
@@ -120,7 +118,7 @@ export function ViewingRequestActions({ id, updatedAt, defaultDate, defaultTime,
       <Feedback state={confirmState} />
       <Feedback state={proposeState} />
       <Feedback state={declineState} />
-      <ConflictPanel state={declineState} pending={busy} onOverride={() => undefined} compact />
+      <ConflictPanel state={declineState} pending={busy} formId={`${uid}-decline`} compact />
     </div>
   );
 }

@@ -2,8 +2,8 @@
 
 import { CalendarClock, LoaderCircle } from "lucide-react";
 import Link from "next/link";
-import { useActionState, useEffect, useRef, useState } from "react";
-import { ConflictPanel, useOverrideSubmit } from "@/components/admin/diary/conflict-panel";
+import { useActionState, useEffect, useId, useRef, useState } from "react";
+import { ConflictPanel, OverrideFields } from "@/components/admin/diary/conflict-panel";
 import { LinkPicker } from "@/components/admin/diary/link-picker";
 import type { DiaryFormState } from "@/lib/diary/form-state";
 import type { LinkKind, LinkOption } from "@/lib/diary/repository";
@@ -58,7 +58,7 @@ export function AppointmentForm({ initial, staff, permissions, customerHasEmail,
   const [titleTouched, setTitleTouched] = useState(Boolean(initial.id));
   const [notify, setNotify] = useState(true);
   const alertRef = useRef<HTMLDivElement>(null);
-  const { form: formRef, fields: overrideFields, submitWithOverride } = useOverrideSubmit();
+  const formId = useId();
   const statusOptions = formStatusOptions(initial.id ? initial.status : null);
   const errors = state.fieldErrors ?? {};
   const editing = Boolean(initial.id);
@@ -96,12 +96,12 @@ export function AppointmentForm({ initial, staff, permissions, customerHasEmail,
   const clockNote = clockChangeNote(values.date, values.startTime);
 
   return (
-    <form ref={formRef} action={formAction} className="grid grid-cols-1 gap-6" noValidate>
+    <form id={formId} action={formAction} className="grid grid-cols-1 gap-6" noValidate>
       {initial.id && <input type="hidden" name="id" value={initial.id} />}
       {initial.updatedAt && <input type="hidden" name="updatedAt" value={initial.updatedAt} />}
-      {overrideFields}
+      <OverrideFields />
 
-      <ConflictPanel state={state} pending={pending} onOverride={submitWithOverride} onChangeTime={() => document.getElementById("appointment-date")?.focus()} />
+      <ConflictPanel state={state} pending={pending} formId={formId} onChangeTime={() => document.getElementById("appointment-date")?.focus()} />
 
       {state.status === "error" && (
         <div ref={alertRef} tabIndex={-1} role="alert" className="rounded-2xl border border-[#FECDCA] bg-[#FEF3F2] p-4 text-sm font-semibold text-[#B42318] outline-none">

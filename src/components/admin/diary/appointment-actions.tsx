@@ -1,7 +1,7 @@
 "use client";
 
 import { LoaderCircle, XCircle } from "lucide-react";
-import { ConflictPanel, useOverrideSubmit } from "@/components/admin/diary/conflict-panel";
+import { ConflictPanel, OverrideFields } from "@/components/admin/diary/conflict-panel";
 import { useActionState, useEffect, useId, useRef, useState } from "react";
 import type { DiaryFormState } from "@/lib/diary/form-state";
 import { cn } from "@/lib/utils";
@@ -57,7 +57,7 @@ export function CancelAppointment({ id, updatedAt, isViewing, customerHasEmail, 
           </label>
         )}
         {state.status === "error" && !state.fieldErrors && <p role="alert" className="text-sm font-semibold text-[#B42318]">{state.message}</p>}
-        <ConflictPanel state={state} pending={pending} onOverride={() => undefined} compact />
+        <ConflictPanel state={state} pending={pending} formId={panelId} compact />
         <div className="flex flex-wrap gap-2">
           <button type="submit" disabled={pending} className={cn("inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#B42318] px-4 text-sm font-bold text-white hover:bg-[#912018] disabled:opacity-60", focusRing)}>
             {pending && <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />} Confirm cancellation
@@ -73,11 +73,11 @@ export function CancelAppointment({ id, updatedAt, isViewing, customerHasEmail, 
 export function AssignBookingStaff({ bookingId, current, staff, action }: { bookingId: string; current: string; staff: Array<{ id: string; name: string }>; action: FormAction }) {
   const [state, formAction, pending] = useActionState(action, { status: "idle" } as DiaryFormState);
   const [value, setValue] = useState(current);
-  const { form, fields, submitWithOverride } = useOverrideSubmit();
+  const formId = useId();
   return (
-    <form ref={form} action={formAction} className="grid grid-cols-1 gap-3">
+    <form id={formId} action={formAction} className="grid grid-cols-1 gap-3">
       <input type="hidden" name="bookingId" value={bookingId} />
-      {fields}
+      <OverrideFields />
       <div>
         <label htmlFor="booking-staff" className="mb-1 block text-sm font-bold text-[#0B1220]">Staff member</label>
         <div className="flex flex-wrap gap-2">
@@ -92,7 +92,7 @@ export function AssignBookingStaff({ bookingId, current, staff, action }: { book
       </div>
       {state.status === "saved" && <p role="status" className="text-sm font-semibold text-[#067647]">{state.message}</p>}
       {state.status === "error" && <p role="alert" className="text-sm font-semibold text-[#B42318]">{state.message}</p>}
-      <ConflictPanel state={state} pending={pending} actionLabel="Assign anyway" onOverride={submitWithOverride} compact />
+      <ConflictPanel state={state} pending={pending} actionLabel="Assign anyway" formId={formId} compact />
     </form>
   );
 }
