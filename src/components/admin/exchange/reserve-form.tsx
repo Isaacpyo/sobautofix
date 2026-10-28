@@ -3,9 +3,9 @@ import { ActionForm, ConfirmButton, MoneyField, SelectField, TextField } from ".
 import { formatPounds } from "./labels";
 
 /** Records a reservation (vehicle_sales). The vehicle then shows as Reserved on the website. */
-export function ReserveForm({ vehicle, enquiryId, canChangePrice, partExchangeOptions = [] }: { vehicle: { id: string; title: string; price: number }; enquiryId?: string; canChangePrice: boolean; partExchangeOptions?: Array<{ id: string; reference: string; title: string }> }) {
+export function ReserveForm({ vehicle, enquiryId, canChangePrice, partExchangeOptions = [], narrow = false }: { vehicle: { id: string; title: string; price: number }; enquiryId?: string; canChangePrice: boolean; partExchangeOptions?: Array<{ id: string; reference: string; title: string }>; narrow?: boolean }) {
   return <ActionForm action={reserveVehicleAction} hidden={{ vehicleId: vehicle.id, enquiryId }} aria-label={`Reserve ${vehicle.title}`}>
-    <div className="grid gap-3 sm:grid-cols-2">
+    <div className={narrow ? "grid gap-3" : "grid gap-3 sm:grid-cols-2"}>
       <MoneyField name="agreedPrice" label="Agreed price" defaultValue={String(vehicle.price)} required readOnly={!canChangePrice} hint={canChangePrice ? `Advertised at ${formatPounds(vehicle.price)}.` : `Advertised price. Only an owner or manager can agree a different price.`} />
       <MoneyField name="deposit" label="Deposit received" hint="Recorded only. No online payments are taken." />
       <TextField name="paymentMethod" label="Deposit paid by" placeholder="For example bank transfer" />
