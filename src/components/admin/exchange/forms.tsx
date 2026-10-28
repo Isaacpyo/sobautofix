@@ -29,15 +29,19 @@ export function ActionForm({ action, children, className, hidden, successMessage
   id?: string;
   "aria-label"?: string;
 }) {
-  const [state, formAction, pending] = useActionState(action, idleState);
   const router = useRouter();
+  // Success is confirmed in the shared toast region as soon as the action
+  // returns. The form itself may already be gone (a stage change often
+  // replaces it in the same render), so this cannot wait for an effect.
+  const [state, formAction, pending] = useActionState(async (previous: FormState, formData: FormData) => {
+    const result = await action(previous, formData);
+    if (result.status === "success") {
+      if (result.message) announce(result.message);
+      if (result.redirectTo) router.push(result.redirectTo);
+    }
+    return result;
+  }, idleState);
   const formRef = useRef<HTMLFormElement>(null);
-  useEffect(() => {
-    if (state.status !== "success") return;
-    // Success is confirmed in the shared toast region, which outlives this form.
-    if (state.message) announce(state.message);
-    if (state.redirectTo) router.push(state.redirectTo);
-  }, [router, state]);
   useEffect(() => {
     if (state.status !== "error" || !state.fieldErrors) return;
     const first = formRef.current?.querySelector<HTMLElement>("[aria-invalid='true']");

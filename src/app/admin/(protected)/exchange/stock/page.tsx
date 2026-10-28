@@ -1,4 +1,5 @@
 import { CarFront, Plus } from "lucide-react";
+import { AdminBulkActions, AdminItemCheckbox } from "@/components/admin/admin-bulk-actions";
 import { AdminLoadingLink } from "@/components/admin/admin-loading-link";
 import { AdminPagination } from "@/components/admin/admin-list-controls";
 import { formatPounds, stockStatusLabels, stockStatusOrder, vehicleTitle } from "@/components/admin/exchange/labels";
@@ -8,6 +9,7 @@ import { StockSoldToggle } from "@/components/admin/exchange/stock-status-contro
 import { EmptyState, LinkButton, NoAccess, PageHeading, Thumb } from "@/components/admin/exchange/ui";
 import { listStock, stockSorts } from "@/lib/exchange/admin/stock";
 import { requireStaffPage } from "@/lib/exchange/staff";
+import { manageTrashAction } from "../../trash/actions";
 import { formatRegistration } from "@/lib/vehicle/registration-format";
 
 const pageSize = 20;
@@ -36,12 +38,13 @@ export default async function ExchangeStockPage({ searchParams }: { searchParams
     ]} />
     <FilterChips action="/admin/exchange/stock" param="status" value={status} keep={keep} options={[{ value: "", label: "All", count: all.length }, ...stockStatusOrder.map((value) => ({ value, label: stockStatusLabels[value], count: counts[value] }))]} />
 
-    {!visible.length ? <div className="mt-4"><EmptyState icon={CarFront} title={all.length ? "No vehicles match these filters" : "No vehicles in stock yet"} action={staff.can("stock.edit") && !all.length ? <LinkButton href="/admin/exchange/stock/new" variant="primary"><Plus size={17} aria-hidden="true" />Add the first vehicle</LinkButton> : undefined}>{all.length ? "Try a different search or clear the filters." : "Add a vehicle by registration to create a draft listing."}</EmptyState></div> : <>
+    {!visible.length ? <div className="mt-4"><EmptyState icon={CarFront} title={all.length ? "No vehicles match these filters" : "No vehicles in stock yet"} action={staff.can("stock.edit") && !all.length ? <LinkButton href="/admin/exchange/stock/new" variant="primary"><Plus size={17} aria-hidden="true" />Add the first vehicle</LinkButton> : undefined}>{all.length ? "Try a different search or clear the filters." : "Add a vehicle by registration to create a draft listing."}</EmptyState></div> : <BulkWrap enabled={canPublish}>
       <div className="mt-4 hidden overflow-hidden rounded-xl border border-[#E4EAF0] bg-white lg:block">
         <table className="w-full text-left text-sm">
           <caption className="sr-only">Vehicle stock</caption>
-          <thead className="bg-[#F4F7FA] text-xs font-extrabold tracking-wide text-[#586575] uppercase"><tr><th scope="col" className="px-4 py-3">Vehicle</th><th scope="col" className="px-4 py-3">Price</th><th scope="col" className="px-4 py-3">Status</th><th scope="col" className="px-4 py-3">In stock</th><th scope="col" className="px-4 py-3">Publishing</th><th scope="col" className="px-4 py-3"><span className="sr-only">Actions</span></th></tr></thead>
+          <thead className="bg-[#F4F7FA] text-xs font-extrabold tracking-wide text-[#586575] uppercase"><tr>{canPublish && <th scope="col" className="w-12 px-2 py-3"><span className="sr-only">Select</span></th>}<th scope="col" className="px-4 py-3">Vehicle</th><th scope="col" className="px-4 py-3">Price</th><th scope="col" className="px-4 py-3">Status</th><th scope="col" className="px-4 py-3">In stock</th><th scope="col" className="px-4 py-3">Publishing</th><th scope="col" className="px-4 py-3"><span className="sr-only">Actions</span></th></tr></thead>
           <tbody>{visible.map(({ vehicle, daysInStock, readiness, hasActiveSale }) => <tr key={vehicle.id} className="border-t border-[#E4EAF0] align-middle hover:bg-[#F8FAFC]">
+            {canPublish && <td className="px-2 py-3"><AdminItemCheckbox id={vehicle.id} label={`Select ${vehicleTitle(vehicle)}`} /></td>}
             <td className="px-4 py-3"><div className="flex items-center gap-3"><Thumb url={vehicle.images[0]?.url} alt="" className="w-20" /><div className="min-w-0"><a href={`/admin/exchange/stock/${vehicle.id}`} className="font-extrabold text-[#071127] hover:text-[#1462C4]">{vehicleTitle(vehicle)}</a><p className="truncate text-xs text-[#667586]">{vehicle.derivative || "No derivative"}</p><p className="mt-0.5 text-xs font-bold text-[#586575]">{vehicle.stockReference || "No stock ref"}{vehicle.registration ? ` · ${formatRegistration(vehicle.registration)}` : ""}</p></div></div></td>
             <td className="px-4 py-3 font-extrabold text-[#071127]">{vehicle.price > 0 ? formatPounds(vehicle.price) : <span className="text-[#B42318]">Not priced</span>}</td>
             <td className="px-4 py-3"><StockStatusBadge status={vehicle.status} /></td>
@@ -64,6 +67,11 @@ export default async function ExchangeStockPage({ searchParams }: { searchParams
         {canPublish && (vehicle.status === "available" || vehicle.status === "sold") && <div className="mt-2"><StockSoldToggle vehicle={{ id: vehicle.id, status: vehicle.status, name: vehicleTitle(vehicle), updatedAt: vehicle.updatedAt }} hasActiveSale={hasActiveSale} /></div>}
       </li>)}</ul>
       <AdminPagination path="/admin/exchange/stock" page={page} pageSize={pageSize} totalItems={filtered.length} query={query} status={status} additionalParams={{ sort: sort === "updated" ? "" : sort }} />
-    </>}
+    </BulkWrap>}
   </>;
+}
+
+/** Bulk "Move to trash" (the existing CMS trash) for staff who may withdraw stock. */
+function BulkWrap({ enabled, children }: { enabled: boolean; children: React.ReactNode }) {
+  return enabled ? <AdminBulkActions entity="inventory" action={manageTrashAction}>{children}</AdminBulkActions> : <>{children}</>;
 }

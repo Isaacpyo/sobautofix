@@ -1,6 +1,6 @@
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type BrowserContext, type Page } from "@playwright/test";
 
 // Vehicle Buying & Selling staff journeys on the local stack (seeded with
 // scripts/exchange-local-seed.mjs). Runs serially: the reservation journey
@@ -19,12 +19,22 @@ test.describe.configure({ mode: "serial" });
 test.skip(({ isMobile }) => isMobile, "Desktop staff journeys; mobile layouts are checked separately");
 test.skip(!password, "Staff test logins are only available on the local stack (or set E2E_STAFF_PASSWORD)");
 
+// Sign-in is rate limited, so each role signs in once and the session is reused.
+const sessions = new Map<string, Awaited<ReturnType<BrowserContext["storageState"]>>>();
+
 async function signIn(page: Page, email: string) {
+  const saved = sessions.get(email);
+  if (saved) {
+    await page.context().addCookies(saved.cookies);
+    return;
+  }
+  await page.context().clearCookies();
   await page.goto("/admin/login");
   await page.getByLabel(/email/i).fill(email);
   await page.getByLabel(/password/i).fill(password);
   await page.getByRole("button", { name: /sign in/i }).click();
   await expect(page).not.toHaveURL(/\/admin\/login/, { timeout: 60_000 });
+  sessions.set(email, await page.context().storageState());
 }
 
 async function confirmDialog(page: Page, name: RegExp | string) {
@@ -145,13 +155,13 @@ test("buying: enquiry, offer history, purchase and a linked stock draft", async 
   await page.getByRole("button", { name: "Record offer" }).click();
   await expect(page.getByText(/Final offer recorded/)).toBeVisible();
   const history = page.locator("section", { has: page.getByRole("heading", { name: "Offer history" }) });
-  await expect(history.getByText("Superseded")).toBeVisible();
+  await expect(history.getByText("Superseded", { exact: true })).toBeVisible();
 
   await page.getByLabel("Record the outcome").selectOption("accepted");
   await page.getByRole("button", { name: "Record outcome" }).click();
   await confirmDialog(page, "Record outcome");
   await expect(page.getByText("Offer marked as accepted.")).toBeVisible();
-  await expect(history.getByText("Accepted")).toBeVisible();
+  await expect(history.getByText("Accepted", { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "Mark as purchased" }).click();
   await confirmDialog(page, "Mark as purchased");
@@ -162,7 +172,7 @@ test("buying: enquiry, offer history, purchase and a linked stock draft", async 
   await expect(page.getByRole("heading", { name: /2016 Skoda Fabia/ })).toBeVisible();
   const stockUrl = page.url().split("?")[0]!;
   await page.goto(`${stockUrl}?tab=costs`);
-  await expect(page.getByText(/Purchase from seller/)).toBeVisible();
+  await expect(page.getByRole("cell", { name: /^Purchase from seller \(SELL-/ })).toBeVisible();
   // Seller details never reach the listing.
   await page.goto(`${stockUrl}?tab=listing`);
   await expect(page.getByText(`E2E Seller ${run}`)).toHaveCount(0);
