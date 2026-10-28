@@ -8,6 +8,10 @@ import { loadDiaryEntries, loadStaffDirectory, staffNameMap } from "@/lib/diary/
 import { addDays, formatDateKeyLong, formatLondonDateTime, londonMidnight, londonTimeKey, todayInLondon } from "@/lib/diary/time";
 import { isMissingSchemaError } from "@/lib/exchange/schema";
 import { requireStaffPage } from "@/lib/exchange/staff";
+import { RetryNotificationButton, RunSweepButton } from "@/components/admin/diary/notification-retry";
+import { retryStateLabel } from "@/lib/notifications/retry-policy";
+import { listFailedNotifications } from "@/lib/notifications/retry-sweep";
+import { retryNotificationNowAction, runRetrySweepNowAction } from "./actions";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Today" };
@@ -47,7 +51,11 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   const canSales = staff.can("sales.manage");
   const lanes: Lane[] = [...(canSales ? (["sales"] as const) : []), ...(canBuying ? (["buying"] as const) : []), "workshop"];
 
-  const directory = await loadStaffDirectory(staff.client);
+  const [directory, failedNotifications] = await Promise.all([
+    loadStaffDirectory(staff.client),
+    canSales || canBuying ? listFailedNotifications(staff.client) : Promise.resolve({ rows: [], schemaMissing: false }),
+  ]);
+  const failedRows = failedNotifications.rows.filter((row) => (row.type === "vehicle_sales" ? canSales : canBuying));
   const enquiryColumns = "id,type,status,created_at,customers(name,anonymised_at),vehicles(make,model)";
   const exchangeColumns = `${enquiryColumns},follow_up_at,sales_stage,sale_vehicles(make,model,year,stock_reference)`;
   const [agenda, requests, newEnquiriesFull, followUps] = await Promise.all([
@@ -66,7 +74,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   }
   newEnquiries = newEnquiries.filter((row) => lanes.includes(laneOf(row.type)));
   const followUpRows = (((followUps?.error ? [] : followUps?.data) || []) as unknown as EnquiryRow[]).filter((row) => lanes.includes(laneOf(row.type)));
-  const submissionIds = await submissionsFor(staff.client, [...newEnquiries, ...followUpRows].filter((row) => row.type === "vehicle_purchase").map((row) => row.id));
+  const submissionIds = await submissionsFor(staff.client, [...newEnquiries, ...followUpRows, ...failedRows].filter((row) => row.type === "vehicle_purchase").map((row) => row.id));
 
   const entries = agenda.entries.filter((entry) => entry.status !== "cancelled" && (!mine || entry.assignedTo === staff.userId));
   const requestRows = ((requests?.data || []) as unknown as Array<{ id: string; title: string; starts_at: string; customers: CustomerRelation | CustomerRelation[] | null }>);
@@ -136,6 +144,32 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
               ))}
             </ul>
           ) : <Empty>No viewing requests waiting.</Empty>}
+        </section>
+      )}
+
+      {failedRows.length > 0 && (
+        <section aria-labelledby="failed-heading" className="grid grid-cols-1 gap-3 rounded-2xl border border-[#FECDCA] bg-[#FEF3F2]/50 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 id="failed-heading" className="text-xl font-extrabold text-[#0B1220]">Notifications that failed</h2>
+              <p className="text-sm text-[#344054]">These enquiries are saved. Their emails will be retried automatically up to 3 times; you can also retry now.</p>
+            </div>
+            {canSales && <RunSweepButton action={runRetrySweepNowAction} />}
+          </div>
+          <ul className="grid grid-cols-1 gap-2">
+            {failedRows.map((row) => {
+              const name = customerDisplayName(relation(row.customers)) ?? "Customer";
+              return (
+                <li key={row.id} className="flex flex-wrap items-center gap-3 rounded-xl bg-white px-3 py-2 ring-1 ring-[#FECDCA]">
+                  <div className="min-w-0 flex-1">
+                    <Link href={enquiryHref({ ...row, status: "new", vehicles: null, customers: row.customers } as EnquiryRow)} className="font-bold text-[#0B1220] hover:underline">{name}</Link>
+                    <p className="text-sm text-[#5B6575]">{row.type === "vehicle_sales" ? "Sales enquiry" : "Buying enquiry"} · {row.notification_attempt_count} {row.notification_attempt_count === 1 ? "retry" : "retries"} · {retryStateLabel(row)}</p>
+                  </div>
+                  <RetryNotificationButton enquiryId={row.id} label={name} action={retryNotificationNowAction} />
+                </li>
+              );
+            })}
+          </ul>
         </section>
       )}
 
