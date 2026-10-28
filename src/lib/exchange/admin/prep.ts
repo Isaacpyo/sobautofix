@@ -8,6 +8,7 @@ import { mapVehicle, type SaleVehicleRow } from "@/lib/sales/repository";
 import type { SaleVehicle } from "@/types/domain";
 import { assertCan, assertStaffMember, ExchangeUserError, formText, must, mustRow, optionalDate, optionalText } from "./core";
 import { inspectionSchema } from "./buying";
+import { visibleDocuments } from "./documents";
 import { minimumPublishPhotos, type PrepItemRow } from "./stock";
 
 export type PrepVehicle = {
@@ -26,14 +27,14 @@ export async function listPreparation(staff: StaffContext, now = new Date()): Pr
   const [vehicles, items, documents, inspections, minimum] = await Promise.all([
     client.from("sale_vehicles").select("*, sale_vehicle_images(*)").is("deleted_at", null).in("status", ["draft", "preparation", "available", "reserved"]).order("updated_at", { ascending: false }).limit(300),
     client.from("vehicle_prep_items").select("id,sale_vehicle_id,title,category,status,notes,due_on,assigned_to,position,completed_at").order("position").order("created_at"),
-    client.from("vehicle_documents").select("sale_vehicle_id").not("sale_vehicle_id", "is", null),
+    client.from("vehicle_documents").select("sale_vehicle_id,kind").not("sale_vehicle_id", "is", null),
     client.from("vehicle_inspections").select("id,sale_vehicle_id,inspected_on,outcome,inspector_name").eq("kind", "pre_sale").order("inspected_on", { ascending: false }),
     minimumPublishPhotos(),
   ]);
   must(vehicles, "Vehicles could not be loaded.");
   const today = now.toISOString().slice(0, 10);
   const itemsByVehicle = group((items.data || []) as PrepItemRow[], (item) => item.sale_vehicle_id);
-  const docCounts = group((documents.data || []) as Array<{ sale_vehicle_id: string }>, (row) => row.sale_vehicle_id);
+  const docCounts = group(visibleDocuments(staff, (documents.data || []) as Array<{ sale_vehicle_id: string; kind: string }>), (row) => row.sale_vehicle_id);
   const inspectionsByVehicle = group((inspections.data || []) as Array<{ id: string; sale_vehicle_id: string; inspected_on: string; outcome: string; inspector_name: string }>, (row) => row.sale_vehicle_id);
   return ((vehicles.data || []) as SaleVehicleRow[]).map(mapVehicle).map((vehicle) => {
     const vehicleItems = itemsByVehicle.get(vehicle.id) || [];

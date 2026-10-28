@@ -2,7 +2,7 @@ import "server-only";
 
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
-import { documentKinds } from "@/components/admin/exchange/labels";
+import { documentKinds, isFinanceDocument } from "@/components/admin/exchange/labels";
 import { auditStaffAction, type StaffContext } from "@/lib/exchange/staff";
 import { assertCan, ExchangeUserError, guardCopy, must } from "./core";
 import {
@@ -140,6 +140,7 @@ function sameOwner(row: DocumentOwner, request: { vehicleId?: string; submission
  * are recorded; PDFs are kept as uploaded after the magic-byte check.
  */
 async function finalizeDocument(staff: StaffContext, request: Extract<FinalizeRequest, { target: "document" }>) {
+  if (isFinanceDocument(request.kind) && !staff.can("finance.view")) throw new ExchangeUserError("Only an owner or manager can upload purchase or sale invoices.");
   const existing = await documentRowForPath(staff, request.path);
   if (existing) {
     if (!sameOwner(existing, request)) throw new ExchangeUserError("That upload does not belong to this record.");
@@ -195,7 +196,7 @@ async function removeUnreferenced(staff: StaffContext, path: string) {
 export async function deleteDocument(staff: StaffContext, documentId: string) {
   assertCan(staff, "prep.manage");
   const document = must(await staff.client.from("vehicle_documents").select("id,object_path,sale_vehicle_id,seller_submission_id,kind").eq("id", documentId).maybeSingle(), "The document could not be loaded.");
-  if (!document) throw new ExchangeUserError("That document no longer exists.");
+  if (!document || !canViewDocuments(staff, document)) throw new ExchangeUserError("That document no longer exists.");
   const { error } = await staff.client.storage.from(DOCUMENT_BUCKET).remove([document.object_path]);
   if (error) throw new ExchangeUserError("The document could not be removed. Try again.");
   must(await staff.client.from("vehicle_documents").delete().eq("id", documentId), "The document could not be removed.");
@@ -203,15 +204,24 @@ export async function deleteDocument(staff: StaffContext, documentId: string) {
   await auditStaffAction(staff, "document_deleted", entity[0], entity[1], { documentId, kind: document.kind });
 }
 
-/** Who may open a private document: staff who work stock, preparation or buying. */
-export function canViewDocuments(staff: Pick<StaffContext, "can">, document: { seller_submission_id: string | null; sale_vehicle_id: string | null }) {
+/**
+ * Who may open a private document: staff who work stock, preparation or
+ * buying. Purchase and sale invoices also need finance.view.
+ */
+export function canViewDocuments(staff: Pick<StaffContext, "can">, document: { seller_submission_id: string | null; sale_vehicle_id: string | null; kind: string }) {
+  if (isFinanceDocument(document.kind) && !staff.can("finance.view")) return false;
   if (document.seller_submission_id && !document.sale_vehicle_id) return staff.can("buying.manage") || staff.can("prep.manage");
   return staff.can("stock.edit") || staff.can("prep.manage");
 }
 
+/** Documents this staff member may see (finance-only kinds removed for everyone else). */
+export function visibleDocuments<T extends { kind: string }>(staff: Pick<StaffContext, "can">, documents: T[]) {
+  return staff.can("finance.view") ? documents : documents.filter((document) => !isFinanceDocument(document.kind));
+}
+
 /** A 60-second signed link, issued per click, so a copied URL soon stops working. */
 export async function documentDownloadUrl(staff: StaffContext, documentId: string) {
-  const { data: document } = await staff.client.from("vehicle_documents").select("id,object_path,file_name,sale_vehicle_id,seller_submission_id").eq("id", documentId).maybeSingle();
+  const { data: document } = await staff.client.from("vehicle_documents").select("id,object_path,file_name,kind,sale_vehicle_id,seller_submission_id").eq("id", documentId).maybeSingle();
   if (!document) return { status: 404 as const };
   if (!canViewDocuments(staff, document)) return { status: 403 as const };
   const { data, error } = await staff.client.storage.from(DOCUMENT_BUCKET).createSignedUrl(document.object_path, 60, { download: document.file_name });

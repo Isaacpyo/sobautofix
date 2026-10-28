@@ -68,7 +68,7 @@ const client = {
 vi.mock("@/lib/exchange/staff", () => ({ auditStaffAction: async () => undefined }));
 vi.mock("@/lib/supabase/server", () => ({ createAdminClient: () => client }));
 
-import { finalizeUpload, submissionPhotoUrl } from "@/lib/exchange/admin/documents";
+import { canViewDocuments, documentDownloadUrl, finalizeUpload, submissionPhotoUrl, visibleDocuments } from "@/lib/exchange/admin/documents";
 
 const vehicleId = "00000000-0000-4000-8000-000000000010";
 const docPath = `stock/${vehicleId}/11111111-1111-4111-8111-111111111111.jpg`;
@@ -143,5 +143,33 @@ describe("seller photos", () => {
     await expect(submissionPhotoUrl(staffAs("sales"), "p-done")).resolves.toMatchObject({ status: 200, url: "https://signed.test/sub/done.jpg" });
     await expect(submissionPhotoUrl(staffAs("sales"), "p-raw")).resolves.toEqual({ status: 409 });
     await expect(submissionPhotoUrl(staffAs("workshop"), "p-done")).resolves.toEqual({ status: 403 });
+  });
+});
+
+describe("finance-only documents", () => {
+  const invoice = { id: "d-invoice", kind: "purchase_invoice", object_path: "stock/v/inv.pdf", file_name: "inv.pdf", sale_vehicle_id: vehicleId, seller_submission_id: null };
+  const service = { id: "d-service", kind: "service_record", object_path: "stock/v/svc.pdf", file_name: "svc.pdf", sale_vehicle_id: vehicleId, seller_submission_id: null };
+
+  it("needs finance.view to open purchase or sale invoices", async () => {
+    db.tables.vehicle_documents = [invoice, service];
+    for (const role of ["sales", "workshop"] as const) {
+      await expect(documentDownloadUrl(staffAs(role), "d-invoice")).resolves.toEqual({ status: 403 });
+      await expect(documentDownloadUrl(staffAs(role), "d-service")).resolves.toMatchObject({ status: 200 });
+    }
+    await expect(documentDownloadUrl(staffAs("manager"), "d-invoice")).resolves.toMatchObject({ status: 200 });
+    expect(canViewDocuments(staffAs("sales"), { ...invoice, kind: "sale_invoice" })).toBe(false);
+    expect(canViewDocuments(staffAs("sales"), { ...invoice, kind: "history_check" })).toBe(true);
+  });
+
+  it("hides them from document lists", () => {
+    expect(visibleDocuments(staffAs("sales"), [invoice, service]).map((document) => document.id)).toEqual(["d-service"]);
+    expect(visibleDocuments(staffAs("owner"), [invoice, service])).toHaveLength(2);
+  });
+
+  it("stops other roles uploading them", async () => {
+    const pdfPath = docPath.replace(".jpg", ".pdf");
+    db.objects.set(pdfPath, new TextEncoder().encode("%PDF-1.7"));
+    await expect(finalizeUpload(staffAs("workshop"), { target: "document", vehicleId, path: pdfPath, fileName: "inv.pdf", kind: "purchase_invoice" })).rejects.toThrow(/owner or manager/);
+    expect(db.tables.vehicle_documents).toHaveLength(0);
   });
 });

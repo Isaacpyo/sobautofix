@@ -6,6 +6,7 @@ import { auditStaffAction, type StaffContext } from "@/lib/exchange/staff";
 import { normalizeRegistration } from "@/lib/vehicle/registration-format";
 import { assertCan, assertStaffMember, ExchangeUserError, fieldError, formText, lines, moneyPence, must, mustRow, optionalDate, optionalText, requiredInt, type StaffClient } from "./core";
 import { createStockDraft } from "./stock";
+import { visibleDocuments } from "./documents";
 import { loadThread, type ThreadMessage } from "./threads";
 
 export type SubmissionListItem = {
@@ -94,7 +95,7 @@ export async function getSubmissionDetail(staff: StaffContext, id: string): Prom
     interestedVehicle: vehicleRow ? { id: vehicleRow.id, title: `${vehicleRow.year} ${vehicleRow.make} ${vehicleRow.model}`, status: vehicleRow.status, price: vehicleRow.price } : null,
     purchasedVehicle: purchasedRow ? { id: purchasedRow.id, title: `${purchasedRow.year} ${purchasedRow.make} ${purchasedRow.model}`, status: purchasedRow.status } : null,
     photos: (photos.data || []) as SubmissionDetail["photos"],
-    documents: (documents.data || []) as SubmissionDetail["documents"],
+    documents: visibleDocuments(staff, (documents.data || []) as SubmissionDetail["documents"]),
     inspections: (inspections.data || []) as SubmissionDetail["inspections"],
     appointments: (appointments.data || []) as SubmissionDetail["appointments"],
     thread,

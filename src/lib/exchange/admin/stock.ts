@@ -27,6 +27,7 @@ import {
   requiredInt,
   type StaffClient,
 } from "./core";
+import { visibleDocuments } from "./documents";
 import { statusChangeColumns, statusChangeProblem } from "./stock-rules";
 
 const STOCK_SELECT = "*, sale_vehicle_images(*)";
@@ -163,7 +164,7 @@ export async function getStockDetail(staff: StaffContext, id: string, now = new 
     internal,
     costs,
     margin: finance ? summariseMargin({ costs: costs.map((cost) => ({ category: cost.category, amountPence: cost.amount_pence, basis: cost.basis })), advertisedPricePounds: vehicle.price, sale: liveSale ? { agreedPricePence: liveSale.agreed_price_pence, completed: liveSale.status === "completed" } : null }) : null,
-    documents: (documentsResult.data || []) as DocumentRow[],
+    documents: visibleDocuments(staff, (documentsResult.data || []) as DocumentRow[]),
     inspections: (inspectionsResult.data || []) as InspectionRow[],
     prepItems: (prepResult.data || []) as PrepItemRow[],
     sales,

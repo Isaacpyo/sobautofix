@@ -143,6 +143,17 @@ export const documentKindLabels: Record<(typeof documentKinds)[number], string> 
   other: "Other",
 };
 
+/**
+ * Document kinds that show what SOB paid or was paid: owners and managers
+ * (finance.view) only, hidden from everyone else. A history check is a
+ * vehicle history report (finance, stolen and write-off markers), not a
+ * price, so staff who work stock keep access to it.
+ */
+export const financeDocumentKinds: ReadonlyArray<(typeof documentKinds)[number]> = ["purchase_invoice", "sale_invoice"];
+export function isFinanceDocument(kind: string) {
+  return (financeDocumentKinds as readonly string[]).includes(kind);
+}
+
 export const acquisitionSources = ["customer_purchase", "part_exchange", "trade", "auction", "other"] as const;
 export const acquisitionSourceLabels: Record<(typeof acquisitionSources)[number], string> = { customer_purchase: "Bought from a customer", part_exchange: "Part exchange", trade: "Trade", auction: "Auction", other: "Other" };
 

@@ -30,6 +30,7 @@ import {
   documentKindLabels,
   documentKinds,
   formatDate,
+  isFinanceDocument,
   listingConditionLabels,
   penceToInput,
   serviceHistoryLabels,
@@ -205,12 +206,12 @@ export function PhotoManager({ vehicleId, photos, minimumPhotos }: { vehicleId: 
   </div>;
 }
 
-export function DocumentUploader({ vehicleId, submissionId }: { vehicleId?: string; submissionId?: string }) {
+export function DocumentUploader({ vehicleId, submissionId, canFinance = false }: { vehicleId?: string; submissionId?: string; canFinance?: boolean }) {
   const [kind, setKind] = useState<string>("other");
   return <div className="grid gap-3">
     <label className="block max-w-sm text-sm font-bold text-[#071127]">Document type
       <select value={kind} onChange={(event) => setKind(event.target.value)} className="mt-1.5 block min-h-11 w-full rounded-xl border border-[#D7E0E9] bg-white px-3 text-sm font-semibold">
-        {documentKinds.map((value) => <option key={value} value={value}>{documentKindLabels[value]}</option>)}
+        {documentKinds.filter((value) => canFinance || !isFinanceDocument(value)).map((value) => <option key={value} value={value}>{documentKindLabels[value]}</option>)}
       </select>
     </label>
     <FileUploader target={{ target: "document", vehicleId, submissionId, kind }} label="Upload a private document" hint="PDF, JPG, PNG or WebP up to 15 MB. Stored privately; staff open it through a link that expires after a minute." />

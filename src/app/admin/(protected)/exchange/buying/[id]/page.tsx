@@ -100,7 +100,7 @@ export default async function BuyingEnquiryPage({ params }: { params: Promise<{ 
 
         <Card title="Documents" description="Private files for this purchase, such as the V5C or service book.">
           <DocumentList documents={detail.documents} canDelete={staff.can("prep.manage")} />
-          <div className="mt-3"><DocumentUploader submissionId={s.id} /></div>
+          <div className="mt-3"><DocumentUploader submissionId={s.id} canFinance={staff.can("finance.view")} /></div>
         </Card>
 
         {s.enquiry_id ? <><EnquiryThread messages={detail.thread} /><EnquiryReplyComposer enquiryId={s.enquiry_id} customerEmail={detail.customer?.email || null} initialClientRequestId={randomUUID()} replyAction={sendExchangeReplyAction} noteAction={saveExchangeNoteAction} /></> : <Notice tone="info">This submission has no email thread.</Notice>}
