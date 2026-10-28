@@ -122,13 +122,47 @@ async function finalizePhoto(staff: StaffContext, request: Extract<FinalizeReque
   }
 }
 
+type DocumentOwner = { sale_vehicle_id: string | null; seller_submission_id: string | null };
+
+async function documentRowForPath(staff: StaffContext, path: string) {
+  const { data } = await staff.client.from("vehicle_documents").select("id,sale_vehicle_id,seller_submission_id").eq("object_path", path).maybeSingle();
+  return (data as ({ id: string } & DocumentOwner) | null) || null;
+}
+
+function sameOwner(row: DocumentOwner, request: { vehicleId?: string; submissionId?: string }) {
+  return (row.sale_vehicle_id || null) === (request.vehicleId || null) && (row.seller_submission_id || null) === (request.submissionId || null);
+}
+
+/**
+ * Records an uploaded document. Idempotent: a retried finalize returns the
+ * row that already exists, and a file referenced by a row is never deleted.
+ * Images are re-encoded (orientation applied, EXIF/GPS removed) before they
+ * are recorded; PDFs are kept as uploaded after the magic-byte check.
+ */
 async function finalizeDocument(staff: StaffContext, request: Extract<FinalizeRequest, { target: "document" }>) {
-  const bytes = await download(staff, DOCUMENT_BUCKET, request.path);
-  const type = sniffContentType(bytes);
+  const existing = await documentRowForPath(staff, request.path);
+  if (existing) {
+    if (!sameOwner(existing, request)) throw new ExchangeUserError("That upload does not belong to this record.");
+    return { id: existing.id };
+  }
+  const original = await download(staff, DOCUMENT_BUCKET, request.path);
+  const type = sniffContentType(original);
   const expectedExtension = request.path.split(".").pop();
-  if (!type || bytes.byteLength > DOCUMENT_MAX_BYTES || extensionFor(type) !== expectedExtension) {
-    await staff.client.storage.from(DOCUMENT_BUCKET).remove([request.path]);
-    throw new ExchangeUserError(bytes.byteLength > DOCUMENT_MAX_BYTES ? "Documents must be 15 MB or smaller." : "This file is not a valid PDF, JPG, PNG or WebP document.");
+  if (!type || original.byteLength > DOCUMENT_MAX_BYTES || extensionFor(type) !== expectedExtension) {
+    await removeUnreferenced(staff, request.path);
+    throw new ExchangeUserError(original.byteLength > DOCUMENT_MAX_BYTES ? "Documents must be 15 MB or smaller." : "This file is not a valid PDF, JPG, PNG or WebP document.");
+  }
+  let stored = original;
+  if (type !== "application/pdf") {
+    try {
+      stored = await reencodePhoto(original, type);
+    } catch {
+      await removeUnreferenced(staff, request.path);
+      throw new ExchangeUserError("This image could not be read. Try exporting it again as a JPG or PDF.");
+    }
+    // Replace the uploaded original (which may carry location data) with the clean copy.
+    const { error: replaceError } = await staff.client.storage.from(DOCUMENT_BUCKET).upload(request.path, stored, { contentType: type, upsert: true });
+    if (replaceError) throw new ExchangeUserError("The document could not be saved. Try again.");
   }
   const inserted = await staff.client.from("vehicle_documents").insert({
     sale_vehicle_id: request.vehicleId || null,
@@ -137,16 +171,25 @@ async function finalizeDocument(staff: StaffContext, request: Extract<FinalizeRe
     file_name: safeFileName(request.fileName),
     object_path: request.path,
     content_type: type,
-    size_bytes: bytes.byteLength,
+    size_bytes: stored.byteLength,
     uploaded_by: staff.userId,
   }).select("id").single();
   if (inserted.error || !inserted.data) {
-    await staff.client.storage.from(DOCUMENT_BUCKET).remove([request.path]);
+    // A concurrent finalize may have recorded the same upload: return that row.
+    const raced = await documentRowForPath(staff, request.path);
+    if (raced && sameOwner(raced, request)) return { id: raced.id };
+    if (!raced) await removeUnreferenced(staff, request.path);
     throw new ExchangeUserError("The document could not be saved. Try again.");
   }
   const entity = request.vehicleId ? ["sale_vehicle", request.vehicleId] : ["seller_submission", request.submissionId!];
   await auditStaffAction(staff, "document_uploaded", entity[0]!, entity[1]!, { documentId: inserted.data.id, kind: request.kind });
   return { id: inserted.data.id as string };
+}
+
+/** Deletes an uploaded object only when no document row points at it. */
+async function removeUnreferenced(staff: StaffContext, path: string) {
+  if (await documentRowForPath(staff, path)) return;
+  await staff.client.storage.from(DOCUMENT_BUCKET).remove([path]);
 }
 
 export async function deleteDocument(staff: StaffContext, documentId: string) {
