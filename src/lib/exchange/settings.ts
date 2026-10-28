@@ -66,6 +66,8 @@ export const getExchangePrivateSettings = cache(async (): Promise<ExchangePrivat
     viewingLengthMinutes: clamp(merged.viewingLengthMinutes, 15, 240),
     minimumPublishPhotos: clamp(merged.minimumPublishPhotos, 1, 20),
     sellerRetentionMonths: clamp(merged.sellerRetentionMonths, 1, 120),
+    reservationHoldDays: merged.reservationHoldDays > 0 ? clamp(merged.reservationHoldDays, 1, 60) : 0,
+    handoverChecklist: merged.handoverChecklist.map((item) => item.trim()).filter(Boolean).slice(0, 20),
   };
 });
 
