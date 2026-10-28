@@ -49,6 +49,13 @@ async function publicListing(page: Page, slug: string) {
   return exchange.ok() ? `/exchange/cars/${slug}` : `/cars-for-sale/${slug}`;
 }
 
+/** The vehicle's card in the public catalogue, which carries the Reserved / Sold marker. */
+async function publicCard(page: Page, slug: string) {
+  const catalogue = (await page.request.get("/exchange/cars")).ok() ? "/exchange/cars" : "/cars-for-sale";
+  await page.goto(catalogue);
+  return page.locator(`a[href$="/${slug}"]`).first();
+}
+
 let publishedVehicle = { id: "", slug: "", title: "" };
 
 test("stock: draft, disclosures and photos, publishing blocked until ready, then live", async ({ page }) => {
@@ -198,8 +205,8 @@ test("selling: reserve, cancel, reserve again and complete the sale", async ({ p
   }
 
   await reserve();
-  const listing = await publicListing(page, publishedVehicle.slug);
-  await expect((await page.request.get(listing)).text()).resolves.toMatch(/Reserved/);
+  await expect(await publicCard(page, publishedVehicle.slug)).toContainText(/Reserved/i);
+  await page.goBack();
 
   await page.getByLabel("Reason").fill("Buyer changed their mind");
   await page.getByRole("button", { name: "Cancel reservation" }).click();
@@ -219,6 +226,5 @@ test("selling: reserve, cancel, reserve again and complete the sale", async ({ p
 
   await page.goto(`/admin/exchange/stock/${publishedVehicle.id}`);
   await expect(page.getByText("Sold", { exact: true }).first()).toBeVisible();
-  await page.goto(listing);
-  await expect(page.getByText(/sold/i).first()).toBeVisible();
+  await expect(await publicCard(page, publishedVehicle.slug)).toContainText(/Sold/i);
 });
