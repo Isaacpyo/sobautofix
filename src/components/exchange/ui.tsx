@@ -115,5 +115,5 @@ export function Notice({ tone = "info", title, children, className, role }: { to
 }
 
 export function Price({ value, className }: { value: number; className?: string }) {
-  return <span className={cn("font-[family-name:var(--font-barlow)] font-bold tracking-tight text-[#0B1220] tabular-nums", className)}>{new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", maximumFractionDigits: 0 }).format(value)}</span>;
+  return <span className={cn("exchange-display font-bold tracking-tight text-[#0B1220] tabular-nums", className)}>{new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", maximumFractionDigits: 0 }).format(value)}</span>;
 }

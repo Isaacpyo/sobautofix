@@ -37,7 +37,7 @@ export function SellStartForm() {
           autoCapitalize="characters"
           spellCheck={false}
           maxLength={10}
-          className="block min-h-14 w-full rounded-xl border-2 border-[#F2C94C] bg-[#FFD84D] px-4 text-center font-[family-name:var(--font-barlow)] text-[26px] font-bold tracking-[.12em] text-[#0B1220] uppercase placeholder:text-[18px] placeholder:font-semibold placeholder:tracking-normal placeholder:text-[#5C4A00] placeholder:normal-case focus:outline-3 focus:outline-offset-2 focus:outline-white"
+          className="block min-h-14 w-full rounded-xl border-2 border-[#F2C94C] bg-[#FFD84D] px-4 text-center exchange-display text-[26px] font-bold tracking-[.12em] text-[#0B1220] uppercase placeholder:text-[18px] placeholder:font-semibold placeholder:tracking-normal placeholder:text-[#5C4A00] placeholder:normal-case focus:outline-3 focus:outline-offset-2 focus:outline-white"
         />
       </div>
       <button type="submit" className={buttonClass("primary", "min-h-14 px-6 text-base")}>Start your enquiry <ArrowRight size={18} aria-hidden="true" /></button>

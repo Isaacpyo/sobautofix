@@ -24,31 +24,41 @@ function emailRequiredForEmailContact(value: { preferredContact: string; email?:
 export const vehicleEnquiryIntents = ["viewing", "question"] as const;
 export type VehicleEnquiryIntent = (typeof vehicleEnquiryIntents)[number];
 
-export const vehicleEnquiryRequestSchema = z.object({
-  idempotencyKey: z.uuid(),
-  vehicleId: z.uuid(),
+const vehicleEnquiryFields = {
   intent: z.enum(vehicleEnquiryIntents),
   ...contactFields,
-  preferredDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  preferredTime: z.enum(viewingSlots).optional(),
+  preferredDate: z.union([z.literal(""), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]).optional().transform((value) => value || undefined),
+  preferredTime: z.union([z.literal(""), z.enum(viewingSlots)]).optional().transform((value) => value || undefined),
   alternativeDate: z.union([z.literal(""), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]).optional().transform((value) => value || undefined),
   alternativeTime: z.union([z.literal(""), z.enum(viewingSlots)]).optional().transform((value) => value || undefined),
   message: z.string().trim().max(2000, "Use 2,000 characters or fewer").optional().transform((value) => value || undefined),
   privacyAccepted: z.literal(true, { message: "Please confirm you have read the privacy notice" }),
-  turnstileToken: z.string().max(4096).optional(),
-}).superRefine((value, context) => {
-  emailRequiredForEmailContact(value, context);
-  if (value.intent === "viewing" && (!value.preferredDate || !value.preferredTime)) {
-    context.addIssue({ code: "custom", path: ["preferredDate"], message: "Choose a preferred date and time" });
-  }
-  if (value.intent === "question" && !value.message) {
-    context.addIssue({ code: "custom", path: ["message"], message: "Tell us what you would like to know" });
-  }
-  if (Boolean(value.alternativeDate) !== Boolean(value.alternativeTime)) {
-    context.addIssue({ code: "custom", path: ["alternativeTime"], message: "Choose both a date and a time for the alternative, or leave both empty" });
-  }
-});
+};
 
+type VehicleEnquiryShape = { intent: VehicleEnquiryIntent; preferredContact: string; email?: string; preferredDate?: string; preferredTime?: string; alternativeDate?: string; alternativeTime?: string; message?: string };
+
+function refineVehicleEnquiry(value: VehicleEnquiryShape, context: z.RefinementCtx) {
+  emailRequiredForEmailContact(value, context);
+  if (value.intent === "viewing" && !value.preferredDate) context.addIssue({ code: "custom", path: ["preferredDate"], message: "Choose a preferred date" });
+  if (value.intent === "viewing" && !value.preferredTime) context.addIssue({ code: "custom", path: ["preferredTime"], message: "Choose a preferred time" });
+  if (value.intent === "question" && !value.message) context.addIssue({ code: "custom", path: ["message"], message: "Tell us what you would like to know" });
+  if (value.intent === "viewing" && Boolean(value.alternativeDate) !== Boolean(value.alternativeTime)) {
+    context.addIssue({ code: "custom", path: [value.alternativeDate ? "alternativeTime" : "alternativeDate"], message: "Choose both a date and a time for the alternative, or leave both empty" });
+  }
+}
+
+/** What the visitor fills in. */
+export const vehicleEnquiryFormSchema = z.object(vehicleEnquiryFields).superRefine(refineVehicleEnquiry);
+
+/** What the API accepts: the form plus the vehicle, an idempotency key and the security token. */
+export const vehicleEnquiryRequestSchema = z.object({
+  ...vehicleEnquiryFields,
+  idempotencyKey: z.uuid(),
+  vehicleId: z.uuid(),
+  turnstileToken: z.string().max(4096).optional(),
+}).superRefine(refineVehicleEnquiry);
+
+export type VehicleEnquiryFormInput = z.input<typeof vehicleEnquiryFormSchema>;
 export type VehicleEnquiryRequest = z.infer<typeof vehicleEnquiryRequestSchema>;
 
 export const runningStatusValues = ["runs_and_drives", "runs_not_driveable", "does_not_run", "not_sure"] as const;

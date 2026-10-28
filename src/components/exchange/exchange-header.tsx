@@ -19,7 +19,7 @@ export function ExchangeLogo({ name, shortName, className }: { name: string; sho
       <Image src={logo} alt="" sizes="80px" className="h-9 w-auto lg:h-11" preload />
       <span aria-hidden="true" className="h-8 w-px bg-[#E3E8EF]" />
       <span className="flex flex-col leading-none">
-        <span className="font-[family-name:var(--font-barlow)] text-[19px] font-bold tracking-tight text-[#0B1220] uppercase lg:text-[22px]">{shortName}</span>
+        <span className="exchange-display text-[19px] font-bold tracking-tight text-[#0B1220] uppercase lg:text-[22px]">{shortName}</span>
         <span className="mt-0.5 text-[11px] font-medium text-[#5B6575]">by SOB Autofix</span>
       </span>
     </Link>

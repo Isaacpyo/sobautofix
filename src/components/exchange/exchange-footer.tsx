@@ -20,7 +20,7 @@ export function ExchangeFooter({ settings, base }: { settings: ResolvedExchangeS
     <footer className="bg-[#111827] text-[15px] text-[#D0D5DD]">
       <Container className="grid gap-10 py-12 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr] lg:py-16">
         <div>
-          <p className="font-[family-name:var(--font-barlow)] text-[28px] font-bold text-white uppercase">{settings.name}</p>
+          <p className="exchange-display text-[28px] font-bold text-white uppercase">{settings.name}</p>
           <p className="mt-3 max-w-sm leading-7">{settings.tagline}</p>
           <p className="mt-4 max-w-sm text-sm leading-6 text-[#AEB6C2]">
             {settings.name} is the vehicle sales and buying service of {settings.legalName}, trading as {settings.workshopName}.

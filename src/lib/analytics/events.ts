@@ -8,12 +8,16 @@ export const analyticsEvents = [
   "phone_clicked", "whatsapp_clicked", "directions_clicked",
   "vehicle_listing_viewed", "vehicle_sales_enquiry", "fleet_enquiry_submitted",
   "web_vital",
+  // SOB Auto Exchange. Properties are limited to non-personal values such as
+  // intent, channel, step and counts: never names, contacts, registrations or uploads.
+  "exchange_vehicle_viewed", "viewing_requested", "vehicle_question_sent", "vehicle_contact_clicked",
+  "seller_form_started", "seller_form_completed",
 ] as const;
 
 export type AnalyticsEvent = (typeof analyticsEvents)[number];
 type SafeValue = string | number | boolean;
 
-const forbiddenKeys = new Set(["registration", "vehicle", "email", "phone", "postcode", "description", "problem"]);
+const forbiddenKeys = new Set(["registration", "vehicle", "email", "phone", "postcode", "description", "problem", "name", "message", "reg", "vrm", "photo", "file", "filename", "upload", "address"]);
 
 export function sanitizeAnalyticsProperties(properties: Record<string, SafeValue> = {}) {
   return Object.fromEntries(Object.entries(properties).filter(([key]) => !forbiddenKeys.has(key.toLowerCase())));

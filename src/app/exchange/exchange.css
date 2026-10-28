@@ -22,3 +22,8 @@
 .exchange-app dialog::backdrop {
   background: rgba(11, 18, 32, 0.6);
 }
+
+/* Display type outside headings (prices, wordmark). */
+.exchange-display {
+  font-family: var(--font-barlow), "Barlow Condensed", "Arial Narrow", "Roboto Condensed", ui-sans-serif, sans-serif;
+}
