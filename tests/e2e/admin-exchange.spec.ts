@@ -125,7 +125,7 @@ test("permissions: the sales role cannot see costs or change the price", async (
   await signIn(page, salesEmail);
   await page.goto(`/admin/exchange/stock/${publishedVehicle.id}`);
   await expect(page.getByRole("link", { name: /Costs/ })).toHaveCount(0);
-  await expect(page.getByRole("navigation", { name: "Vehicle Buying & Selling sections" }).getByRole("button", { name: /^More/ })).toHaveCount(0);
+  await expect(page.getByRole("navigation", { name: "Vehicle Buying & Selling sections" }).getByRole("button", { name: /^Finance & settings/ })).toHaveCount(0);
   await expect(page.getByLabel(/Advertised price/)).toHaveAttribute("readonly", "");
   await page.goto(`/admin/exchange/stock/${publishedVehicle.id}?tab=costs`);
   await expect(page.getByText("Gross margin")).toHaveCount(0);
@@ -135,11 +135,11 @@ test("permissions: the sales role cannot see costs or change the price", async (
   expect(csv.status()).toBe(403);
 });
 
-test("navigation: reporting and settings sit under the More tab", async ({ page }) => {
+test("navigation: reporting and settings sit under Finance & settings", async ({ page }) => {
   await signIn(page, ownerEmail);
   await page.goto("/admin/exchange");
   const sections = page.getByRole("navigation", { name: "Vehicle Buying & Selling sections" });
-  const more = sections.getByRole("button", { name: /^More/ });
+  const more = sections.getByRole("button", { name: /^Finance & settings/ });
   await expect(sections.getByRole("link", { name: "Sales & Handover" })).toBeVisible();
   await expect(more).toBeVisible();
   await expect(sections.getByRole("link", { name: "Settings" })).toBeHidden();
