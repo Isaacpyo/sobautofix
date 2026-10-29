@@ -14,6 +14,9 @@ export default async function ExchangeAdminLayout({ children }: { children: Reac
     { href: "/admin/exchange/viewings", label: "Viewings & Appointments" },
     { href: "/admin/exchange/preparation", label: "Preparation & Inspections" },
     { href: "/admin/exchange/handover", label: "Sales & Handover" },
+  ];
+  // Owner and manager pages sit under the More tab so the row fits a laptop.
+  const moreTabs: ExchangeTab[] = [
     ...(staff.can("finance.view") ? [{ href: "/admin/exchange/reports", label: "Costs & Reporting" }] : []),
     ...(staff.can("settings.manage") ? [{ href: "/admin/exchange/settings", label: "Settings" }] : []),
   ];
@@ -25,7 +28,7 @@ export default async function ExchangeAdminLayout({ children }: { children: Reac
       <p className="text-xs font-extrabold tracking-widest text-[#1974E2] uppercase">SOB Auto Exchange</p>
       <h1 className="mt-1 text-3xl font-extrabold text-[#071127] sm:text-4xl">Vehicle Buying &amp; Selling</h1>
     </header>
-    {allowed && <ExchangeSubtabNav tabs={tabs} />}
+    {allowed && <ExchangeSubtabNav tabs={tabs} moreTabs={moreTabs} />}
     <div className="mt-6">
       {!allowed ? <NoAccess area="Vehicle Buying & Selling" /> : schemaMissing ? <Notice title="Database update needed">{SCHEMA_MISSING_MESSAGE}</Notice> : children}
     </div>

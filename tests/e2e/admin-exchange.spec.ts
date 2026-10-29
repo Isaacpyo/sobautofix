@@ -50,10 +50,13 @@ async function publicListing(page: Page, slug: string) {
 }
 
 /** The vehicle's card in the public catalogue, which carries the Reserved / Sold marker. */
-async function publicCard(page: Page, slug: string) {
-  const catalogue = (await page.request.get("/exchange/cars")).ok() ? "/exchange/cars" : "/cars-for-sale";
+async function publicCard(page: Page, slug: string, { sold = false } = {}) {
+  // Sold cars leave the catalogue for the Recently sold archive.
+  const exchange = sold ? "/exchange/cars/sold" : "/exchange/cars";
+  const catalogue = (await page.request.get(exchange)).ok() ? exchange : "/cars-for-sale";
   await page.goto(catalogue);
-  return page.locator(`a[href$="/${slug}"]`).first();
+  // The whole card, not just its title link: the status badge sits beside the link.
+  return page.locator(`a[href$="/${slug}"]`).first().locator("xpath=ancestor::*[self::article or self::li][1]");
 }
 
 let publishedVehicle = { id: "", slug: "", title: "" };
@@ -122,6 +125,7 @@ test("permissions: the sales role cannot see costs or change the price", async (
   await signIn(page, salesEmail);
   await page.goto(`/admin/exchange/stock/${publishedVehicle.id}`);
   await expect(page.getByRole("link", { name: /Costs/ })).toHaveCount(0);
+  await expect(page.getByRole("navigation", { name: "Vehicle Buying & Selling sections" }).getByRole("button", { name: /^More/ })).toHaveCount(0);
   await expect(page.getByLabel(/Advertised price/)).toHaveAttribute("readonly", "");
   await page.goto(`/admin/exchange/stock/${publishedVehicle.id}?tab=costs`);
   await expect(page.getByText("Gross margin")).toHaveCount(0);
@@ -129,6 +133,28 @@ test("permissions: the sales role cannot see costs or change the price", async (
   await expect(page.getByText("You don't have access to this area")).toBeVisible();
   const csv = await page.request.get("/api/admin/exchange/reports/export");
   expect(csv.status()).toBe(403);
+});
+
+test("navigation: reporting and settings sit under the More tab", async ({ page }) => {
+  await signIn(page, ownerEmail);
+  await page.goto("/admin/exchange");
+  const sections = page.getByRole("navigation", { name: "Vehicle Buying & Selling sections" });
+  const more = sections.getByRole("button", { name: /^More/ });
+  await expect(sections.getByRole("link", { name: "Sales & Handover" })).toBeVisible();
+  await expect(more).toBeVisible();
+  await expect(sections.getByRole("link", { name: "Settings" })).toBeHidden();
+  await more.click();
+  await expect(more).toHaveAttribute("aria-expanded", "true");
+  await page.keyboard.press("Escape");
+  await expect(more).toHaveAttribute("aria-expanded", "false");
+  await expect(more).toBeFocused();
+  await more.click();
+  await sections.getByRole("link", { name: "Costs & Reporting" }).click();
+  await expect(page).toHaveURL(/\/admin\/exchange\/reports$/);
+  await expect(more).toHaveAccessibleName(/current section: Costs & Reporting/);
+  await more.click();
+  await sections.getByRole("link", { name: "Settings" }).click();
+  await expect(page).toHaveURL(/\/admin\/exchange\/settings$/);
 });
 
 test("buying: enquiry, offer history, purchase and a linked stock draft", async ({ page }) => {
@@ -226,5 +252,5 @@ test("selling: reserve, cancel, reserve again and complete the sale", async ({ p
 
   await page.goto(`/admin/exchange/stock/${publishedVehicle.id}`);
   await expect(page.getByText("Sold", { exact: true }).first()).toBeVisible();
-  await expect(await publicCard(page, publishedVehicle.slug)).toContainText(/Sold/i);
+  await expect(await publicCard(page, publishedVehicle.slug, { sold: true })).toContainText(/Sold/i);
 });
