@@ -86,8 +86,10 @@ export function VehicleActions({ vehicle, contact, links }: { vehicle: EnquiryVe
         </div>
       </div>
 
-      {/* Compact action bar directly above the mobile bottom navigation. */}
-      <div data-exchange-action-bar data-exchange-fixed className="fixed inset-x-0 bottom-[calc(64px+env(safe-area-inset-bottom))] z-30 border-t border-[#E3E8EF] bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
+      {/* Compact action bar directly above the mobile bottom navigation. The
+          extra bottom padding leaves room for the raised Sell My Car button,
+          which rises about 20px above the nav, so it never touches Ask. */}
+      <div data-exchange-action-bar data-exchange-fixed className="fixed inset-x-0 bottom-[calc(64px+env(safe-area-inset-bottom))] z-30 border-t border-[#E3E8EF] bg-white/95 px-4 pt-3 pb-7 backdrop-blur lg:hidden">
         <div className="mx-auto flex max-w-xl items-center gap-2">
           <p className="mr-auto min-w-0">
             <span className="block truncate text-[13px] text-[#5B6575]">{vehicle.name}</span>
