@@ -15,7 +15,7 @@ export default async function ExchangeAdminLayout({ children }: { children: Reac
     { href: "/admin/exchange/preparation", label: "Preparation & Inspections" },
     { href: "/admin/exchange/handover", label: "Sales & Handover" },
   ];
-  // Owner and manager pages sit under the More tab so the row fits a laptop.
+  // Owner and manager pages sit under "Finance & settings" so the row fits a laptop.
   const moreTabs: ExchangeTab[] = [
     ...(staff.can("finance.view") ? [{ href: "/admin/exchange/reports", label: "Costs & Reporting" }] : []),
     ...(staff.can("settings.manage") ? [{ href: "/admin/exchange/settings", label: "Settings" }] : []),
