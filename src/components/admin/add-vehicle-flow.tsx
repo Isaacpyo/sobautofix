@@ -53,7 +53,7 @@ export function AddVehicleFlow({ action, inventoryReady = true, editorBasePath =
       setDuplicate(result.duplicate);
       setStage("verify");
     } catch {
-      setError("Vehicle lookup is temporarily unavailable. You can try again or enter the vehicle manually.");
+      setError("Could not reach the vehicle lookup. Check your internet connection and try again, or enter the vehicle manually.");
       setCanEnterManually(true);
     } finally { setLoading(false); }
   }

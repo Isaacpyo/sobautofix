@@ -56,6 +56,28 @@ export function normalizeVehicleDataGlobal(response: VehicleDataGlobalResponse, 
   };
 }
 
+type LookupFailureCode = "not_found" | "invalid" | "unavailable";
+
+/**
+ * Decides why a lookup that returned HTTP 200 produced no vehicle. The upstream
+ * wording varies ("Vehicle Not Found", "No Match Found", "NoResults"), so match
+ * the phrases loosely. Account problems (key, package, credit) mention "not
+ * found" too and must stay "unavailable" so staff are not told the car is
+ * unknown when the service itself is broken.
+ */
+export function classifyVehicleDataGlobalFailure(response: VehicleDataGlobalResponse): LookupFailureCode {
+  const status = response.ResponseInformation;
+  const vehicleStatus = response.Results?.VehicleDetails;
+  const message = `${status?.StatusMessage || ""} ${vehicleStatus?.StatusMessage || ""}`.toLowerCase().replace(/[\s_-]+/g, "");
+  if (/key|package|account|credit|subscription|unauthori[sz]ed|forbidden/.test(message)) return "unavailable";
+  if (/notfound|nomatch|noresult|nodata|novehicle|unknownvrm/.test(message)) return "not_found";
+  if (message.includes("invalid")) return "invalid";
+  // The request itself succeeded but the vehicle block did not: the service
+  // answered, it just has no vehicle for this registration.
+  if (status?.IsSuccessStatusCode && status.StatusCode === 0 && !vehicleStatus?.VehicleIdentification) return "not_found";
+  return "unavailable";
+}
+
 export class VehicleDataGlobalProvider implements VehicleLookupProvider {
   constructor(
     private readonly apiKey: string,
@@ -84,9 +106,12 @@ export class VehicleDataGlobalProvider implements VehicleLookupProvider {
       const status = payload.ResponseInformation;
       const vehicleStatus = payload.Results?.VehicleDetails;
       if (!status?.IsSuccessStatusCode || status.StatusCode !== 0 || !vehicleStatus || vehicleStatus.StatusCode !== 0) {
-        const message = `${status?.StatusMessage || ""} ${vehicleStatus?.StatusMessage || ""}`.toLowerCase();
-        if (message.includes("not found") || message.includes("notfound")) throw new VehicleLookupError("Vehicle not found", "not_found");
-        if (message.includes("invalid")) throw new VehicleLookupError("Invalid registration", "invalid");
+        const code = classifyVehicleDataGlobalFailure(payload);
+        // Status codes and upstream wording only, with the registration removed,
+        // so the next unexpected reply can be diagnosed from the logs.
+        console.warn("Vehicle Data Global lookup failed", { code, statusCode: status?.StatusCode, statusMessage: redact(status?.StatusMessage, registration), vehicleStatusCode: vehicleStatus?.StatusCode, vehicleStatusMessage: redact(vehicleStatus?.StatusMessage, registration) });
+        if (code === "not_found") throw new VehicleLookupError("Vehicle not found", "not_found");
+        if (code === "invalid") throw new VehicleLookupError("Invalid registration", "invalid");
         throw new VehicleLookupError("Vehicle service unavailable", "unavailable");
       }
 
@@ -98,4 +123,11 @@ export class VehicleDataGlobalProvider implements VehicleLookupProvider {
       clearTimeout(timeout);
     }
   }
+}
+
+function redact(message: string | undefined, registration: string) {
+  const characters = registration.replace(/[^a-z0-9]/gi, "").split("");
+  if (!message || characters.length === 0) return message;
+  // Matches "AB12CDE" and "AB12 CDE" alike.
+  return message.replace(new RegExp(characters.join("\\s*"), "gi"), "[registration]");
 }

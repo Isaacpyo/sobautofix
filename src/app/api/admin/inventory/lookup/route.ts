@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) return failure("invalid", "Check the registration number and try again.", 400);
 
   const provider = getConfiguredVehicleProvider();
-  if (!provider) return lookupFailed(client, auth.user.id, "unavailable", "Vehicle lookup is temporarily unavailable. You can try again or enter the vehicle manually.", 503);
+  if (!provider) return lookupFailed(client, auth.user.id, "unavailable", "Vehicle lookup is not set up on this site yet. Enter the vehicle manually.", 503);
 
   try {
     const vehicle = await provider.lookup(parsed.data);
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, vehicle: { ...vehicle, registration: parsed.data }, duplicate: duplicate ? { id: duplicate.id, label: [duplicate.make, duplicate.model].filter(Boolean).join(" "), status: duplicate.status } : null }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     const known = error instanceof VehicleLookupError ? error : new VehicleLookupError("Vehicle lookup is temporarily unavailable.", "unavailable");
-    const message = known.code === "not_found" ? "No vehicle details were found for this registration." : known.code === "invalid" ? "Check the registration number and try again." : known.code === "rate_limited" ? "The lookup service is busy. Please wait and try again." : "Vehicle lookup is temporarily unavailable. You can try again or enter the vehicle manually.";
+    const message = known.code === "not_found" ? "No vehicle was found for this registration. Check it and try again, or enter the vehicle manually." : known.code === "invalid" ? "That is not a valid UK registration. Check it and try again." : known.code === "rate_limited" ? "The lookup service is busy. Please wait a minute and try again." : "The vehicle lookup service is not responding right now. Try again in a few minutes, or enter the vehicle manually.";
     const status = known.code === "not_found" ? 404 : known.code === "invalid" ? 400 : known.code === "rate_limited" ? 429 : 503;
     return lookupFailed(client, auth.user.id, known.code, message, status);
   }

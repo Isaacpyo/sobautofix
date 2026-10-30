@@ -50,6 +50,24 @@ describe("registration-first Add Vehicle flow", () => {
     expect(screen.getByRole("link", { name: "View existing vehicle" })).toHaveAttribute("href", "/admin/inventory/a07a8c80-b78e-47e6-9ef6-90a59d17db75");
   });
 
+  it("says the registration was not found instead of blaming the service", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ json: async () => ({ success: false, error: { code: "not_found", message: "No vehicle was found for this registration. Check it and try again, or enter the vehicle manually." } }) }));
+    render(<AddVehicleFlow action={action} />);
+    fireEvent.change(screen.getByLabelText("Registration number"), { target: { value: "ZZ99ZZZ" } });
+    fireEvent.click(screen.getByRole("button", { name: "Look up vehicle" }));
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("No vehicle was found for this registration"));
+    expect(screen.getByRole("alert")).not.toHaveTextContent("temporarily unavailable");
+    expect(screen.getByRole("button", { name: "Enter details manually" })).toBeInTheDocument();
+  });
+
+  it("says the lookup could not be reached when the request itself fails", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
+    render(<AddVehicleFlow action={action} />);
+    fireEvent.change(screen.getByLabelText("Registration number"), { target: { value: "LM17XXA" } });
+    fireEvent.click(screen.getByRole("button", { name: "Look up vehicle" }));
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Could not reach the vehicle lookup"));
+  });
+
   it("offers manual entry after a provider failure", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ json: async () => ({ success: false, error: { code: "unavailable", message: "Vehicle lookup is temporarily unavailable." } }) }));
     render(<AddVehicleFlow action={action} />);

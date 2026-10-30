@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { normalizeDvlaVehicle } from "@/lib/vehicle/dvla";
-import { normalizeVehicleDataGlobal } from "@/lib/vehicle/vehicle-data-global";
+import { classifyVehicleDataGlobalFailure, normalizeVehicleDataGlobal } from "@/lib/vehicle/vehicle-data-global";
 
 describe("DVLA provider normalization", () => {
   it("selects only approved identity fields", () => {
@@ -60,5 +60,30 @@ describe("Vehicle Data Global provider normalization", () => {
     });
     expect(result).not.toHaveProperty("UkvdId");
     expect(result).not.toHaveProperty("Vin");
+  });
+});
+
+describe("Vehicle Data Global failure classification", () => {
+  const ok = { StatusCode: 0, StatusMessage: "Success", IsSuccessStatusCode: true };
+  const failed = (StatusMessage: string) => ({ StatusCode: 1, StatusMessage, IsSuccessStatusCode: false });
+
+  it.each(["Vehicle Not Found", "No Match Found", "NoMatchFound", "No Results", "no_data_found", "Unknown VRM"])("treats %s as not found", (message) => {
+    expect(classifyVehicleDataGlobalFailure({ ResponseInformation: failed(message) })).toBe("not_found");
+    expect(classifyVehicleDataGlobalFailure({ ResponseInformation: ok, Results: { VehicleDetails: { StatusCode: 1, StatusMessage: message } } })).toBe("not_found");
+  });
+
+  it("treats a successful request with no vehicle block as not found", () => {
+    expect(classifyVehicleDataGlobalFailure({ ResponseInformation: ok, Results: {} })).toBe("not_found");
+  });
+
+  it("keeps account and package problems as unavailable", () => {
+    for (const message of ["Package Not Found", "ApiKey not found", "Insufficient credit", "Account suspended", "Unauthorised"]) {
+      expect(classifyVehicleDataGlobalFailure({ ResponseInformation: failed(message) })).toBe("unavailable");
+    }
+  });
+
+  it("recognises invalid registrations and unknown failures", () => {
+    expect(classifyVehicleDataGlobalFailure({ ResponseInformation: failed("Invalid VRM") })).toBe("invalid");
+    expect(classifyVehicleDataGlobalFailure({ ResponseInformation: failed("Internal error") })).toBe("unavailable");
   });
 });
