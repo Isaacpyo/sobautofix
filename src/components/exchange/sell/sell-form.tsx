@@ -13,6 +13,7 @@ import { sellerFormSchema, type SellerFormInput, type SellerFormOutput } from "@
 import { cn } from "@/lib/utils";
 import { useExchangeHref } from "../exchange-base";
 import { prefersReducedMotion, useToast } from "../feedback";
+import { NumberPlateInput } from "../number-plate";
 import { takeSellRegistration } from "../sell-handoff";
 import { buttonClass, inputClass, labelClass, linkClass, Notice } from "../ui";
 import { ChoiceGroup, FieldError, TextAreaField, TextField } from "./fields";
@@ -403,16 +404,12 @@ export function SellForm({ interestedVehicle, contact, links, responsePromise }:
             <div>
               <label htmlFor={`${id}-registration`} className={labelClass}>Registration number</label>
               <div className="mt-1.5 flex flex-col gap-2 sm:flex-row">
-                <input
+                <NumberPlateInput
                   id={`${id}-registration`}
                   {...register("vehicle.registration")}
-                  autoComplete="off"
-                  autoCapitalize="characters"
-                  spellCheck={false}
-                  maxLength={10}
                   aria-invalid={err("vehicle.registration") ? true : undefined}
                   aria-describedby={err("vehicle.registration") ? `${id}-registration-error` : undefined}
-                  className="min-h-14 w-full rounded-xl border-2 border-[#F2C94C] bg-[#FFD84D] px-4 text-center exchange-display text-[26px] font-bold tracking-[.12em] text-[#0B1220] uppercase sm:max-w-xs"
+                  wrapperClassName="sm:max-w-xs"
                 />
                 <button type="button" onClick={lookupRegistration} disabled={lookup.status === "loading"} className={buttonClass("dark", "min-h-14")}>
                   {lookup.status === "loading" ? <LoaderCircle size={18} className="animate-spin" aria-hidden="true" /> : <Search size={18} aria-hidden="true" />} Find my car

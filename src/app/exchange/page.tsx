@@ -1,16 +1,17 @@
-import { ArrowRight, ArrowUpRight, CalendarCheck, Car, ClipboardList, Clock, Mail, MapPin, MessageCircle, Phone, Repeat, SearchCheck, Star, Wrench } from "lucide-react";
+import { ArrowRight, ArrowUpRight, CalendarCheck, Car, ClipboardList, MapPin, Repeat, SearchCheck, Star, Wrench } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { formatAddress } from "@/components/exchange/exchange-footer";
 import { workshopPhotos } from "@/components/exchange/photos";
 import { SellStartForm } from "@/components/exchange/sell-start-band";
+import { LocationMap } from "@/components/exchange/location-map";
 import { ButtonLink, Container, Eyebrow, linkClass, Notice, SectionHeading } from "@/components/exchange/ui";
 import { VehicleCard } from "@/components/exchange/vehicle-card";
 import { diagnostics, services } from "@/config/site";
 import { exchangeHref } from "@/lib/exchange/host";
 import { getExchangeBase } from "@/lib/exchange/links";
-import { formatUkPhone, mainSiteHref, mapsHref, telHref, whatsappHref } from "@/lib/exchange/public/links";
+import { mainSiteHref, mapsHref } from "@/lib/exchange/public/links";
 import { exchangeMetadata } from "@/lib/exchange/public/metadata";
 import { getLatestAvailable } from "@/lib/exchange/public/stock";
 import { getExchangeSettings } from "@/lib/exchange/settings";
@@ -40,8 +41,7 @@ export default async function ExchangeHomePage() {
       <section className="relative overflow-hidden bg-[#F3F5F8]">
         <Container className="grid items-center gap-8 py-8 sm:py-12 lg:grid-cols-[1.05fr_1fr] lg:gap-12 lg:py-16">
           <div>
-            <Eyebrow>{settings.name} · Doncaster</Eyebrow>
-            <h1 className="mt-3 text-[44px] leading-[.95] font-bold text-balance text-[#0B1220] sm:text-[60px] lg:text-[68px]">{settings.heroHeading}</h1>
+            <h1 className="text-[44px] leading-[.95] font-bold text-balance text-[#0B1220] sm:text-[60px] lg:text-[68px]">{settings.heroHeading}</h1>
             <p className="mt-5 max-w-xl text-[17px] leading-7 text-[#344054] sm:text-lg">{settings.heroBody}</p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
               <ButtonLink href={href("/cars")} className="min-h-14 px-6 text-base"><Car size={20} aria-hidden="true" /> Browse Cars</ButtonLink>
@@ -209,22 +209,8 @@ export default async function ExchangeHomePage() {
             <div className="mt-3 flex gap-2 leading-7"><MapPin size={20} aria-hidden="true" className="mt-1 shrink-0 text-[#1462C4]" /><address className="not-italic">{address}</address></div>
             <a href={mapsHref(address, siteConfig.googleMapsUrl)} target="_blank" rel="noopener noreferrer" className={`${linkClass} mt-2 inline-flex min-h-11 items-center gap-1.5`}>Get directions <ArrowUpRight size={16} aria-hidden="true" /></a>
           </div>
-          <div>
-            <h3 className="flex items-center gap-2 text-[22px] font-bold text-[#0B1220]"><Clock size={20} aria-hidden="true" className="text-[#1462C4]" /> Opening hours</h3>
-            {settings.openingHours ? (
-              <p className="mt-3 leading-7 whitespace-pre-line">{settings.openingHours}</p>
-            ) : (
-              <p className="mt-3 leading-7">Please call to confirm opening times before you visit. Viewings are by appointment.</p>
-            )}
-          </div>
-          <div>
-            <h3 className="text-[22px] font-bold text-[#0B1220]">Get in touch</h3>
-            <ul className="mt-3 grid gap-2">
-              {settings.phone && <li><a href={telHref(settings.phone)} className="inline-flex min-h-11 items-center gap-2 font-semibold text-[#0B1220] hover:text-[#1462C4]"><Phone size={18} aria-hidden="true" className="text-[#1462C4]" /> {formatUkPhone(settings.phone)}</a></li>}
-              {settings.whatsapp && <li><a href={whatsappHref(settings.whatsapp)} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 font-semibold text-[#0B1220] hover:text-[#1462C4]"><MessageCircle size={18} aria-hidden="true" className="text-[#1462C4]" /> WhatsApp us</a></li>}
-              {settings.email && <li><a href={`mailto:${settings.email}`} className="inline-flex min-h-11 items-center gap-2 font-semibold break-all text-[#0B1220] hover:text-[#1462C4]"><Mail size={18} aria-hidden="true" className="shrink-0 text-[#1462C4]" /> {settings.email}</a></li>}
-            </ul>
-            <Link href={href("/contact")} className={`${linkClass} mt-2 inline-flex min-h-11 items-center gap-1.5`}>All contact options <ArrowRight size={16} aria-hidden="true" /></Link>
+          <div className="lg:col-span-2">
+            <LocationMap address={address} />
           </div>
         </Container>
       </section>
