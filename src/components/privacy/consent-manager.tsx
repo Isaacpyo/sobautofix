@@ -18,10 +18,14 @@ function subscribe(callback: () => void) {
 function getSnapshot() { return window.localStorage.getItem(storageKey) || ""; }
 function getServerSnapshot() { return ""; }
 
-export function ConsentManager() {
+/** The visitor's stored choice, or null before they choose (and on the server). */
+export function useConsent(): Consent | null {
   const stored = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  let consent: Consent | null = null;
-  try { consent = stored ? JSON.parse(stored) as Consent : null; } catch { consent = null; }
+  try { return stored ? JSON.parse(stored) as Consent : null; } catch { return null; }
+}
+
+export function ConsentManager() {
+  const consent = useConsent();
 
   function choose(value: Consent) {
     window.localStorage.setItem(storageKey, JSON.stringify(value));

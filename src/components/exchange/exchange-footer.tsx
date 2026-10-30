@@ -4,6 +4,7 @@ import { exchangePolicyPages } from "@/config/exchange";
 import { exchangeHref } from "@/lib/exchange/host";
 import { formatUkPhone, mainSiteHref, telHref, whatsappHref } from "@/lib/exchange/public/links";
 import type { ResolvedExchangeSettings } from "@/lib/exchange/settings";
+import { FooterSection } from "./footer-section";
 import { Container } from "./ui";
 
 export function formatAddress(address: ResolvedExchangeSettings["address"]) {
@@ -18,8 +19,8 @@ export function ExchangeFooter({ settings, base }: { settings: ResolvedExchangeS
 
   return (
     <footer className="bg-[#111827] text-[15px] text-[#D0D5DD]">
-      <Container className="grid gap-10 py-12 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr] lg:py-16">
-        <div>
+      <Container className="grid py-12 md:grid-cols-3 md:gap-10 lg:grid-cols-[1.3fr_1fr_1fr_1.2fr_1.2fr] lg:py-16">
+        <div className="mb-6 md:mb-0">
           <p className="exchange-display text-[28px] font-bold text-white uppercase">{settings.name}</p>
           <p className="mt-3 max-w-sm leading-7">{settings.tagline}</p>
           <p className="mt-4 max-w-sm text-sm leading-6 text-[#AEB6C2]">
@@ -27,27 +28,24 @@ export function ExchangeFooter({ settings, base }: { settings: ResolvedExchangeS
             {settings.companyNumber ? ` Registered in England and Wales, company number ${settings.companyNumber}.` : ""}
           </p>
         </div>
-        <nav aria-label="Buying and selling">
-          <h2 className="text-sm font-semibold tracking-[.08em] text-white uppercase">Buy and sell</h2>
-          <ul className="mt-3 grid gap-1">
-            <li><Link className={linkClass} href={href("/cars")}>Browse cars</Link></li>
-            <li><Link className={linkClass} href={href("/cars/sold")}>Recently sold</Link></li>
-            <li><Link className={linkClass} href={href("/sell")}>Sell your car</Link></li>
-            <li><Link className={linkClass} href={href("/part-exchange")}>Part exchange</Link></li>
-            <li><Link className={linkClass} href={href("/how-buying-works")}>How buying works</Link></li>
-            <li><Link className={linkClass} href={href("/about")}>About us</Link></li>
-          </ul>
-        </nav>
-        <nav aria-label="SOB Autofix workshop">
-          <h2 className="text-sm font-semibold tracking-[.08em] text-white uppercase">Workshop</h2>
-          <ul className="mt-3 grid gap-1">
-            <li><a className={linkClass} href={main("/")}>{settings.workshopName} <ArrowUpRight size={14} className="ml-1" aria-hidden="true" /></a></li>
-            <li><a className={linkClass} href={main("/services")}>Repairs &amp; servicing</a></li>
-            <li><a className={linkClass} href={main("/diagnostics")}>Diagnostics</a></li>
-            <li><a className={linkClass} href={main("/book")}>Book a service</a></li>
-          </ul>
-        </nav>
-        <div>
+        <FooterSection title="Buy and sell" label="Buying and selling">
+          <li><Link className={linkClass} href={href("/cars")}>Browse cars</Link></li>
+          <li><Link className={linkClass} href={href("/cars/sold")}>Recently sold</Link></li>
+          <li><Link className={linkClass} href={href("/sell")}>Sell your car</Link></li>
+          <li><Link className={linkClass} href={href("/part-exchange")}>Part exchange</Link></li>
+          <li><Link className={linkClass} href={href("/how-buying-works")}>How buying works</Link></li>
+          <li><Link className={linkClass} href={href("/about")}>About us</Link></li>
+        </FooterSection>
+        <FooterSection title="Workshop" label="SOB Autofix workshop">
+          <li><a className={linkClass} href={main("/")}>{settings.workshopName} <ArrowUpRight size={14} className="ml-1" aria-hidden="true" /></a></li>
+          <li><a className={linkClass} href={main("/services")}>Repairs &amp; servicing</a></li>
+          <li><a className={linkClass} href={main("/diagnostics")}>Diagnostics</a></li>
+          <li><a className={linkClass} href={main("/book")}>Book a service</a></li>
+        </FooterSection>
+        <FooterSection title="Policies" label="Policies">
+          {exchangePolicyPages.map((page) => <li key={page.slug}><Link className={linkClass} href={href(`/policies/${page.slug}`)}>{page.title}</Link></li>)}
+        </FooterSection>
+        <div className="mt-8 md:mt-0">
           <h2 className="text-sm font-semibold tracking-[.08em] text-white uppercase">Contact</h2>
           <ul className="mt-3 grid gap-2.5">
             {settings.phone && <li><a className="inline-flex min-h-9 items-center gap-2 rounded hover:text-white" href={telHref(settings.phone)}><Phone size={16} aria-hidden="true" className="text-[#7DB5F5]" /> {formatUkPhone(settings.phone)}</a></li>}
@@ -60,9 +58,8 @@ export function ExchangeFooter({ settings, base }: { settings: ResolvedExchangeS
       <div className="border-t border-white/10">
         <Container className="flex flex-col gap-4 py-6 text-sm text-[#AEB6C2] lg:flex-row lg:items-center lg:justify-between">
           <p>&copy; {year} {settings.legalName}. All rights reserved.</p>
-          <nav aria-label="Policies">
+          <nav aria-label="Legal">
             <ul className="flex flex-wrap gap-x-5 gap-y-1">
-              {exchangePolicyPages.map((page) => <li key={page.slug}><Link className={linkClass} href={href(`/policies/${page.slug}`)}>{page.title}</Link></li>)}
               <li><a className={linkClass} href={main("/privacy")}>Privacy notice</a></li>
               <li><a className={linkClass} href={main("/cookies")}>Cookies</a></li>
             </ul>
