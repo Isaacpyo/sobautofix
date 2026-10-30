@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { formatAddress } from "@/components/exchange/exchange-footer";
-import { workshopPhotos } from "@/components/exchange/photos";
+import { homePhotos } from "@/components/exchange/photos";
 import { SellStartForm } from "@/components/exchange/sell-start-band";
 import { LocationMap } from "@/components/exchange/location-map";
 import { ButtonLink, Container, Eyebrow, linkClass, Notice, SectionHeading } from "@/components/exchange/ui";
@@ -41,7 +41,7 @@ export default async function ExchangeHomePage() {
       <section className="relative overflow-hidden bg-[#F3F5F8]">
         <Container className="grid items-center gap-8 py-8 sm:py-12 lg:grid-cols-[1.05fr_1fr] lg:gap-12 lg:py-16">
           <div>
-            <h1 className="text-[44px] leading-[.95] font-bold text-balance text-[#0B1220] sm:text-[60px] lg:text-[68px]">{settings.heroHeading}</h1>
+            <h1 className="text-[40px] leading-[.95] font-bold text-balance text-[#0B1220] sm:text-[52px] lg:text-[60px]">{settings.heroHeading}</h1>
             <p className="mt-5 max-w-xl text-[17px] leading-7 text-[#344054] sm:text-lg">{settings.heroBody}</p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
               <ButtonLink href={href("/cars")} className="min-h-14 px-6 text-base"><Car size={20} aria-hidden="true" /> Browse Cars</ButtonLink>
@@ -53,7 +53,7 @@ export default async function ExchangeHomePage() {
           </div>
           <div className="relative">
             <div className="relative aspect-[4/3] overflow-hidden rounded-3xl shadow-[0_24px_60px_rgba(11,18,32,.18)] lg:aspect-[5/4]">
-              <Image src={workshopPhotos.hero.src} alt={workshopPhotos.hero.alt} fill preload sizes="(max-width: 1023px) 100vw, 560px" className="object-cover object-[60%_50%]" placeholder="blur" />
+              <Image src={homePhotos.hero.src} alt={homePhotos.hero.alt} fill preload sizes="(max-width: 1023px) 100vw, 560px" className="object-cover object-[45%_60%]" placeholder="blur" />
             </div>
             <div className="absolute -bottom-5 left-4 flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-[0_12px_30px_rgba(11,18,32,.16)] sm:left-6">
               <span className="grid size-10 place-items-center rounded-xl bg-[#EAF2FD] text-[#1462C4]"><Wrench size={20} aria-hidden="true" /></span>
@@ -70,8 +70,8 @@ export default async function ExchangeHomePage() {
           {/* Two journeys side by side at every width; Repairs & Diagnostics has its own section further down. */}
           <ul className="grid grid-cols-2 gap-3 sm:gap-4">
             {[
-              { title: "Buy a Car", summary: "Used cars with full condition notes.", body: "Browse used cars with the condition, inspection notes and known faults on every listing.", action: "Browse cars", link: href("/cars"), photo: workshopPhotos.buy, icon: Car },
-              { title: "Sell or Part Exchange", summary: "Get an offer for your car.", body: "Tell us about your car in a few steps and add photos from your phone. We review every enquiry.", action: "Sell your car", link: href("/sell"), photo: workshopPhotos.sell, icon: Repeat },
+              { title: "Buy a Car", summary: "Used cars with full condition notes.", body: "Browse used cars with the condition, inspection notes and known faults on every listing.", action: "Browse cars", link: href("/cars"), photo: homePhotos.buy, icon: Car },
+              { title: "Sell or Part Exchange", summary: "Get an offer for your car.", body: "Tell us about your car in a few steps and add photos from your phone. We review every enquiry.", action: "Sell your car", link: href("/sell"), photo: homePhotos.sell, icon: Repeat },
             ].map((journey) => (
               <li key={journey.title} className="group relative flex flex-col overflow-hidden rounded-2xl border border-[#E3E8EF] bg-white transition hover:shadow-[0_12px_32px_rgba(11,18,32,.10)]">
                 <div className="relative aspect-[4/3] overflow-hidden bg-[#F3F5F8] sm:aspect-[16/9]">
@@ -118,7 +118,7 @@ export default async function ExchangeHomePage() {
       <section aria-labelledby="why-heading" className="py-14 sm:py-20">
         <Container className="grid gap-10 lg:grid-cols-[1fr_1.1fr] lg:items-center">
           <div className="relative aspect-[4/3] overflow-hidden rounded-3xl lg:aspect-[4/5]">
-            <Image src={workshopPhotos.inspection.src} alt={workshopPhotos.inspection.alt} fill sizes="(max-width: 1023px) 100vw, 520px" className="object-cover object-[50%_40%]" />
+            <Image src={homePhotos.inspection.src} alt={homePhotos.inspection.alt} fill sizes="(max-width: 1023px) 100vw, 520px" className="object-cover object-[40%_60%]" />
           </div>
           <div>
             <Eyebrow>Why buy from {settings.workshopName}</Eyebrow>

@@ -1,6 +1,6 @@
 import { ArrowRight, Car } from "lucide-react";
 import Link from "next/link";
-import { exchangeEntryLinks } from "@/config/site";
+import { exchangeEntryLinks, exchangeVehicleLink } from "@/config/site";
 
 /**
  * Shown on the main site's /cars-for-sale pages. Links go to the /exchange
@@ -8,7 +8,7 @@ import { exchangeEntryLinks } from "@/config/site";
  * and is permanently redirected to it once EXCHANGE_REDIRECTS_ENABLED is set.
  */
 export function VisitExchangeBanner({ vehicleSlug }: { vehicleSlug?: string }) {
-  const href = vehicleSlug ? `${exchangeEntryLinks.cars}/${encodeURIComponent(vehicleSlug)}` : exchangeEntryLinks.cars;
+  const href = vehicleSlug ? exchangeVehicleLink(vehicleSlug) : exchangeEntryLinks.cars;
   return (
     <div className="border-y border-[#1974E2]/20 bg-[#EAF3FF]">
       <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">

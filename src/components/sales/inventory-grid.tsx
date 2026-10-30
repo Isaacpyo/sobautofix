@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Funnel, Gauge, ImageIcon } from "lucide-react";
 import { useMemo, useState } from "react";
+import { exchangeVehicleLink } from "@/config/site";
 import { formatCurrency } from "@/lib/utils";
 import type { SaleVehicle } from "@/types/domain";
 import { SoldBanner } from "./sold-banner";
@@ -82,7 +83,7 @@ export function InventoryGrid({ vehicles }: { vehicles: SaleVehicle[] }) {
       <div className="grid gap-5 bg-transparent md:grid-cols-2 md:gap-px md:overflow-hidden md:border md:border-[#E4EAF0] md:bg-[#E4EAF0] lg:grid-cols-3">
         {filtered.map((vehicle) => (
           <Link
-            href={`/cars-for-sale/${vehicle.slug}`}
+            href={exchangeVehicleLink(vehicle.slug)}
             key={vehicle.id}
             className="premium-card group overflow-hidden rounded-2xl border border-[#D7E0E9] bg-white shadow-sm transition hover:-translate-y-1 hover:border-[#1974E2]/50 hover:shadow-xl md:rounded-none md:border-0 md:shadow-none"
             data-reveal

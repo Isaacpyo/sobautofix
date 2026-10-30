@@ -52,21 +52,35 @@ describe("catalogue filters in the query string", () => {
     expect(sortVehicles(stock, "mileage_asc").map((vehicle) => vehicle.slug)).toEqual(["focus", "astra", "fiesta", "bmw", "yaris"]);
   });
 
-  it("computes options from live stock, hides empty ones and only shows models for the chosen make", () => {
-    const options = buildFilterOptions(stock, parseCatalogueFilters({}));
-    expect(options.make.map((option) => `${option.value}:${option.count}`)).toEqual(["BMW:1", "Ford:2", "Toyota:1", "Vauxhall:1"]);
+  it("lists the full range of standard values with live counts and only shows models for the chosen make", () => {
+    const options = buildFilterOptions(stock, parseCatalogueFilters({}), new Date("2026-10-30T12:00:00Z"));
+    const count = (list: { value: string; count: number }[], value: string) => list.find((option) => option.value === value)?.count;
+    // Every standard make is offered, with the stock count (0 when none in stock).
+    expect(options.make.length).toBeGreaterThan(20);
+    expect(count(options.make, "Ford")).toBe(2);
+    expect(count(options.make, "BMW")).toBe(1);
+    expect(count(options.make, "Audi")).toBe(0);
+    expect(options.make.map((option) => option.label)).toEqual([...options.make.map((option) => option.label)].sort((a, b) => a.localeCompare(b, "en-GB")));
     expect(options.model).toEqual([]);
     expect(options.condition.map((option) => option.value)).toEqual(["ready_to_drive", "repair_project"]);
-    // Every threshold changes the result and never returns nothing.
-    for (const option of [...options.maxPrice, ...options.minPrice, ...options.maxMileage, ...options.minYear]) {
-      expect(option.count).toBeGreaterThan(0);
-      expect(option.count).toBeLessThan(stock.length);
-    }
+    expect(options.fuel.map((option) => option.value)).toEqual(expect.arrayContaining(["Petrol", "Diesel", "Electric", "Plug-in Hybrid"]));
+    expect(options.transmission.map((option) => option.value)).toEqual(expect.arrayContaining(["Manual", "Automatic"]));
+    // Every price, mileage and year step is offered with its count.
+    expect(options.minPrice.map((option) => option.value)).toContain("1000");
+    expect(options.maxPrice.map((option) => option.value)).toContain("100000");
+    expect(options.maxMileage).toHaveLength(10);
+    expect(options.minYear[0]).toMatchObject({ value: "2026", label: "2026 or newer" });
+    expect(options.minYear.map((option) => option.value)).toContain("2000");
+    for (const option of options.maxPrice) expect(option.count).toBe(stock.filter((vehicle) => vehicle.price <= Number(option.value)).length);
+
     const ford = buildFilterOptions(stock, parseCatalogueFilters({ make: "Ford" }));
-    expect(ford.model.map((option) => option.value)).toEqual(["Fiesta", "Focus"]);
-    // Other facets narrow to the chosen make, while the make facet still lists every make.
-    expect(ford.fuel.map((option) => option.value)).toEqual(["Petrol"]);
-    expect(ford.make).toHaveLength(4);
+    // Models come from the standard list for the make, plus any in stock.
+    expect(ford.model.map((option) => option.value)).toEqual(expect.arrayContaining(["Fiesta", "Focus"]));
+    expect(count(ford.model, "Fiesta")).toBe(1);
+    // Other facets narrow their counts to the chosen make; the make facet still counts every make.
+    expect(count(ford.fuel, "Petrol")).toBe(2);
+    expect(count(ford.fuel, "Diesel")).toBe(0);
+    expect(count(ford.make, "BMW")).toBe(1);
   });
 
   it("keeps a selected value visible even when it no longer narrows the list", () => {

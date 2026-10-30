@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { requiresMfaChallenge } from "@/lib/auth/mfa";
 import { isMandatoryAdminMfaEnabled } from "@/lib/auth/mfa-policy";
 import { findValidTrustedDevice, isSensitiveAdminPath, TRUSTED_DEVICE_COOKIE } from "@/lib/auth/trusted-device";
-import { EXCHANGE_HOST_HEADER, EXCHANGE_PATH_PREFIX, isExchangeHostname, isSharedInfrastructurePath, toExchangePublicPath } from "@/lib/exchange/host";
+import { EXCHANGE_HOST_HEADER, EXCHANGE_PATH_PREFIX, exchangeRedirectsActive, isExchangeHostname, isSharedInfrastructurePath, toExchangePublicPath } from "@/lib/exchange/host";
 
 export async function proxy(request: NextRequest) {
   const hostname = request.headers.get("host") || request.nextUrl.hostname;
@@ -52,7 +52,7 @@ function routeExchangeHost(request: NextRequest) {
  */
 function mainSiteExchangeRedirect(request: NextRequest) {
   const exchangeUrl = process.env.NEXT_PUBLIC_EXCHANGE_URL;
-  if (!exchangeUrl || process.env.VERCEL_ENV !== "production" || process.env.EXCHANGE_REDIRECTS_ENABLED !== "true") return null;
+  if (!exchangeUrl || !exchangeRedirectsActive()) return null;
   const pathname = request.nextUrl.pathname;
   let target: string | null = null;
   if (pathname === EXCHANGE_PATH_PREFIX || pathname.startsWith(`${EXCHANGE_PATH_PREFIX}/`)) target = toExchangePublicPath(pathname);
