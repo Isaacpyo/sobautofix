@@ -67,15 +67,28 @@ Also: mobile layouts, keyboard use, reduced motion; validation keeps input; pric
 | 28 Oct | Local e2e gate, 92 tests (desktop + mobile): 59 passed, 14 skipped (need local setup), 19 failed | All exchange, admin-exchange and diary journeys pass except one axe contrast hit on the toast fade-in (fixed: slide-only entrance). The 18 booking and marketing failures also fail on unmodified `main` in the same environment (32 failures there): no CMS content, local site URL, no booking catalogue seed. Not regressions. |
 | 28 Oct | CI history | No CI run had ever passed. `verify` failed at build: sitemap needs a non-localhost `NEXT_PUBLIC_SITE_URL`. Fixed in the workflow env (also least-privilege permissions and concurrency). |
 | 28 Oct | Vercel preview of branch | Failed: commit author `Claude <noreply@anthropic.com>` is not a Vercel project member (Hobby). Production merges are squash-merged by the GitHub user, so authored by the owner. |
+| 28 Oct | Merged and deployed (PR #1) | First green CI in the repo's history; production smoke test passed |
+| 29 Oct | Mobile and admin fixes (PRs #2 to #4) | Raised Sell button clearance, two-up home journeys, Finance & settings tab; live checks passed |
+| 30 Oct | Lighthouse gate (PR #5) | Median of 3 runs per URL; flaky single-run failures removed |
+| 30 Oct | Production migrations (PRs #6, #7) | Applied 20261028090000 to 090400 with the `Production migrations` workflow; history matches; all 12 exchange tables present |
+| 30 Oct | Subdomain and redirects | exchange.sobautofix.com live over HTTPS; `NEXT_PUBLIC_EXCHANGE_URL` and `EXCHANGE_REDIRECTS_ENABLED=true` set; old /exchange and /cars-for-sale links 308 to the subdomain (owner verified) |
+| 30 Oct | Owner review fixes (PRs #8, #9) | Number plate input, map, policies footer column, collapsible mobile footer, new home imagery and headline, full catalogue filters, main-site links straight to the subdomain; live checks passed |
+| 30 Oct | Settings content | Owner pasted approved wording (draft doc: claude.ai/artifact/TVgAMRyqU4ZfeuVifPXBNC); no "finalising" placeholders left on live pages |
 
-## Blockers (exact next actions)
+## Status of earlier blockers
 
-| Blocker | Action needed | Who |
-| --- | --- | --- |
-| Production migrations | `supabase link --project-ref nmebkkelpvhxxycrbbos && supabase db push --linked --dry-run && supabase db push --linked`, or add env secret `SOB_SUPABASE_ACCESS_TOKEN` (a token for the account that owns that project) | Owner |
-| Exchange subdomain | Vercel project `sobautofix` → Domains → add `exchange.sobautofix.com`; Cloudflare DNS → `CNAME exchange cname.vercel-dns.com` (DNS only); then set `NEXT_PUBLIC_EXCHANGE_URL` and later `EXCHANGE_REDIRECTS_ENABLED=true` | Owner (no DNS-scoped token or Vercel access here) |
-| Branch previews | Vercel Hobby rejects non-member commit authors | Optional: owner adds a preview workflow or accepts local verification |
-| Policy wording, notification recipients, handover checklist, response-time promise | Enter approved content in Admin → Vehicle Buying & Selling → Settings | Owner |
+| Item | Status |
+| --- | --- |
+| Production migrations | Done 30 Oct. Future migrations: run **Production migrations** (Actions, `workflow_dispatch`): `dry-run` from any branch, `apply` with `confirm=APPLY` from `main` only. Uses repository secret `SOB_SUPABASE_ACCESS_TOKEN` (fine-grained: `database_pooling_config_read`, `database_write`); the owner is keeping it for future migrations. |
+| Exchange subdomain | Done 30 Oct (Vercel domain, Cloudflare CNAME, both env vars, redirects on). |
+| Settings content | Done 30 Oct. Finance is left open-ended ("ask us"); HPI checks confirmed. |
+| Branch previews | Vercel Hobby only deploys Git pushes authored by the owner. `vercel.json` turns off Vercel's own previews for `claude/*` branches, and `.github/workflows/preview-deploy.yml` deploys previews with the Vercel CLI instead. Needs repository secret `VERCEL_TOKEN` (owner's Vercel token); skipped until it is set. |
+
+## Owner to-dos (not code)
+
+- Complete **Condition & disclosure** for the two live cars (Hyundai Santa Fe MX60 OKJ, Vauxhall Meriva HF16 JKK): 11 fields show "Not confirmed".
+- Review **Settings → Staff roles**: every existing admin became Owner.
+- Send one real viewing request and one sell-my-car enquiry and confirm both emails reach info@sobautofix.com.
 
 ## Resume log
 
@@ -83,6 +96,8 @@ Also: mobile layouts, keyboard use, reduced motion; validation keeps input; pric
 - Lifecycle migration 090300 (offer history, handover checklist, override audit, notification retries, purchase-to-stock uniqueness) and settings `reservationHoldDays` and `handoverChecklist` added after the governing brief.
 
 - 28 Oct 19:20: all three lanes merged into the delivery branch (customer `0031dc7`, diary and reliability, staff operations). Security pass defects fixed: document EXIF, idempotent document finalize, unfinalised seller photos, invoice access (lane 2); role-aware RLS migration 090400, production upload secrets, stock trash permission (lead). Staff guide added. Next: e2e merge gate (92 tests), then PR, CI, merge.
+
+- 30 Oct: all owner blockers cleared (migrations applied, subdomain live, settings published). Production staff journeys are tested on the local stack only; the first real listing is the production check.
 
 ## Release and rollback
 
