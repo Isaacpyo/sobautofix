@@ -41,6 +41,6 @@ describe("sold vehicle controls and markers", () => {
   it("renders a prominent sold marker on the public stock card", () => {
     render(<InventoryGrid vehicles={[soldVehicle]} />);
     expect(screen.getByText("Sold", { selector: "span" })).toBeVisible();
-    expect(screen.getByRole("link", { name: /Ford Focus/i })).toHaveAttribute("href", "/cars-for-sale/sold-ford-focus");
+    expect(screen.getByRole("link", { name: /Ford Focus/i })).toHaveAttribute("href", "/exchange/cars/sold-ford-focus");
   });
 });

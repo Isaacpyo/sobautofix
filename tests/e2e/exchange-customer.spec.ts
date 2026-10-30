@@ -43,7 +43,7 @@ test.describe("SOB Auto Exchange customer app", () => {
 
   test("home page shows the journeys, latest cars and no main-site chrome", async ({ page }) => {
     await page.goto("/exchange");
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("Your next car");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Buy it. Sell it.");
     await expect(page.getByRole("link", { name: "Browse Cars" }).first()).toBeVisible();
     await expect(page.getByRole("heading", { name: "Latest cars" })).toBeVisible();
     // Sold cars never appear in the latest list.

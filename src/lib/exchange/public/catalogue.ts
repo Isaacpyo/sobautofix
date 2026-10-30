@@ -1,8 +1,9 @@
 // Catalogue filtering and sorting for SOB Auto Exchange. Pure functions so
 // the same rules run on the server (page render) and in tests. Filters live
-// in the query string; options are computed from live stock and hide values
-// that would return nothing.
+// in the query string; options list the standard values with live stock
+// counts.
 
+import { vehicleMakes, vehicleModelsByMake, vehicleSalesOptions } from "@/lib/vehicle/sales-options";
 import type { ListingCondition, SaleVehicle } from "@/types/domain";
 
 export const sortOptions = [
@@ -155,47 +156,56 @@ function countBy<T extends CatalogueVehicle>(vehicles: T[], value: (vehicle: T) 
 const priceSteps = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 12500, 15000, 17500, 20000, 25000, 30000, 40000, 50000, 75000, 100000];
 const mileageSteps = [10000, 20000, 30000, 40000, 50000, 60000, 80000, 100000, 125000, 150000];
 
-/**
- * Threshold options ("from £5,000", "up to 60,000 miles"). An option is shown
- * only when it changes the results: never zero matches, never every match,
- * and never the same count as a neighbouring threshold. The selected value is
- * always kept so the control can show it.
- */
+/** "2026 or newer" back fifteen years, then wider steps to 2000. */
+function yearSteps(now = new Date()) {
+  const current = now.getFullYear();
+  const recent = Array.from({ length: 16 }, (_, index) => current - index);
+  return [...recent, ...[2010, 2005, 2000].filter((year) => year < current - 15)];
+}
+
+/** Threshold options ("from £5,000", "up to 60,000 miles"): every step, with how many cars it matches. */
 function thresholdOptions<T>(pool: T[], steps: number[], test: (vehicle: T, step: number) => boolean, label: (step: number) => string, selected?: number): FilterOption[] {
-  const options: FilterOption[] = [];
-  const seen = new Set<number>();
-  for (const step of steps) {
-    const count = pool.filter((vehicle) => test(vehicle, step)).length;
-    const isSelected = step === selected;
-    if (!isSelected && (count === 0 || count === pool.length || seen.has(count))) continue;
-    seen.add(count);
-    options.push({ value: String(step), label: label(step), count });
-  }
+  const options = steps.map((step) => ({ value: String(step), label: label(step), count: pool.filter((vehicle) => test(vehicle, step)).length }));
+  if (selected !== undefined && !steps.includes(selected)) options.push({ value: String(selected), label: label(selected), count: pool.filter((vehicle) => test(vehicle, selected)).length });
   return options;
 }
 
 /**
- * Facet options for the filter panel. Each facet is computed from stock that
- * matches every *other* active filter, so options that would return nothing
- * are hidden and the counts are what the visitor would actually get.
+ * The standard values staff choose from when listing a car, with stock counts,
+ * plus any stock value that is not on the list. Zero-count values stay so the
+ * filter shows the full range, not only what happens to be in stock today.
  */
-export function buildFilterOptions<T extends CatalogueVehicle>(vehicles: T[], filters: CatalogueFilters): CatalogueFilterOptions {
+function withStandardValues(standard: readonly string[], fromStock: FilterOption[], sortByLabel = false): FilterOption[] {
+  const options = standard.map((label) => ({ value: label, label, count: fromStock.find((option) => same(option.value, label))?.count ?? 0 }));
+  for (const option of fromStock) if (!standard.some((label) => same(label, option.value))) options.push(option);
+  return sortByLabel ? options.sort((a, b) => a.label.localeCompare(b.label, "en-GB")) : options;
+}
+
+function standardModels(make: string): readonly string[] {
+  const entry = Object.entries(vehicleModelsByMake).find(([candidate]) => same(candidate, make));
+  return entry ? entry[1] : [];
+}
+
+/**
+ * Facet options for the filter panel. Counts for each facet come from stock
+ * that matches every *other* active filter, so they are what the visitor
+ * would actually get.
+ */
+export function buildFilterOptions<T extends CatalogueVehicle>(vehicles: T[], filters: CatalogueFilters, now = new Date()): CatalogueFilterOptions {
   const facet = (key: FilterKey) => vehicles.filter((vehicle) => matches(vehicle, filters, key));
   const pounds = (step: number) => `£${step.toLocaleString("en-GB")}`;
-  const years = [...new Set(facet("minYear").map((vehicle) => vehicle.year))].sort((a, b) => b - a);
   return {
-    make: countBy(facet("make"), (vehicle) => vehicle.make),
+    make: withStandardValues(vehicleMakes, countBy(facet("make"), (vehicle) => vehicle.make), true),
     // Models only make sense once a make is chosen.
-    model: filters.make ? countBy(facet("model"), (vehicle) => vehicle.model) : [],
-    fuel: countBy(facet("fuel"), (vehicle) => vehicle.fuelType),
-    transmission: countBy(facet("transmission"), (vehicle) => vehicle.transmission),
+    model: filters.make ? withStandardValues(standardModels(filters.make), countBy(facet("model"), (vehicle) => vehicle.model), true) : [],
+    fuel: withStandardValues(vehicleSalesOptions.fuelType, countBy(facet("fuel"), (vehicle) => vehicle.fuelType)),
+    transmission: withStandardValues(vehicleSalesOptions.transmission, countBy(facet("transmission"), (vehicle) => vehicle.transmission)),
     condition: (["ready_to_drive", "repair_project"] as const)
-      .map((value) => ({ value, label: value === "ready_to_drive" ? "Ready to drive" : "Repair project", count: facet("condition").filter((vehicle) => vehicle.listingCondition === value).length }))
-      .filter((option) => option.count > 0),
-    minPrice: thresholdOptions(facet("minPrice"), [...priceSteps].reverse(), (vehicle, step) => vehicle.price >= step, (step) => `From ${pounds(step)}`, filters.minPrice).reverse(),
+      .map((value) => ({ value, label: value === "ready_to_drive" ? "Ready to drive" : "Repair project", count: facet("condition").filter((vehicle) => vehicle.listingCondition === value).length })),
+    minPrice: thresholdOptions(facet("minPrice"), priceSteps, (vehicle, step) => vehicle.price >= step, (step) => `From ${pounds(step)}`, filters.minPrice),
     maxPrice: thresholdOptions(facet("maxPrice"), priceSteps, (vehicle, step) => vehicle.price <= step, (step) => `Up to ${pounds(step)}`, filters.maxPrice),
     maxMileage: thresholdOptions(facet("maxMileage"), mileageSteps, (vehicle, step) => vehicle.mileage <= step, (step) => `Up to ${step.toLocaleString("en-GB")} miles`, filters.maxMileage),
-    minYear: thresholdOptions(facet("minYear"), years, (vehicle, year) => vehicle.year >= year, (year) => `${year} or newer`, filters.minYear).sort((a, b) => Number(b.value) - Number(a.value)),
+    minYear: thresholdOptions(facet("minYear"), yearSteps(now), (vehicle, year) => vehicle.year >= year, (year) => `${year} or newer`, filters.minYear),
   };
 }
 

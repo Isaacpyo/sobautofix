@@ -69,6 +69,13 @@ describe("sitemap generation", () => {
       .toEqual(new Date("2026-08-09T15:30:00.000Z"));
   });
 
+  it("leaves stock pages to the exchange sitemap once they redirect there", () => {
+    const urls = build({ vehicles: [vehicle()], stockOnExchange: true }).map((entry) => entry.url);
+
+    expect(urls.some((url) => url.includes("/cars-for-sale"))).toBe(false);
+    expect(urls).toContain("https://sobautofix.com/about");
+  });
+
   it("includes conditional and custom CMS pages only when their public data exists", () => {
     const entries = build({ hasReviews: true, hasMedia: true, content: [content({ kind: "core_page", slug: "new-public-page" })] });
     const urls = entries.map((entry) => entry.url);

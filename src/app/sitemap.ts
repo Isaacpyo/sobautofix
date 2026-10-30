@@ -1,6 +1,7 @@
 import { isSupabaseConfigured } from "@/lib/supabase/server";
 import type { MetadataRoute } from "next";
 import { diagnostics, services, siteConfig } from "@/config/site";
+import { exchangeRedirectsActive } from "@/lib/exchange/host";
 import { getPublishedContentByKinds } from "@/lib/content/repository";
 import { getPublishedMedia } from "@/lib/media/repository";
 import { getVisibleReviews } from "@/lib/reviews/repository";
@@ -22,6 +23,8 @@ type SitemapInput = {
   vehicles: SaleVehicle[];
   hasReviews: boolean;
   hasMedia: boolean;
+  /** Stock pages redirect to the exchange host, which publishes its own sitemap. */
+  stockOnExchange?: boolean;
 };
 
 function sitemapBaseUrl(value: string) {
@@ -54,7 +57,7 @@ function contentPath(entry: ContentEntry) {
   }
 }
 
-export function buildSitemap({ baseUrl, content, vehicles, hasReviews, hasMedia }: SitemapInput): MetadataRoute.Sitemap {
+export function buildSitemap({ baseUrl, content, vehicles, hasReviews, hasMedia, stockOnExchange = false }: SitemapInput): MetadataRoute.Sitemap {
   const base = sitemapBaseUrl(baseUrl);
   const entries = new Map<string, MetadataRoute.Sitemap[number]>();
   const add = (path: string, entry: Omit<MetadataRoute.Sitemap[number], "url">) => {
@@ -62,7 +65,7 @@ export function buildSitemap({ baseUrl, content, vehicles, hasReviews, hasMedia 
     entries.set(url, { url, ...entry });
   };
 
-  for (const path of CORE_PATHS) add(path, { changeFrequency: path === "" ? "weekly" : "monthly", priority: path === "" ? 1 : 0.7 });
+  for (const path of CORE_PATHS.filter((candidate) => !(stockOnExchange && candidate === "/cars-for-sale"))) add(path, { changeFrequency: path === "" ? "weekly" : "monthly", priority: path === "" ? 1 : 0.7 });
   for (const item of services.filter((candidate) => candidate.published)) add(`/services/repairs-maintenance/${item.slug}`, { changeFrequency: "monthly", priority: 0.7 });
   for (const item of diagnostics.filter((candidate) => candidate.published)) add(`/diagnostics/${item.slug}`, { changeFrequency: "monthly", priority: 0.7 });
   if (hasReviews) add("/reviews", { changeFrequency: "monthly", priority: 0.7 });
@@ -78,7 +81,7 @@ export function buildSitemap({ baseUrl, content, vehicles, hasReviews, hasMedia 
     });
   }
 
-  for (const vehicle of vehicles) {
+  for (const vehicle of stockOnExchange ? [] : vehicles) {
     const path = `/cars-for-sale/${vehicle.slug}`;
     add(path, { lastModified: validLastModified(vehicle.updatedAt, path), changeFrequency: "weekly", priority: 0.8 });
   }
@@ -97,5 +100,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getPublishedMedia(undefined, strict),
   ]);
 
-  return buildSitemap({ baseUrl: siteConfig.siteUrl, content, vehicles, hasReviews: reviews.length > 0, hasMedia: media.length > 0 });
+  return buildSitemap({ baseUrl: siteConfig.siteUrl, content, vehicles, hasReviews: reviews.length > 0, hasMedia: media.length > 0, stockOnExchange: exchangeRedirectsActive() });
 }

@@ -41,6 +41,11 @@ export function exchangeHref(base: string, path = "/") {
 }
 
 /** Strip the "/exchange" prefix, giving the path as it appears on the exchange host. */
+/** True when production sends the main site's stock pages to the exchange host (proxy.ts). */
+export function exchangeRedirectsActive(env: Record<string, string | undefined> = process.env) {
+  return Boolean(env.NEXT_PUBLIC_EXCHANGE_URL) && env.VERCEL_ENV === "production" && env.EXCHANGE_REDIRECTS_ENABLED === "true";
+}
+
 export function toExchangePublicPath(pathname: string) {
   if (pathname === EXCHANGE_PATH_PREFIX) return "/";
   return pathname.startsWith(`${EXCHANGE_PATH_PREFIX}/`) ? pathname.slice(EXCHANGE_PATH_PREFIX.length) : pathname;

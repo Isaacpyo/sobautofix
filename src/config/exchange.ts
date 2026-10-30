@@ -53,7 +53,8 @@ export const exchangePublicDefaults: ExchangePublicSettings = {
   name: "SOB Auto Exchange",
   shortName: "Auto Exchange",
   tagline: "Buy, sell and maintain your car with SOB Autofix.",
-  heroHeading: "Your next car. Your current car. Your trusted workshop.",
+  // Non-breaking spaces keep each phrase on one line ("Buy it. Sell it. / Service it.").
+  heroHeading: "Buy\u00a0it. Sell\u00a0it. Service\u00a0it.",
   heroBody: "Explore our used cars, request an offer for your vehicle, or book repairs and diagnostics in Doncaster.",
   phone: "",
   whatsapp: "",

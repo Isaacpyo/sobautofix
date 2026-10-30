@@ -126,15 +126,19 @@ export const specialOffer = {
 } as const;
 
 /**
- * Main-site links into SOB Auto Exchange. They use the /exchange path on the
- * main site, which works before exchange.sobautofix.com is live and is
- * permanently redirected there once EXCHANGE_REDIRECTS_ENABLED=true.
+ * Main-site links into SOB Auto Exchange. With NEXT_PUBLIC_EXCHANGE_URL set
+ * (production) they point straight at exchange.sobautofix.com; without it
+ * (previews, local) they use the /exchange path on the main site.
  */
-export const exchangeEntryLinks = {
-  home: "/exchange",
-  cars: "/exchange/cars",
-  sell: "/exchange/sell",
-} as const;
+const exchangeUrl = process.env.NEXT_PUBLIC_EXCHANGE_URL?.replace(/\/+$/, "");
+
+export const exchangeEntryLinks = exchangeUrl
+  ? { home: `${exchangeUrl}/`, cars: `${exchangeUrl}/cars`, sell: `${exchangeUrl}/sell` }
+  : { home: "/exchange", cars: "/exchange/cars", sell: "/exchange/sell" };
+
+export function exchangeVehicleLink(slug: string) {
+  return `${exchangeEntryLinks.cars}/${encodeURIComponent(slug)}`;
+}
 
 export const mainNavigation = [
   { label: "Services", href: "/services" },

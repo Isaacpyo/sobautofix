@@ -16,3 +16,18 @@ export const workshopPhotos = {
   inspection: { src: diagnosticsInCar, alt: "A technician using a diagnostic tablet inside a car" },
   partExchange: { src: mercedesCheck, alt: "A technician checking a silver Mercedes with a diagnostic tablet" },
 };
+
+// Home page imagery supplied by the owner (30 Oct 2026). These are styled
+// marketing images, not photos of SOB Autofix stock or premises, so the alt
+// text describes the scene without claiming either.
+import homeHero from "../../../assets/exchange-hero-showroom.webp";
+import homeInspection from "../../../assets/exchange-inspection-red-car.webp";
+import homeBuy from "../../../assets/exchange-card-buy.webp";
+import homeSell from "../../../assets/exchange-card-sell.webp";
+
+export const homePhotos = {
+  hero: { src: homeHero, alt: "A blue BMW saloon parked outside a car showroom at sunset" },
+  inspection: { src: homeInspection, alt: "A red hatchback with its door and bonnet open and an inspection checklist on the driver's seat" },
+  buy: { src: homeBuy, alt: "A blue BMW saloon in a car showroom" },
+  sell: { src: homeSell, alt: "Car keys being handed over in front of a silver hatchback" },
+};
