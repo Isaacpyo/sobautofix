@@ -10,9 +10,10 @@ type ReadinessInput = Pick<
 > & { knownFaultsReviewed?: boolean };
 
 /**
- * A vehicle may only go on sale with core specifications, a price,
- * photographs and a condition disclosure. Unknown history is allowed, but
- * it must be stated ("Not confirmed"), never hidden or guessed.
+ * A vehicle may only go on sale with core specifications, a price, a
+ * description and photographs. The condition summary is optional (owner,
+ * 30 Oct 2026): left blank, customers see "Not confirmed". Unknown history is
+ * allowed, but it must be stated, never hidden or guessed.
  */
 export function getPublishReadiness(vehicle: ReadinessInput, options: { minimumPhotos: number }): PublishReadiness {
   const checks: ReadinessCheck[] = [
@@ -20,7 +21,6 @@ export function getPublishReadiness(vehicle: ReadinessInput, options: { minimumP
     { key: "price", label: "An advertised price above £0", passed: Number.isInteger(vehicle.price) && vehicle.price > 0 },
     { key: "description", label: "A description of at least 20 characters", passed: (vehicle.description?.trim().length || 0) >= 20 },
     { key: "photos", label: `At least ${options.minimumPhotos} photographs`, passed: vehicle.images.length >= options.minimumPhotos },
-    { key: "condition", label: "A condition summary of at least 20 characters", passed: (vehicle.conditionSummary?.trim().length || 0) >= 20 },
     {
       key: "repairProject",
       label: "Known faults listed for a repair project",

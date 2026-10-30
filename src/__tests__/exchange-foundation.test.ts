@@ -39,10 +39,14 @@ describe("publish readiness", () => {
     expect(getPublishReadiness(listing, { minimumPhotos: 4 })).toMatchObject({ ready: true, missing: [] });
   });
 
-  it("blocks missing photos, price and condition disclosure", () => {
-    const result = getPublishReadiness({ ...listing, price: 0, images: [], conditionSummary: "" }, { minimumPhotos: 4 });
+  it("blocks missing photos and price", () => {
+    const result = getPublishReadiness({ ...listing, price: 0, images: [] }, { minimumPhotos: 4 });
     expect(result.ready).toBe(false);
-    expect(result.missing).toEqual(expect.arrayContaining(["An advertised price above £0", "At least 4 photographs", "A condition summary of at least 20 characters"]));
+    expect(result.missing).toEqual(expect.arrayContaining(["An advertised price above £0", "At least 4 photographs"]));
+  });
+
+  it("does not require a condition summary", () => {
+    expect(getPublishReadiness({ ...listing, conditionSummary: "" }, { minimumPhotos: 4 })).toMatchObject({ ready: true, missing: [] });
   });
 
   it("requires listed faults for a repair project", () => {

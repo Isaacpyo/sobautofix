@@ -79,7 +79,7 @@ export function ConditionForm({ vehicle }: { vehicle: SaleVehicle }) {
       <legend className="sr-only">Condition</legend>
       <SelectField name="listingCondition" label="Listing condition" defaultValue={vehicle.listingCondition} options={options(listingConditionLabels)} hint="A repair project must list its known faults." />
       <SelectField name="writeOffStatus" label="Insurance write-off" defaultValue={vehicle.writeOffStatus} options={options(writeOffLabels)} />
-      <TextArea className="md:col-span-2" name="conditionSummary" label="Condition summary" rows={3} defaultValue={vehicle.conditionSummary} hint="At least 20 characters to publish. Mention marks and wear you can see in the photos." />
+      <TextArea className="md:col-span-2" name="conditionSummary" label="Condition summary" rows={3} defaultValue={vehicle.conditionSummary} hint="Optional. Mention marks and wear you can see in the photos. Left blank, customers see “Not confirmed”." />
       <TextArea name="knownFaults" label="Known faults (one per line)" rows={4} defaultValue={vehicle.knownFaults.join("\n")} />
       <TextArea name="workCompleted" label="Work completed (one per line)" rows={4} defaultValue={vehicle.workCompleted.join("\n")} />
     </fieldset>
