@@ -1,0 +1,70 @@
+name: Production migrations
+
+# Manual only. Applies supabase/migrations to the production project, following
+# docs/database-migration-policy.md: list, dry run, then push, then list again.
+# "dry-run" (the default) changes nothing. "apply" needs confirm=APPLY and runs
+# only from main. Uses the repository secret SOB_SUPABASE_ACCESS_TOKEN; the CLI
+# connects through a temporary login role, so no database password is needed.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "dry-run lists pending migrations; apply pushes them"
+        type: choice
+        options: [dry-run, apply]
+        default: dry-run
+      confirm:
+        description: "Type APPLY to push (apply mode only)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-migrations
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.ref == 'refs/heads/main'
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SOB_SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: nmebkkelpvhxxycrbbos
+    steps:
+      - name: Check inputs and secret
+        env:
+          MODE: ${{ inputs.mode }}
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then echo "::error::Repository secret SOB_SUPABASE_ACCESS_TOKEN is not set"; exit 1; fi
+          if [ "$MODE" = "apply" ] && [ "$CONFIRM" != "APPLY" ]; then echo "::error::apply mode needs confirm=APPLY"; exit 1; fi
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.113.0
+      - name: Link the production project
+        run: supabase link --project-ref "$PROJECT_REF"
+      - name: Migration history (before)
+        run: supabase migration list --linked
+      - name: Dry run
+        run: supabase db push --linked --dry-run
+      - name: Apply
+        if: inputs.mode == 'apply'
+        run: supabase db push --linked
+      - name: Migration history (after)
+        if: inputs.mode == 'apply'
+        run: supabase migration list --linked
+      - name: Verify exchange tables exist
+        if: inputs.mode == 'apply'
+        run: |
+          supabase inspect db table-stats --linked > table-stats.txt
+          missing=0
+          for table in exchange_settings exchange_private_settings vehicle_internal_records vehicle_costs vehicle_prep_items seller_submissions seller_submission_photos vehicle_inspections vehicle_documents vehicle_sales diary_appointments seller_offers; do
+            if grep -qw "$table" table-stats.txt; then echo "present: $table"; else echo "::error::missing: $table"; missing=1; fi
+          done
+          rm -f table-stats.txt
+          exit $missing
