@@ -2,24 +2,21 @@ import "server-only";
 
 import { z } from "zod";
 import { exchangePolicyPages, exchangePrivateDefaults, exchangePublicDefaults, type ExchangePrivateSettings, type ExchangePublicSettings } from "@/config/exchange";
-import { isStaffRole, staffRoles, type StaffRole } from "@/lib/exchange/permissions";
 import { mergeSettings } from "@/lib/exchange/settings";
 import { auditStaffAction, type StaffContext } from "@/lib/exchange/staff";
-import { assertCan, ExchangeUserError, fieldError, guardCopy, must, requiredInt } from "./core";
+import { assertCan, fieldError, guardCopy, must, requiredInt } from "./core";
 
 export async function loadSettingsForEdit(staff: StaffContext) {
   assertCan(staff, "settings.manage");
-  const [publicRow, privateRow, profiles] = await Promise.all([
+  const [publicRow, privateRow] = await Promise.all([
     staff.client.from("exchange_settings").select("value,updated_at").eq("id", true).maybeSingle(),
     staff.client.from("exchange_private_settings").select("value,updated_at").eq("id", true).maybeSingle(),
-    staff.client.from("admin_profiles").select("user_id,display_name,staff_role").order("display_name"),
   ]);
   return {
     publicSettings: mergeSettings(exchangePublicDefaults, publicRow.data?.value) as ExchangePublicSettings,
     privateSettings: mergeSettings(exchangePrivateDefaults, privateRow.data?.value) as ExchangePrivateSettings,
     publicUpdatedAt: (publicRow.data?.updated_at as string | undefined) || null,
     privateUpdatedAt: (privateRow.data?.updated_at as string | undefined) || null,
-    staff: ((profiles.data || []) as Array<{ user_id: string; display_name: string; staff_role: string | null }>).map((row) => ({ id: row.user_id, name: row.display_name, role: (isStaffRole(row.staff_role) ? row.staff_role : "owner") as StaffRole })),
   };
 }
 
@@ -76,19 +73,4 @@ export async function savePrivateSettings(staff: StaffContext, input: z.infer<ty
   const value: ExchangePrivateSettings = { ...input, notificationRecipients: [...new Set(input.notificationRecipients)] };
   must(await staff.client.from("exchange_private_settings").upsert({ id: true, value, updated_by: staff.userId }), "The settings could not be saved.");
   await auditStaffAction(staff, "update", "exchange_settings", "private", { recipients: value.notificationRecipients.length, reservationHoldDays: value.reservationHoldDays, handoverSteps: value.handoverChecklist.length, minimumPublishPhotos: value.minimumPublishPhotos });
-}
-
-export const roleSchema = z.object({ userId: z.string().uuid(), role: z.enum(staffRoles) });
-
-/** Changes a staff role. Nobody changes their own role, and the last owner cannot be demoted. */
-export async function changeStaffRole(staff: StaffContext, input: z.infer<typeof roleSchema>) {
-  assertCan(staff, "settings.manage");
-  if (input.userId === staff.userId) throw new ExchangeUserError("You cannot change your own role. Ask another owner.");
-  const profiles = must(await staff.client.from("admin_profiles").select("user_id,staff_role"), "Staff could not be loaded.") as Array<{ user_id: string; staff_role: string | null }>;
-  const target = profiles.find((profile) => profile.user_id === input.userId);
-  if (!target) throw new ExchangeUserError("That member of staff no longer exists.");
-  const owners = profiles.filter((profile) => (profile.staff_role || "owner") === "owner");
-  if ((target.staff_role || "owner") === "owner" && input.role !== "owner" && owners.length <= 1) throw new ExchangeUserError("This is the last owner. Make someone else an owner first.");
-  must(await staff.client.from("admin_profiles").update({ staff_role: input.role }).eq("user_id", input.userId), "The role could not be changed.");
-  await auditStaffAction(staff, "role_change", "admin_profile", input.userId, { from: target.staff_role || "owner", to: input.role });
 }

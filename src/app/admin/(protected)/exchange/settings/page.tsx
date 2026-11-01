@@ -1,18 +1,16 @@
-import { Check, Minus } from "lucide-react";
-import { ActionForm, SelectField, SubmitButton, TextArea, TextField } from "@/components/admin/exchange/forms";
-import { Badge, Card, NoAccess, Notice, PageHeading } from "@/components/admin/exchange/ui";
+import { ActionForm, SubmitButton, TextArea, TextField } from "@/components/admin/exchange/forms";
+import { Badge, Card, LinkButton, NoAccess, Notice, PageHeading } from "@/components/admin/exchange/ui";
 import { exchangePolicyPages, NOT_PUBLISHED_COPY } from "@/config/exchange";
 import { loadSettingsForEdit } from "@/lib/exchange/admin/settings-admin";
-import { permissionDescriptions, permissionsFor, staffRoleLabels, staffRoles } from "@/lib/exchange/permissions";
 import { requireStaffPage } from "@/lib/exchange/staff";
-import { changeStaffRoleAction, savePrivateSettingsAction, savePublicSettingsAction } from "./actions";
+import { savePrivateSettingsAction, savePublicSettingsAction } from "./actions";
 
 const blankMeans = "Leave blank if not yet approved: the site then says the information is being finalised.";
 
 export default async function ExchangeSettingsPage() {
   const { staff, allowed } = await requireStaffPage("settings.manage");
   if (!allowed) return <NoAccess area="settings" />;
-  const { publicSettings: p, privateSettings: v, staff: people } = await loadSettingsForEdit(staff);
+  const { publicSettings: p, privateSettings: v } = await loadSettingsForEdit(staff);
 
   return <>
     <PageHeading eyebrow="Owner only" title="Settings" description="Customer-facing copy, policies, operating rules and staff roles for SOB Auto Exchange." />
@@ -57,18 +55,8 @@ export default async function ExchangeSettingsPage() {
       <div className="flex justify-end"><SubmitButton>Save operating settings</SubmitButton></div>
     </ActionForm>
 
-    <Card id="roles" className="mt-6" title="Staff roles" description="Who can see costs, change prices, publish and change settings. Sign-in access itself is controlled by the staff allowlist.">
-      <ul className="divide-y divide-[#EEF2F6]">{people.map((person) => <li key={person.id} className="flex flex-wrap items-end justify-between gap-3 py-3">
-        <div className="min-w-0"><p className="font-bold text-[#071127]">{person.name}{person.id === staff.userId && <span className="ml-2 text-xs font-semibold text-[#586575]">(you)</span>}</p><p className="text-xs text-[#586575]">{staffRoleLabels[person.role]}</p></div>
-        {person.id === staff.userId ? <p className="text-xs text-[#586575]">You cannot change your own role.</p> : <ActionForm action={changeStaffRoleAction} hidden={{ userId: person.id }} className="flex flex-wrap items-end gap-2">
-          <SelectField name="role" label={<span className="sr-only">Role for {person.name}</span>} defaultValue={person.role} options={staffRoles.map((role) => ({ value: role, label: staffRoleLabels[role] }))} />
-          <SubmitButton variant="secondary" pendingLabel="Saving…">Change role</SubmitButton>
-        </ActionForm>}
-      </li>)}</ul>
-      <details className="mt-4 rounded-lg border border-[#E4EAF0] p-3"><summary className="min-h-10 cursor-pointer text-sm font-extrabold text-[#1462C4]">What each role can do</summary>
-        <div className="mt-3 overflow-x-auto"><table className="w-full min-w-[34rem] text-left text-xs"><caption className="sr-only">Permissions by role</caption><thead><tr><th scope="col" className="py-1 pr-3">Permission</th>{staffRoles.map((role) => <th key={role} scope="col" className="py-1 pr-3 text-center">{staffRoleLabels[role]}</th>)}</tr></thead>
-          <tbody>{Object.entries(permissionDescriptions).map(([permission, description]) => <tr key={permission} className="border-t border-[#EEF2F6]"><td className="py-1.5 pr-3">{description}</td>{staffRoles.map((role) => <td key={role} className="py-1.5 pr-3 text-center">{permissionsFor(role).includes(permission as never) ? <Check size={14} className="mx-auto text-[#067647]" aria-label="Yes" /> : <Minus size={14} className="mx-auto text-[#98A2B3]" aria-label="No" />}</td>)}</tr>)}</tbody></table></div>
-      </details>
+    <Card id="roles" className="mt-6" title="Staff roles" description="Inviting staff, changing roles and removing access now live in one place.">
+      <LinkButton href="/admin/staff">Open Staff &amp; access</LinkButton>
     </Card>
   </>;
 }

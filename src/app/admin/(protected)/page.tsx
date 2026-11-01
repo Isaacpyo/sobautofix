@@ -25,7 +25,9 @@ import {
 } from "@/lib/admin/dashboard";
 import { emptyInvoiceDashboard, loadInvoiceDashboard, normalizeInvoiceDashboardFilters } from "@/lib/invoices/dashboard";
 import { formatPence } from "@/lib/invoices/money";
-import { createAdminReadClient, getAdminUser } from "@/lib/supabase/server";
+import { createAdminClient, createAdminReadClient, getAdminUser } from "@/lib/supabase/server";
+import { can } from "@/lib/exchange/permissions";
+import { getStaffRole } from "@/lib/exchange/staff";
 import { cn } from "@/lib/utils";
 
 type RecentEnquiry = {
@@ -60,6 +62,9 @@ const emptyResult = { data: [], count: 0, error: null };
 export default async function DashboardPage() {
   const client = await createAdminReadClient();
   const admin = await getAdminUser({ allowTrustedDevice: true });
+  const roleClient = createAdminClient();
+  // Money and restricted shortcuts follow the staff role (Staff & access).
+  const role = admin && roleClient ? await getStaffRole(roleClient, admin.user.id) : "workshop";
   const now = new Date();
 
   const [newEnquiriesResult, recentEnquiriesResult, stockResult, contentResult, failedEmailsResult, activityResult, bookingsResult, bookingServicesResult, invoicesResult] = client
@@ -131,9 +136,9 @@ export default async function DashboardPage() {
         </div>
         <div className="hidden flex-wrap gap-2 md:flex" aria-label="Quick actions">
           <QuickAction href="/admin/enquiries" label="View enquiries" icon={Inbox} variant="secondary" />
-          <QuickAction href="/admin/inventory/new" label="Add vehicle" icon={CarFront} variant="secondary" />
-          <QuickAction href="/admin/invoices/new" label="Add invoice" icon={ReceiptText} variant="secondary" />
-          <QuickAction href="/admin/news/new" label="Add article" icon={Plus} />
+          {can(role, "stock.edit") && <QuickAction href="/admin/inventory/new" label="Add vehicle" icon={CarFront} variant="secondary" />}
+          {can(role, "finance.edit") && <QuickAction href="/admin/invoices/new" label="Add invoice" icon={ReceiptText} variant="secondary" />}
+          {can(role, "content.manage") && <QuickAction href="/admin/news/new" label="Add article" icon={Plus} />}
         </div>
       </div>
 
@@ -145,6 +150,7 @@ export default async function DashboardPage() {
       )}
 
       <section className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" aria-label="Key performance indicators">
+        {can(role, "finance.view") && <>
         <KpiCard
           label="Outstanding invoices"
           value={invoicesResult.outstandingCount}
@@ -160,6 +166,7 @@ export default async function DashboardPage() {
           href="/admin/invoices?status=paid"
           icon={BadgePoundSterling}
         />
+        </>}
         <KpiCard
           label="New enquiries"
           value={newEnquiriesResult.count ?? 0}

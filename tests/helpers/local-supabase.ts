@@ -75,11 +75,12 @@ export async function provisionLocalTestUsers(): Promise<LocalTestUsers> {
 
   executeLocalOwnerSql(
     `
-      insert into public.admin_profiles (user_id, display_name)
+      -- Both test admins are owners with access, whatever the demo seed set.
+      insert into public.admin_profiles (user_id, display_name, staff_role)
       values
-        (:'admin_id'::uuid, 'Local Invoice Test Admin'),
-        (:'secondary_admin_id'::uuid, 'Secondary Local Invoice Test Admin')
-      on conflict (user_id) do update set display_name = excluded.display_name;
+        (:'admin_id'::uuid, 'Local Invoice Test Admin', 'owner'),
+        (:'secondary_admin_id'::uuid, 'Secondary Local Invoice Test Admin', 'owner')
+      on conflict (user_id) do update set display_name = excluded.display_name, staff_role = 'owner', access_removed_at = null;
     `,
     { admin_id: adminIdentity.id, secondary_admin_id: secondaryAdminIdentity.id },
   );

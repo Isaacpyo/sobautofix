@@ -10,6 +10,8 @@ export type FormState = {
   nonce?: number;
   /** Optional redirect target the client follows after success. */
   redirectTo?: string;
+  /** A one-time link to show the user, e.g. a staff invite that could not be emailed. */
+  link?: string;
 };
 
 export const idleState: FormState = { status: "idle", message: "" };
