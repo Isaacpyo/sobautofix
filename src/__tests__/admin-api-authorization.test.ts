@@ -6,6 +6,7 @@ const harness = vi.hoisted(() => ({
   renderInvoicePdf: vi.fn(),
   renderInvoiceExportPdf: vi.fn(),
   loadInvoiceExportRows: vi.fn(),
+  staffCan: vi.fn(async () => true),
 }));
 
 const serviceClient = {
@@ -16,6 +17,7 @@ vi.mock("@/lib/supabase/server", () => ({
   getAdminUser: harness.getAdminUser,
   createAdminClient: vi.fn(() => serviceClient),
 }));
+vi.mock("@/lib/exchange/staff", () => ({ staffCan: harness.staffCan }));
 vi.mock("@/lib/invoices/repository", () => ({
   getInvoiceForAdmin: vi.fn(async () => ({
     id: "invoice-id",
@@ -89,5 +91,17 @@ describe("admin API authorization", () => {
     expect(response.headers.get("content-type")).toContain("text/csv");
     expect(response.headers.get("content-disposition")).toContain("SOB-Invoices-all-dates.csv");
     expect(response.headers.get("cache-control")).toContain("no-store");
+  });
+
+  it("refuses invoices to staff whose role cannot see money", async () => {
+    harness.admin = { user: { id: "sales-id" }, mfaVerified: true };
+    harness.staffCan.mockResolvedValue(false);
+    const pdfResponse = await invoicePdf(new Request("https://sobautofix.com/api/admin/invoices/invoice-id/pdf"), { params: Promise.resolve({ id: "invoice-id" }) });
+    expect(pdfResponse.status).toBe(403);
+    expect(harness.renderInvoicePdf).not.toHaveBeenCalled();
+    const exportResponse = await invoiceExport(new Request("https://sobautofix.com/api/admin/invoices/export?format=csv"));
+    expect(exportResponse.status).toBe(403);
+    expect(harness.loadInvoiceExportRows).not.toHaveBeenCalled();
+    harness.staffCan.mockResolvedValue(true);
   });
 });

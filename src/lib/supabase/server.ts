@@ -4,6 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { isAllowedAdminEmail } from "@/config/admin";
+import { isMissingSchemaError } from "@/lib/exchange/schema";
 import { requiresMfaChallenge } from "@/lib/auth/mfa";
 import { isMandatoryAdminMfaEnabled } from "@/lib/auth/mfa-policy";
 import { findValidTrustedDevice, TRUSTED_DEVICE_COOKIE } from "@/lib/auth/trusted-device";
@@ -61,21 +62,33 @@ export async function createAdminReadClient() {
   return createAdminClient();
 }
 
+/**
+ * The administrator profile for a signed-in user, when their access is active
+ * (Staff & access). Before the staff-access migration, the email allowlist in
+ * src/config/admin.ts still applies.
+ */
+async function loadActiveAdminProfile(profileClient: NonNullable<ReturnType<typeof createAdminClient>>, user: { id: string; email?: string | null }) {
+  const current = await profileClient
+    .from("admin_profiles")
+    .select("user_id, display_name, access_removed_at")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (!current.error) return current.data && !current.data.access_removed_at ? { user_id: current.data.user_id as string, display_name: current.data.display_name as string } : null;
+  if (!isMissingSchemaError(current.error) || !isAllowedAdminEmail(user.email)) return null;
+  const legacy = await profileClient.from("admin_profiles").select("user_id, display_name").eq("user_id", user.id).maybeSingle();
+  return legacy.data ? { user_id: legacy.data.user_id as string, display_name: legacy.data.display_name as string } : null;
+}
+
 export async function getAdminUser(options: { requireMfa?: boolean; allowTrustedDevice?: boolean } = {}) {
   const requireMfa = options.requireMfa ?? true;
   const client = await createClient();
   if (!client) return null;
   const { data: { user } } = await client.auth.getUser();
-  if (!user || !isAllowedAdminEmail(user.email)) return null;
+  if (!user) return null;
 
   const profileClient = createAdminClient();
   if (!profileClient) return null;
-  const { data: profile } = await profileClient
-    .from("admin_profiles")
-    .select("user_id, display_name")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
+  const profile = await loadActiveAdminProfile(profileClient, user);
   if (!profile) return null;
   const { data: assurance, error: assuranceError } = await client.auth.mfa.getAuthenticatorAssuranceLevel();
   if (assuranceError || !assurance) return null;

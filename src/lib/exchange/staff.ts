@@ -72,6 +72,12 @@ export async function requireStaffAction(permission: ExchangePermission): Promis
   return { userId: auth.user.id, displayName: auth.profile.display_name, role, can: (next) => can(role, next), client };
 }
 
+/** Whether a signed-in administrator's staff role includes a permission. */
+export async function staffCan(userId: string, permission: ExchangePermission) {
+  const client = createAdminClient();
+  return Boolean(client) && can(await getStaffRole(client!, userId), permission);
+}
+
 /** For route handlers that must answer with a status code instead of redirecting. */
 export async function getStaffForRoute(permission: ExchangePermission) {
   const staff = await loadStaff();

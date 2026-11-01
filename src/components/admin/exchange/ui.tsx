@@ -54,7 +54,7 @@ export function NoAccess({ area = "this area" }: { area?: string }) {
     <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-[#F2F4F7] text-[#344054]"><Lock size={20} aria-hidden="true" /></span>
     <div>
       <h2 className="text-lg font-extrabold text-[#071127]">You don&apos;t have access to this area</h2>
-      <p className="mt-1 text-sm leading-6 text-[#586575]">Your staff role does not include {area}. Ask the owner to change your role in Vehicle Buying &amp; Selling settings if you need it.</p>
+      <p className="mt-1 text-sm leading-6 text-[#586575]">Your staff role does not include {area}. Ask an owner to change your role in Staff &amp; access if you need it.</p>
     </div>
   </div>;
 }

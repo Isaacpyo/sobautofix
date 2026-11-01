@@ -74,6 +74,7 @@ Also: mobile layouts, keyboard use, reduced motion; validation keeps input; pric
 | 30 Oct | Subdomain and redirects | exchange.sobautofix.com live over HTTPS; `NEXT_PUBLIC_EXCHANGE_URL` and `EXCHANGE_REDIRECTS_ENABLED=true` set; old /exchange and /cars-for-sale links 308 to the subdomain (owner verified) |
 | 30 Oct | Owner review fixes (PRs #8, #9) | Number plate input, map, policies footer column, collapsible mobile footer, new home imagery and headline, full catalogue filters, main-site links straight to the subdomain; live checks passed |
 | 30 Oct | Settings content | Owner pasted approved wording (draft doc: claude.ai/artifact/TVgAMRyqU4ZfeuVifPXBNC); no "finalising" placeholders left on live pages |
+| 1 Nov | Staff & access (D20 to D22) | Fresh `db reset`; pgTAP 9 files, 193 tests; integration 22 tests and invoice PDF e2e; staff e2e (invite with copy-link fallback, edit, remove, restore, self-protection, sales locked out); 678 unit tests, lint, typecheck, build |
 
 ## Status of earlier blockers
 
@@ -87,7 +88,7 @@ Also: mobile layouts, keyboard use, reduced motion; validation keeps input; pric
 ## Owner to-dos (not code)
 
 - Complete **Condition & disclosure** for the two live cars (Hyundai Santa Fe MX60 OKJ, Vauxhall Meriva HF16 JKK): 11 fields show "Not confirmed".
-- Review **Settings → Staff roles**: every existing admin became Owner.
+- Review **System → Staff & access**: both existing admins are Owners. Invite other staff from there with the right role.
 - Send one real viewing request and one sell-my-car enquiry and confirm both emails reach info@sobautofix.com.
 
 ## Resume log

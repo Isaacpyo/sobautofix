@@ -9,6 +9,12 @@ const { getAdminUserMock } = vi.hoisted(() => ({ getAdminUserMock: vi.fn() }));
 
 vi.mock("@/lib/supabase/server", () => ({ getAdminUser: getAdminUserMock }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("@/lib/exchange/staff", () => ({
+  requireStaffAction: vi.fn(async () => {
+    if (!(await getAdminUserMock())) throw new Error("Unauthorised");
+    return {};
+  }),
+}));
 
 import {
   applyHighIntentArticleImportAction,

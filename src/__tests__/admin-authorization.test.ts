@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const harness = vi.hoisted(() => ({
   user: null as { id: string; email?: string } | null,
-  profile: null as { user_id: string; display_name: string } | null,
+  profile: null as { user_id: string; display_name: string; access_removed_at?: string | null } | null,
   assurance: { currentLevel: "aal1", nextLevel: "aal1", currentAuthenticationMethods: [{ method: "password" }] },
   assuranceError: null as Error | null,
   cookie: undefined as string | undefined,
@@ -72,16 +72,24 @@ describe("admin authorization boundary", () => {
     harness.policyError = null;
   });
 
-  it("denies logged-out, wrong-email, and unprofiled users", async () => {
+  it("denies logged-out users, users without a staff profile, and removed staff", async () => {
     harness.user = null;
     await expect(getAdminUser()).resolves.toBeNull();
 
+    // Access comes from an active staff profile (Staff & access), not the email.
     harness.user = { id: "other-id", email: "customer@example.com" };
+    harness.profile = null;
     await expect(getAdminUser()).resolves.toBeNull();
 
     harness.user = { id: "admin-id", email: "sobautofix@gmail.com" };
-    harness.profile = null;
+    harness.profile = { user_id: "admin-id", display_name: "Admin", access_removed_at: "2026-11-01T09:00:00Z" };
     await expect(getAdminUser()).resolves.toBeNull();
+  });
+
+  it("admits an invited staff member whose email is not in the original allowlist", async () => {
+    harness.user = { id: "staff-id", email: "new.staff@example.com" };
+    harness.profile = { user_id: "staff-id", display_name: "New Staff", access_removed_at: null };
+    await expect(getAdminUser()).resolves.toMatchObject({ user: { id: "staff-id" }, profile: { display_name: "New Staff" } });
   });
 
   it("documents the no-factor AAL1 case and enforces enrolled MFA", async () => {

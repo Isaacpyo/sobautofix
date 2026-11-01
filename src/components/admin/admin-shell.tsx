@@ -28,11 +28,12 @@ export const adminSearchDestinations = [
   ["news blog articles", "/admin/news"],
   ["media images", "/admin/media"], ["reviews", "/admin/reviews"],
   ["offers", "/admin/offers"], ["pricing prices", "/admin/pricing"],
-  ["notifications alerts", "/admin/notifications"], ["settings configuration", "/admin/settings"],
+  ["notifications alerts", "/admin/notifications"], ["staff access team roles users invite", "/admin/staff"],
+  ["settings configuration", "/admin/settings"],
   ["security mfa two factor authenticator", "/admin/configuration/security"],
 ] as const;
 
-export const adminSearchOptions = ["Dashboard", "Today", "Autofix Diary", "Vehicle Buying & Selling", "Vehicle stock", "Customers", "Enquiries", "Bookings", "News & Blog", "Media", "Reviews", "Offers", "Pricing", "Notifications", "Settings", "Security"];
+export const adminSearchOptions = ["Dashboard", "Today", "Autofix Diary", "Vehicle Buying & Selling", "Vehicle stock", "Customers", "Enquiries", "Bookings", "News & Blog", "Media", "Reviews", "Offers", "Pricing", "Notifications", "Staff & access", "Settings", "Security"];
 
 export function findAdminSearchDestination(input: string) {
   const query = input.trim().toLowerCase().replace(/&/g, " ").replace(/\s+/g, " ").trim();

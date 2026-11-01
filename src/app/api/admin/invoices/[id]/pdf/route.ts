@@ -1,4 +1,5 @@
 import { createAdminClient, getAdminUser } from "@/lib/supabase/server";
+import { staffCan } from "@/lib/exchange/staff";
 import { getInvoiceForAdmin } from "@/lib/invoices/repository";
 import { renderInvoicePdf } from "@/lib/invoices/pdf";
 
@@ -8,6 +9,7 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await getAdminUser();
   if (!auth) return Response.json({ error: "Unauthorised" }, { status: 401, headers: privateHeaders });
+  if (!(await staffCan(auth.user.id, "finance.view"))) return Response.json({ error: "Forbidden" }, { status: 403, headers: privateHeaders });
   const { id } = await params;
   const invoice = await getInvoiceForAdmin(id);
   if (!invoice) return Response.json({ error: "Invoice not found" }, { status: 404, headers: privateHeaders });

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { createAdminClient, getAdminUser } from "@/lib/supabase/server";
+import { staffCan } from "@/lib/exchange/staff";
 import { getConfiguredVehicleProvider } from "@/lib/vehicle/configured-provider";
 import { VehicleLookupError } from "@/lib/vehicle/provider";
 import { registrationSchema } from "@/lib/vehicle/registration";
@@ -9,6 +10,7 @@ export async function POST(request: NextRequest) {
   const auth = await getAdminUser();
   const client = createAdminClient();
   if (!auth || !client) return failure("unauthorised", "Your admin session has expired.", 401);
+  if (!(await staffCan(auth.user.id, "stock.edit"))) return failure("forbidden", "Your staff role cannot add vehicles.", 403);
   if (!(await consumeRateLimit(auth.user.id, "admin_vehicle_lookup", 20, 60))) return failure("rate_limited", "Too many lookups. Please wait a minute and try again.", 429);
 
   const body = await request.json().catch(() => null) as { registration?: unknown } | null;

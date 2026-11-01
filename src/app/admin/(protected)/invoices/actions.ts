@@ -6,22 +6,29 @@ import { z } from "zod";
 import { invoiceDraftSchema, invoicePaymentSchema, sendInvoiceSchema, friendlyInvoiceError, priceInputToPence } from "@/lib/invoices/schema";
 import { createInvoiceCorrection, deleteDraftInvoice, duplicateInvoice, issueInvoice, recordInvoicePayment, saveInvoiceDraft, sendInvoiceEmail, voidInvoice } from "@/lib/invoices/repository";
 import { requireFreshAdminSession } from "@/lib/auth/trusted-device-server";
+import { requireStaffAction } from "@/lib/exchange/staff";
+
+/** Invoices are a finance area: owners and managers only (Staff & access). */
+async function requireInvoiceStaff() {
+  await requireFreshAdminSession("/admin/invoices");
+  await requireStaffAction("finance.edit");
+}
 
 export type InvoiceFormState = { error: string };
 export async function saveInvoiceDraftAction(_previous: InvoiceFormState, formData: FormData): Promise<InvoiceFormState> {
-  await requireFreshAdminSession("/admin/invoices");
+  await requireInvoiceStaff();
   let id: string;
   try { const invoiceId = z.union([z.literal(""), z.string().uuid()]).parse(String(formData.get("invoiceId") || "")); const payload = invoiceDraftSchema.parse(JSON.parse(String(formData.get("payload") || "{}"))); const confirmDuplicateSource = formData.get("confirmDuplicateSource") === "true"; id = await saveInvoiceDraft(payload, invoiceId || undefined, confirmDuplicateSource); }
   catch (error) { return { error: friendlyInvoiceError(error) }; }
   refresh(id); redirect(`/admin/invoices/${id}?notice=saved`);
 }
-export async function issueInvoiceAction(formData: FormData) { await requireFreshAdminSession("/admin/invoices"); const id = uuid(formData); await issueInvoice(id); refresh(id); redirect(`/admin/invoices/${id}?notice=issued`); }
-export async function voidInvoiceAction(formData: FormData) { await requireFreshAdminSession("/admin/invoices"); const id = uuid(formData); await voidInvoice(id); refresh(id); redirect(`/admin/invoices/${id}?notice=voided`); }
-export async function deleteDraftInvoiceAction(formData: FormData) { await requireFreshAdminSession("/admin/invoices"); const id = uuid(formData); await deleteDraftInvoice(id); refresh(id); redirect("/admin/invoices?notice=deleted"); }
-export async function duplicateInvoiceAction(formData: FormData) { await requireFreshAdminSession("/admin/invoices"); const id = uuid(formData); const draftId = await duplicateInvoice(id); refresh(draftId); redirect(`/admin/invoices/${draftId}/edit?notice=duplicated`); }
-export async function createInvoiceCorrectionAction(formData: FormData) { await requireFreshAdminSession("/admin/invoices"); const id = uuid(formData); const draftId = await createInvoiceCorrection(id); refresh(id); refresh(draftId); redirect(`/admin/invoices/${draftId}/edit?notice=corrected`); }
+export async function issueInvoiceAction(formData: FormData) { await requireInvoiceStaff(); const id = uuid(formData); await issueInvoice(id); refresh(id); redirect(`/admin/invoices/${id}?notice=issued`); }
+export async function voidInvoiceAction(formData: FormData) { await requireInvoiceStaff(); const id = uuid(formData); await voidInvoice(id); refresh(id); redirect(`/admin/invoices/${id}?notice=voided`); }
+export async function deleteDraftInvoiceAction(formData: FormData) { await requireInvoiceStaff(); const id = uuid(formData); await deleteDraftInvoice(id); refresh(id); redirect("/admin/invoices?notice=deleted"); }
+export async function duplicateInvoiceAction(formData: FormData) { await requireInvoiceStaff(); const id = uuid(formData); const draftId = await duplicateInvoice(id); refresh(draftId); redirect(`/admin/invoices/${draftId}/edit?notice=duplicated`); }
+export async function createInvoiceCorrectionAction(formData: FormData) { await requireInvoiceStaff(); const id = uuid(formData); const draftId = await createInvoiceCorrection(id); refresh(id); refresh(draftId); redirect(`/admin/invoices/${draftId}/edit?notice=corrected`); }
 export async function recordInvoicePaymentAction(formData: FormData) {
-  await requireFreshAdminSession("/admin/invoices");
+  await requireInvoiceStaff();
   const date = String(formData.get("paidAt") || "");
   try {
     const parsed = invoicePaymentSchema.parse({ invoiceId: formData.get("invoiceId"), amountPence: priceInputToPence(String(formData.get("amount") || "")), paidAt: date ? new Date(`${date}T12:00:00Z`).toISOString() : "", method: formData.get("method"), reference: formData.get("reference") || "" });
@@ -34,7 +41,7 @@ export async function recordInvoicePaymentAction(formData: FormData) {
   }
 }
 export async function sendInvoiceAction(formData: FormData) {
-  await requireFreshAdminSession("/admin/invoices");
+  await requireInvoiceStaff();
   const parsed = sendInvoiceSchema.parse({ invoiceId: formData.get("invoiceId"), recipient: formData.get("recipient"), intent: formData.get("intent") || "new", logicalSendId: formData.get("logicalSendId") });
   const result = await sendInvoiceEmail(parsed.invoiceId, parsed.recipient, parsed.logicalSendId);
   refresh(parsed.invoiceId);
