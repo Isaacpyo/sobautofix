@@ -75,6 +75,7 @@ Also: mobile layouts, keyboard use, reduced motion; validation keeps input; pric
 | 30 Oct | Owner review fixes (PRs #8, #9) | Number plate input, map, policies footer column, collapsible mobile footer, new home imagery and headline, full catalogue filters, main-site links straight to the subdomain; live checks passed |
 | 30 Oct | Settings content | Owner pasted approved wording (draft doc: claude.ai/artifact/TVgAMRyqU4ZfeuVifPXBNC); no "finalising" placeholders left on live pages |
 | 1 Nov | Staff & access (D20 to D22) | Fresh `db reset`; pgTAP 9 files, 193 tests; integration 22 tests and invoice PDF e2e; staff e2e (invite with copy-link fallback, edit, remove, restore, self-protection, sales locked out); 678 unit tests, lint, typecheck, build |
+| 1 Nov | Dashboard health and sign-out | Database health no longer reads "Degraded" when invoice totals are held back from a remembered-device session (cards ask to verify instead) and names any area that fails; sign-out asks for confirmation; dashboard no longer wider than a 390px phone |
 
 ## Status of earlier blockers
 

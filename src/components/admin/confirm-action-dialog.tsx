@@ -1,15 +1,17 @@
 "use client";
 
-import { AlertTriangle, LoaderCircle, Trash2, X } from "lucide-react";
+import { AlertTriangle, LoaderCircle, Trash2, X, type LucideIcon } from "lucide-react";
 import { useEffect, useId, useRef } from "react";
 
-export function ConfirmActionDialog({ open, pending = false, title = "Confirm action", message, confirmLabel, tone = "warning", confirmType = "button", onCancel, onConfirm }: {
+export function ConfirmActionDialog({ open, pending = false, title = "Confirm action", message, confirmLabel, tone = "warning", icon, confirmType = "button", onCancel, onConfirm }: {
   open: boolean;
   pending?: boolean;
   title?: string;
   message: string;
   confirmLabel: React.ReactNode;
-  tone?: "warning" | "danger";
+  /** "info" is for routine confirmations that lose nothing, such as signing out. */
+  tone?: "warning" | "danger" | "info";
+  icon?: LucideIcon;
   confirmType?: "button" | "submit";
   onCancel: () => void;
   onConfirm?: () => void;
@@ -59,11 +61,13 @@ export function ConfirmActionDialog({ open, pending = false, title = "Confirm ac
 
   if (!open) return null;
   const danger = tone === "danger";
+  const Icon = icon || (danger ? Trash2 : AlertTriangle);
+  const iconStyle = danger ? "bg-red-100 text-red-700" : tone === "info" ? "bg-[#EAF2FD] text-[#1462C4]" : "bg-amber-100 text-amber-800";
 
   return <div className="fixed inset-0 z-[110] grid place-items-center bg-[#071127]/65 p-5 backdrop-blur-sm" onMouseDown={(event) => { if (event.target === event.currentTarget && !pending) onCancel(); }}>
     <section ref={dialog} role="alertdialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={messageId} className="w-full max-w-md rounded-3xl border border-white/20 bg-white p-6 shadow-2xl sm:p-7">
       <div className="flex items-start justify-between gap-4">
-        <span className={`grid size-12 shrink-0 place-items-center rounded-2xl ${danger ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-800"}`}>{danger ? <Trash2 size={23} aria-hidden="true" /> : <AlertTriangle size={23} aria-hidden="true" />}</span>
+        <span className={`grid size-12 shrink-0 place-items-center rounded-2xl ${iconStyle}`}><Icon size={23} aria-hidden="true" /></span>
         <button ref={cancelButton} type="button" disabled={pending} onClick={onCancel} aria-label="Close confirmation" className="grid size-10 place-items-center rounded-xl border border-[#D7E0E9] text-[#586575] transition hover:border-[#1974E2] hover:text-[#1974E2] disabled:opacity-50"><X size={18} aria-hidden="true" /></button>
       </div>
       <h2 id={titleId} className="mt-5 text-2xl font-extrabold text-[#071127]">{title}</h2>

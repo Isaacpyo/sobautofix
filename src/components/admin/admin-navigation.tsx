@@ -10,7 +10,6 @@ import {
   Gift,
   ImageIcon,
   Inbox,
-  LogOut,
   Menu,
   Newspaper,
   PanelLeftClose,
@@ -29,7 +28,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { signOut } from "@/app/admin/login/actions";
+import { SignOutButton, signOutButtonStyles } from "@/components/admin/sign-out-button";
 import { Logo } from "@/components/layout/logo";
 import { can, type ExchangePermission, type StaffRole } from "@/lib/exchange/permissions";
 import { cn } from "@/lib/utils";
@@ -161,11 +160,7 @@ export function AdminNavigation({ displayName, notificationCount, collapsed, onT
   const account = (compact = false) => (
     <div className="border-t border-white/10 pt-4">
       {!compact && <><p className="px-2.5 text-[0.6875rem] text-[#8F9EAF]">Signed in as</p><p className="mt-0.5 truncate px-2.5 text-[0.8125rem] font-bold text-white">{displayName}</p></>}
-      <form action={signOut}>
-        <button aria-label={compact ? "Sign out" : undefined} title={compact ? "Sign out" : undefined} className={cn("mt-2 flex min-h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-[0.8125rem] font-semibold text-[#C6D2DF] hover:bg-white/[0.06] hover:text-white", compact && "justify-center px-2")}>
-          <LogOut size={17} aria-hidden="true" /> {!compact && "Sign out"}
-        </button>
-      </form>
+      <SignOutButton compact={compact} className={signOutButtonStyles(compact)} onBeforeConfirm={mobileOpen ? () => setMobileOpen(false) : undefined} />
     </div>
   );
 
