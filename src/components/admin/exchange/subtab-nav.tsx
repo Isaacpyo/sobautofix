@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
+import { usePrefetchIntent } from "@/components/admin/use-prefetch-intent";
 import { cn } from "@/lib/utils";
 
 export type ExchangeTab = { href: string; label: string };
@@ -21,6 +22,7 @@ export function ExchangeSubtabNav({ tabs: baseTabs, moreTabs: groupTabs = [] }: 
   const moreTabs = groupTabs.length === 1 ? [] : groupTabs;
   const pathname = usePathname();
   const listRef = useRef<HTMLUListElement>(null);
+  const prefetchOnIntent = usePrefetchIntent();
   const activeHref = [...tabs, ...moreTabs].filter((tab) => tab.href === "/admin/exchange" ? pathname === tab.href : pathname === tab.href || pathname.startsWith(`${tab.href}/`)).sort((a, b) => b.href.length - a.href.length)[0]?.href;
 
   useEffect(() => {
@@ -33,7 +35,7 @@ export function ExchangeSubtabNav({ tabs: baseTabs, moreTabs: groupTabs = [] }: 
       {tabs.map((tab) => {
         const active = tab.href === activeHref;
         return <li key={tab.href} className="shrink-0">
-          <Link href={tab.href} aria-current={active ? "page" : undefined} className={cn(tabClass, active ? activeClass : idleClass)}>{tab.label}</Link>
+          <Link href={tab.href} {...prefetchOnIntent(tab.href)} aria-current={active ? "page" : undefined} className={cn(tabClass, active ? activeClass : idleClass)}>{tab.label}</Link>
         </li>;
       })}
     </ul>

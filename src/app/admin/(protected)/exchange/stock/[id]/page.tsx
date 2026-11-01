@@ -5,6 +5,7 @@ import { formatDate, formatDateTime, formatPounds, inspectionOutcomeLabels, prep
 import { StockStatusBadge } from "@/components/admin/exchange/stock-badges";
 import { ConditionForm, CostLineForm, CostRowActions, DocumentList, DocumentUploader, InternalForm, ListingForm, PhotoManager, StatusPanel } from "@/components/admin/exchange/stock-editor";
 import { Badge, Card, KeyValues, LinkButton, NoAccess, Notice } from "@/components/admin/exchange/ui";
+import { IntentPrefetchLink } from "@/components/admin/intent-prefetch-link";
 import { BackLink } from "@/components/ui/back-link";
 import { costCategoryLabels, formatPence, MARGIN_DEFINITION } from "@/lib/exchange/margin";
 import { stockTransitions } from "@/lib/exchange/readiness";
@@ -74,7 +75,7 @@ export default async function StockEditorPage({ params, searchParams }: { params
     </header>
 
     <nav aria-label="Vehicle record sections" className="mt-4 -mx-5 overflow-x-auto px-5 lg:mx-0 lg:px-0">
-      <ul className="flex gap-1.5">{visibleTabs.map((item) => <li key={item.key} className="shrink-0"><Link href={`/admin/exchange/stock/${vehicle.id}?tab=${item.key}`} aria-current={tab === item.key ? "page" : undefined} className={cn("inline-flex min-h-10 items-center gap-1.5 rounded-full border px-3.5 text-sm font-bold whitespace-nowrap", tab === item.key ? "border-[#1974E2] bg-[#1974E2] text-white" : "border-[#D7E0E9] bg-white text-[#344054] hover:border-[#1974E2]")}>{"finance" in item && <Lock size={13} aria-hidden="true" />}{item.label}{item.key === "photos" && <span className="text-xs opacity-80">({vehicle.images.length})</span>}</Link></li>)}</ul>
+      <ul className="flex gap-1.5">{visibleTabs.map((item) => <li key={item.key} className="shrink-0"><IntentPrefetchLink href={`/admin/exchange/stock/${vehicle.id}?tab=${item.key}`} aria-current={tab === item.key ? "page" : undefined} className={cn("inline-flex min-h-10 items-center gap-1.5 rounded-full border px-3.5 text-sm font-bold whitespace-nowrap", tab === item.key ? "border-[#1974E2] bg-[#1974E2] text-white" : "border-[#D7E0E9] bg-white text-[#344054] hover:border-[#1974E2]")}>{"finance" in item && <Lock size={13} aria-hidden="true" />}{item.label}{item.key === "photos" && <span className="text-xs opacity-80">({vehicle.images.length})</span>}</IntentPrefetchLink></li>)}</ul>
     </nav>
 
     <div className="mt-4">
