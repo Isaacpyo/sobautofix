@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { signOut } from "@/app/admin/login/actions";
 import { Logo } from "@/components/layout/logo";
 import { can, type ExchangePermission, type StaffRole } from "@/lib/exchange/permissions";
@@ -96,6 +96,11 @@ export function AdminNavigation({ displayName, notificationCount, collapsed, onT
   const countLabel = notificationCount > 99 ? "99+" : String(notificationCount);
   const setMobileOpen = (open: boolean) => onMobileOpenChange(open);
   const drawerClose = useRef<HTMLButtonElement>(null);
+  // Prefetch a section only once someone shows intent (hover, focus, touch).
+  // Prefetching all ~17 sections on every page load sent a burst of server
+  // renders at once; some failed with 503 and pages could stall on loading.
+  const [intent, setIntent] = useState<ReadonlySet<string>>(() => new Set());
+  const showIntent = (href: string) => setIntent((current) => current.has(href) ? current : new Set(current).add(href));
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -119,6 +124,10 @@ export function AdminNavigation({ displayName, notificationCount, collapsed, onT
                 <Link
                   key={href}
                   href={href}
+                  prefetch={intent.has(href) ? null : false}
+                  onMouseEnter={() => showIntent(href)}
+                  onFocus={() => showIntent(href)}
+                  onTouchStart={() => showIntent(href)}
                   aria-current={active ? "page" : undefined}
                   aria-label={compact ? label : undefined}
                   title={compact ? label : undefined}

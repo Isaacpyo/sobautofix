@@ -1,9 +1,13 @@
+import { LoadingStallNotice } from "@/components/admin/loading-stall-notice";
+
 function SkeletonBlock({ className }: { className: string }) {
   return <div aria-hidden="true" className={`rounded-lg bg-[#E4EAF0] ${className}`} />;
 }
 
 export default function AdminLoading() {
   return (
+    <>
+    <LoadingStallNotice />
     <div
       role="status"
       aria-live="polite"
@@ -49,5 +53,6 @@ export default function AdminLoading() {
         </div>
       </div>
     </div>
+    </>
   );
 }
