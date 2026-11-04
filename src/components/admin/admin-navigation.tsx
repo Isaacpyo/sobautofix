@@ -10,7 +10,6 @@ import {
   Gift,
   ImageIcon,
   Inbox,
-  LogOut,
   Menu,
   Newspaper,
   PanelLeftClose,
@@ -20,6 +19,7 @@ import {
   ShieldCheck,
   Star,
   Trash2,
+  UserCog,
   UsersRound,
   Wrench,
   X,
@@ -28,7 +28,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
-import { signOut } from "@/app/admin/login/actions";
+import { SignOutButton, signOutButtonStyles } from "@/components/admin/sign-out-button";
 import { Logo } from "@/components/layout/logo";
 import { can, type ExchangePermission, type StaffRole } from "@/lib/exchange/permissions";
 import { cn } from "@/lib/utils";
@@ -46,31 +46,32 @@ export const navigationGroups: Array<{ label: string; links: AdminLink[] }> = [
       { href: "/admin/diary", label: "Autofix Diary", icon: CalendarDays, permission: "diary.manage" },
       { href: "/admin/exchange", label: "Vehicle Buying & Selling", icon: CarFront, permission: "exchange.view" },
       { href: "/admin/customers", label: "Customers", icon: UsersRound, permission: "customers.view" },
-      { href: "/admin/invoices", label: "Invoices", icon: ReceiptText },
-      { href: "/admin/service-catalogue", label: "Service catalogue", icon: Wrench },
+      { href: "/admin/invoices", label: "Invoices", icon: ReceiptText, permission: "finance.view" },
+      { href: "/admin/service-catalogue", label: "Service catalogue", icon: Wrench, permission: "pricing.manage" },
     ],
   },
   {
     label: "Content",
     links: [
-      { href: "/admin/news", label: "News & Blog", icon: Newspaper },
-      { href: "/admin/media", label: "Media", icon: ImageIcon },
-      { href: "/admin/reviews", label: "Reviews", icon: Star },
+      { href: "/admin/news", label: "News & Blog", icon: Newspaper, permission: "content.manage" },
+      { href: "/admin/media", label: "Media", icon: ImageIcon, permission: "content.manage" },
+      { href: "/admin/reviews", label: "Reviews", icon: Star, permission: "content.manage" },
     ],
   },
   {
     label: "Commercial",
     links: [
-      { href: "/admin/offers", label: "Offers", icon: Gift },
-      { href: "/admin/pricing", label: "Pricing", icon: BadgePoundSterling },
+      { href: "/admin/offers", label: "Offers", icon: Gift, permission: "pricing.manage" },
+      { href: "/admin/pricing", label: "Pricing", icon: BadgePoundSterling, permission: "pricing.manage" },
     ],
   },
   {
     label: "System",
     links: [
       { href: "/admin/notifications", label: "Notifications", icon: Bell },
-      { href: "/admin/trash", label: "Trash", icon: Trash2 },
-      { href: "/admin/settings", label: "Settings", icon: Settings },
+      { href: "/admin/trash", label: "Trash", icon: Trash2, permission: "content.manage" },
+      { href: "/admin/staff", label: "Staff & access", icon: UserCog, permission: "staff.manage" },
+      { href: "/admin/settings", label: "Settings", icon: Settings, permission: "site.manage" },
       { href: "/admin/configuration/security", label: "Security", icon: ShieldCheck },
     ],
   },
@@ -88,7 +89,9 @@ type AdminNavigationProps = {
 };
 
 export function visibleNavigationGroups(role: StaffRole) {
-  return navigationGroups.map((group) => ({ ...group, links: group.links.filter((link) => !link.permission || can(role, link.permission)) }));
+  return navigationGroups
+    .map((group) => ({ ...group, links: group.links.filter((link) => !link.permission || can(role, link.permission)) }))
+    .filter((group) => group.links.length > 0);
 }
 
 export function AdminNavigation({ displayName, notificationCount, collapsed, onToggleCollapsed, role, mobileOpen, onMobileOpenChange }: AdminNavigationProps) {
@@ -151,11 +154,7 @@ export function AdminNavigation({ displayName, notificationCount, collapsed, onT
   const account = (compact = false) => (
     <div className="border-t border-white/10 pt-4">
       {!compact && <><p className="px-2.5 text-[0.6875rem] text-[#8F9EAF]">Signed in as</p><p className="mt-0.5 truncate px-2.5 text-[0.8125rem] font-bold text-white">{displayName}</p></>}
-      <form action={signOut}>
-        <button aria-label={compact ? "Sign out" : undefined} title={compact ? "Sign out" : undefined} className={cn("mt-2 flex min-h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-[0.8125rem] font-semibold text-[#C6D2DF] hover:bg-white/[0.06] hover:text-white", compact && "justify-center px-2")}>
-          <LogOut size={17} aria-hidden="true" /> {!compact && "Sign out"}
-        </button>
-      </form>
+      <SignOutButton compact={compact} className={signOutButtonStyles(compact)} onBeforeConfirm={mobileOpen ? () => setMobileOpen(false) : undefined} />
     </div>
   );
 

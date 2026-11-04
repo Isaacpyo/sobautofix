@@ -25,7 +25,9 @@ import {
 } from "@/lib/admin/dashboard";
 import { emptyInvoiceDashboard, loadInvoiceDashboard, normalizeInvoiceDashboardFilters } from "@/lib/invoices/dashboard";
 import { formatPence } from "@/lib/invoices/money";
-import { createAdminReadClient, getAdminUser } from "@/lib/supabase/server";
+import { createAdminClient, createAdminReadClient, getAdminUser } from "@/lib/supabase/server";
+import { can } from "@/lib/exchange/permissions";
+import { getStaffRole } from "@/lib/exchange/staff";
 import { cn } from "@/lib/utils";
 
 type RecentEnquiry = {
@@ -60,7 +62,15 @@ const emptyResult = { data: [], count: 0, error: null };
 export default async function DashboardPage() {
   const client = await createAdminReadClient();
   const admin = await getAdminUser({ allowTrustedDevice: true });
+  const roleClient = createAdminClient();
+  // Money and restricted shortcuts follow the staff role (Staff & access).
+  const role = admin && roleClient ? await getStaffRole(roleClient, admin.user.id) : "workshop";
   const now = new Date();
+  // Invoice totals come from the signed-in session, and the database releases
+  // invoices only to a finance role with a verified sign-in (two-step
+  // verification done in this session, not a remembered device). Otherwise the
+  // cards ask the person to verify instead of reporting a database fault.
+  const invoiceAccess = !can(role, "finance.view") ? "none" : admin && (admin.mfaVerified || !admin.mfaRequired) ? "load" : "verify";
 
   const [newEnquiriesResult, recentEnquiriesResult, stockResult, contentResult, failedEmailsResult, activityResult, bookingsResult, bookingServicesResult, invoicesResult] = client
     ? await Promise.all([
@@ -72,9 +82,9 @@ export default async function DashboardPage() {
         client.from("admin_audit_log").select("id,actor_id,action,entity_type,entity_id,detail,created_at").order("created_at", { ascending: false }).limit(6),
         client.from("bookings").select("id,status,appointment_start,provider_sync_state").is("deleted_at", null).order("appointment_start", { ascending: true }).limit(500),
         client.from("booking_service_types").select("id", { count: "exact", head: true }).not("system_id", "is", null).is("deleted_at", null).eq("online_booking_enabled", true).not("provider_event_type_id", "is", null),
-        admin
+        admin && invoiceAccess === "load"
           ? loadInvoiceDashboard(admin.client, normalizeInvoiceDashboardFilters({}))
-          : { ...emptyInvoiceDashboard, error: new Error("Admin session is unavailable") },
+          : emptyInvoiceDashboard,
       ])
     : [emptyResult, emptyResult, emptyResult, emptyResult, emptyResult, emptyResult, emptyResult, emptyResult, emptyInvoiceDashboard];
 
@@ -85,17 +95,20 @@ export default async function DashboardPage() {
   const bookingRows = (bookingsResult.data || []) as BookingSummary[];
   const stockCounts = countStatuses(stockRows, ["available", "reserved", "sold"]);
   const articleCounts = countStatuses(contentRows.filter((entry) => entry.kind === "article"), ["published", "draft", "scheduled"]);
-  const databaseReady = Boolean(client) && ![
-    newEnquiriesResult,
-    recentEnquiriesResult,
-    stockResult,
-    contentResult,
-    failedEmailsResult,
-    activityResult,
-    bookingsResult,
-    bookingServicesResult,
-    invoicesResult,
-  ].some((result) => result.error);
+  const dataSources: Array<[string, { error: unknown }]> = [
+    ["new enquiries", newEnquiriesResult],
+    ["recent enquiries", recentEnquiriesResult],
+    ["stock", stockResult],
+    ["website content", contentResult],
+    ["email delivery status", failedEmailsResult],
+    ["recent activity", activityResult],
+    ["bookings", bookingsResult],
+    ["booking services", bookingServicesResult],
+    ["invoice totals", invoicesResult],
+  ];
+  const databaseIssues = client ? dataSources.filter(([, result]) => result.error).map(([name]) => name) : ["dashboard data"];
+  if (databaseIssues.length) console.warn("admin dashboard: data unavailable", { sources: databaseIssues });
+  const databaseReady = databaseIssues.length === 0;
 
   const todayKey = londonDateKey(now);
   const todayAppointments = bookingRows.filter((booking) => londonDateKey(new Date(booking.appointment_start)) === todayKey && !["cancelled", "completed"].includes(booking.status)).length;
@@ -106,6 +119,7 @@ export default async function DashboardPage() {
   const systemHealth = createSystemHealthChecks({
     websiteReady: isWebsiteReady(),
     databaseReady,
+    databaseIssues,
     emailReady: ["RESEND_API_KEY", "RESEND_FROM_EMAIL", "RESEND_REPLY_TO", "ENQUIRY_NOTIFICATION_EMAIL"].every((key) => Boolean(process.env[key])),
     bookingReady: bookingConfigured,
     vehicleLookupReady: (process.env.VEHICLE_LOOKUP_PROVIDER === "vehicle-data-global"
@@ -131,9 +145,9 @@ export default async function DashboardPage() {
         </div>
         <div className="hidden flex-wrap gap-2 md:flex" aria-label="Quick actions">
           <QuickAction href="/admin/enquiries" label="View enquiries" icon={Inbox} variant="secondary" />
-          <QuickAction href="/admin/inventory/new" label="Add vehicle" icon={CarFront} variant="secondary" />
-          <QuickAction href="/admin/invoices/new" label="Add invoice" icon={ReceiptText} variant="secondary" />
-          <QuickAction href="/admin/news/new" label="Add article" icon={Plus} />
+          {can(role, "stock.edit") && <QuickAction href="/admin/inventory/new" label="Add vehicle" icon={CarFront} variant="secondary" />}
+          {can(role, "finance.edit") && <QuickAction href="/admin/invoices/new" label="Add invoice" icon={ReceiptText} variant="secondary" />}
+          {can(role, "content.manage") && <QuickAction href="/admin/news/new" label="Add article" icon={Plus} />}
         </div>
       </div>
 
@@ -145,21 +159,23 @@ export default async function DashboardPage() {
       )}
 
       <section className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" aria-label="Key performance indicators">
+        {can(role, "finance.view") && <>
         <KpiCard
           label="Outstanding invoices"
-          value={invoicesResult.outstandingCount}
-          support={`${formatPence(invoicesResult.outstandingTotalPence)} unpaid`}
+          value={invoiceAccess === "load" ? invoicesResult.outstandingCount : "Verify"}
+          support={invoiceAccess === "load" ? `${formatPence(invoicesResult.outstandingTotalPence)} unpaid` : "Open Invoices and verify your sign-in to see totals"}
           href="/admin/invoices?status=issued"
           icon={ReceiptText}
-          tone={invoicesResult.outstandingCount !== "0" ? "warning" : "default"}
+          tone={invoiceAccess === "load" && invoicesResult.outstandingCount !== "0" ? "warning" : "default"}
         />
         <KpiCard
           label="Paid this week"
-          value={formatPence(invoicesResult.currentWeekPaidTotalPence)}
-          support="Settled since Monday"
+          value={invoiceAccess === "load" ? formatPence(invoicesResult.currentWeekPaidTotalPence) : "Verify"}
+          support={invoiceAccess === "load" ? "Settled since Monday" : "Open Invoices and verify your sign-in to see totals"}
           href="/admin/invoices?status=paid"
           icon={BadgePoundSterling}
         />
+        </>}
         <KpiCard
           label="New enquiries"
           value={newEnquiriesResult.count ?? 0}
@@ -191,10 +207,10 @@ export default async function DashboardPage() {
         />
       </section>
 
-      <div className="mt-8 grid min-w-0 gap-6 xl:grid-cols-12">
+      <div className="mt-8 grid min-w-0 grid-cols-1 gap-6 xl:grid-cols-12">
         <RecentEnquiriesPanel enquiries={recentEnquiries} now={now} />
 
-        <div className="grid content-start gap-6 xl:col-span-4">
+        <div className="grid min-w-0 grid-cols-1 content-start gap-6 xl:col-span-4">
           <BookingPanel configured={bookingConfigured} today={todayAppointments} upcoming={upcomingBookings} attention={bookingAttention} />
           <SystemHealthPanel checks={systemHealth} />
         </div>

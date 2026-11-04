@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createAdminClient, getAdminUser } from "@/lib/supabase/server";
+import { can } from "@/lib/exchange/permissions";
+import { getStaffRole, StaffPermissionError } from "@/lib/exchange/staff";
 import { manageTrashAction } from "@/app/admin/(protected)/trash/actions";
 
 export type CatalogueActionState = { success: boolean; message: string };
@@ -38,6 +40,8 @@ async function verifiedAdmin() {
   if (!admin) redirect("/admin/login?returnTo=%2Fadmin%2Fservice-catalogue");
   if (admin.mfaState === "enrollment_required") redirect("/admin/mfa/enroll");
   if (admin.mfaState === "challenge_required") redirect("/admin/mfa?returnTo=%2Fadmin%2Fservice-catalogue&stepUp=1");
+  const roleClient = createAdminClient();
+  if (!roleClient || !can(await getStaffRole(roleClient, admin.user.id), "pricing.manage")) throw new StaffPermissionError();
   return admin;
 }
 

@@ -4,6 +4,8 @@
 
 Next.js 16 (App Router), React 19, Tailwind 4, Supabase (Postgres, Auth, Storage), zod, Resend, Sentry, Vitest, Playwright. One app serves the workshop site (sobautofix.com), the admin (`/admin`) and SOB Auto Exchange (`exchange.sobautofix.com`, code in `src/app/exchange`). Start with `docs/exchange/ARCHITECTURE.md` and `docs/exchange/DECISIONS.md` for anything to do with vehicle buying and selling or the diary.
 
+**v2 is done and live (1 Nov 2026)**: SOB Auto Exchange, the Autofix Diary, the phone-first admin and Staff & access. What shipped, the migrations applied and the owner's remaining to-dos are in [`docs/V2-UPDATE.md`](docs/V2-UPDATE.md).
+
 ## Working autonomously
 
 Routine work within this project is pre-approved. Do it end to end without stopping for confirmation:

@@ -8,6 +8,7 @@ import {
   type AdminArticleImportPreview,
 } from "@/lib/content/high-intent-article-admin";
 import { requireFreshAdminSession } from "@/lib/auth/trusted-device-server";
+import { requireStaffAction } from "@/lib/exchange/staff";
 
 export type ArticleImportActionState = {
   status: "idle" | "preview" | "success" | "error";
@@ -23,6 +24,7 @@ export async function previewHighIntentArticleImportAction(
   void _formData;
   await requireFreshAdminSession("/admin/news");
   try {
+    await requireStaffAction("content.manage");
     const preview = await previewHighIntentArticleImport();
     return {
       status: "preview",
@@ -44,6 +46,7 @@ export async function applyHighIntentArticleImportAction(
   if (confirmation !== articleImportConfirmation) return { status: "error", message: "Explicit draft-import confirmation is required." };
   await requireFreshAdminSession("/admin/news");
   try {
+    await requireStaffAction("content.manage");
     const result = await applyHighIntentArticleImport(confirmation);
     revalidatePath("/admin/news");
     return {

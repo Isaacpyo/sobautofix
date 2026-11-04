@@ -3,13 +3,14 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { z } from "zod";
-import { isAllowedAdminEmail } from "@/config/admin";
 import { siteConfig } from "@/config/site";
 import { canChangeAdminPassword, requiresMfaChallenge } from "@/lib/auth/mfa";
 import { isMandatoryAdminMfaEnabled } from "@/lib/auth/mfa-policy";
 import { getRecoveryErrorMessage } from "@/lib/auth/recovery-errors";
 import { getCurrentTrustedDevice, revokeAllTrustedDevices } from "@/lib/auth/trusted-device-server";
+import { isMissingSchemaError } from "@/lib/exchange/schema";
 import { consumeRateLimit } from "@/lib/rate-limit";
+import { isActiveStaffEmail } from "@/lib/staff/access";
 import { createAdminClient, createClient, getAdminUser } from "@/lib/supabase/server";
 
 export type LoginState = { message: string };
@@ -23,7 +24,7 @@ export async function loginWithPassword(_: LoginState, formData: FormData): Prom
     password: formData.get("password"),
   });
   if (!parsed.success) return { message: "Enter your email address and password." };
-  if (!isAllowedAdminEmail(parsed.data.email)) return { message: "Sign-in failed. Check your details and try again." };
+  if (!(await isActiveStaffEmail(parsed.data.email))) return { message: "Sign-in failed. Check your details and try again." };
   const requestHeaders = await headers();
   const source = (requestHeaders.get("x-forwarded-for")?.split(",")[0] || requestHeaders.get("x-real-ip") || "unknown").trim().slice(0, 64);
   const email = parsed.data.email.trim().toLowerCase();
@@ -45,12 +46,15 @@ export async function loginWithPassword(_: LoginState, formData: FormData): Prom
     await client.auth.signOut();
     return { message: "Supabase authentication is not configured." };
   }
-  const { data: profile } = await profileClient
+  const { data: profile, error: profileError } = await profileClient
     .from("admin_profiles")
-    .select("user_id")
+    .select("user_id, access_removed_at")
     .eq("user_id", auth.user.id)
     .maybeSingle();
-  if (!profile) {
+  const legacyProfile = profileError && isMissingSchemaError(profileError)
+    ? (await profileClient.from("admin_profiles").select("user_id").eq("user_id", auth.user.id).maybeSingle()).data
+    : null;
+  if (!(profile && !profile.access_removed_at) && !legacyProfile) {
     await client.auth.signOut();
     return { message: "This account is not authorised for the CMS." };
   }
@@ -70,7 +74,7 @@ export async function loginWithPassword(_: LoginState, formData: FormData): Prom
 export async function requestPasswordReset(_: LoginState, formData: FormData): Promise<LoginState> {
   const parsed = z.object({ email: z.email() }).safeParse({ email: formData.get("email") });
   const genericMessage = "If that address belongs to the authorised administrator, a password reset link has been sent.";
-  if (!parsed.success || !isAllowedAdminEmail(parsed.data.email)) return { message: genericMessage };
+  if (!parsed.success || !(await isActiveStaffEmail(parsed.data.email))) return { message: genericMessage };
 
   const client = await createClient();
   if (!client) return { message: "Password recovery is not configured." };

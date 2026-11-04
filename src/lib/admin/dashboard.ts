@@ -14,15 +14,22 @@ export function countStatuses<T extends { status: string }>(rows: T[], statuses:
   }, {});
 }
 
+function listInWords(items: string[]) {
+  return items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(", ")} and ${items.at(-1)}`;
+}
+
 export function createSystemHealthChecks({
   websiteReady,
   databaseReady,
+  databaseIssues = [],
   emailReady,
   bookingReady,
   vehicleLookupReady,
 }: {
   websiteReady: boolean;
   databaseReady: boolean;
+  /** Plain names of the dashboard areas that failed to load, e.g. "invoice totals". */
+  databaseIssues?: string[];
   emailReady: boolean;
   bookingReady: boolean;
   vehicleLookupReady: boolean;
@@ -37,7 +44,11 @@ export function createSystemHealthChecks({
     {
       label: "Database",
       status: databaseReady ? "Connected" : "Degraded",
-      detail: databaseReady ? "Dashboard data is available." : "Some operational data could not be loaded.",
+      detail: databaseReady
+        ? "Dashboard data is available."
+        : databaseIssues.length
+          ? `Could not load ${listInWords(databaseIssues)}. Refresh to try again.`
+          : "Some operational data could not be loaded.",
       state: databaseReady ? "healthy" : "degraded",
     },
     {

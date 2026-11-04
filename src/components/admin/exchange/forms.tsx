@@ -19,8 +19,10 @@ export function useFormContext() {
  * A server-action form that shows field errors next to each control, keeps
  * the submitted values after a validation error and announces the result.
  */
-export function ActionForm({ action, children, className, hidden, successMessage = false, resetOnSuccess = false, id, "aria-label": ariaLabel }: {
+export function ActionForm({ action, children, className, hidden, successMessage = false, resetOnSuccess = false, onSuccess, id, "aria-label": ariaLabel }: {
   action: FormAction;
+  /** Runs after a successful submit, for example to close an inline editor. */
+  onSuccess?: () => void;
   children: React.ReactNode;
   className?: string;
   hidden?: Record<string, string | undefined | null>;
@@ -38,6 +40,7 @@ export function ActionForm({ action, children, className, hidden, successMessage
     if (result.status === "success") {
       if (result.message) announce(result.message);
       if (result.redirectTo) router.push(result.redirectTo);
+      onSuccess?.();
     }
     return result;
   }, idleState);

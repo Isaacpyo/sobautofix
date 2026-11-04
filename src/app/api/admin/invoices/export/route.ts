@@ -1,4 +1,5 @@
 import { createAdminClient, getAdminUser } from "@/lib/supabase/server";
+import { staffCan } from "@/lib/exchange/staff";
 import { InvoiceExportValidationError, invoiceExportCsv, loadInvoiceExportRows, normalizeInvoiceExportFilters } from "@/lib/invoices/export";
 import { renderInvoiceExportPdf } from "@/lib/invoices/export-pdf";
 
@@ -10,6 +11,7 @@ const privateHeaders = { "Cache-Control": "private, no-store, max-age=0", Pragma
 export async function GET(request: Request) {
   const auth = await getAdminUser();
   if (!auth) return Response.json({ error: "Unauthorised" }, { status: 401, headers: privateHeaders });
+  if (!(await staffCan(auth.user.id, "finance.view"))) return Response.json({ error: "Forbidden" }, { status: 403, headers: privateHeaders });
   const admin = createAdminClient();
   if (!admin) return Response.json({ error: "Invoice export is unavailable" }, { status: 503, headers: privateHeaders });
 

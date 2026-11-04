@@ -9,7 +9,26 @@ Settings tab:
 - **Notification recipients**: who gets new enquiry emails.
 - Policy wording (sales terms, reservations, seller privacy, complaints). Until you add it, customers see "We are finalising this information".
 - Handover checklist steps, reservation hold days, photos needed to publish (default 4).
-- Staff roles: Owner (everything), Manager (everything except settings), Sales (enquiries, stock edits, offers; no costs, prices or publishing), Workshop (preparation, inspections, diary; no customer contact details).
+- Staff roles are managed in **Staff & access** (see below).
+
+## Staff & access (owners only)
+
+Menu: **System → Staff & access** (`/admin/staff`). Only owners see it.
+
+- **Invite**: enter the person's name, email and role, then **Send invite**. They get an email with a link to choose a password; the link works once and expires. If the email cannot be sent, the page shows the link instead: send it to them privately (text or WhatsApp), never anywhere public. **Resend invite** sends a fresh link if theirs expired.
+- **Change a role or name**: **Edit** on their row. You cannot change your own role, and there must always be at least one owner.
+- **Remove access**: signs them out straight away and stops them signing in. Their past work and history stay. **Restore access** brings them back with the same password and role.
+- **Recent changes** lists every invite, role change, removal and restore, and who made it.
+- Ask everyone to turn on two-step verification (Security in the menu). The list shows who has it on.
+
+| Role | Can | Cannot |
+| --- | --- | --- |
+| Owner | Everything | |
+| Manager | Everything else, including invoices, costs, prices, website content and pricing | Staff & access, website settings, Vehicle Buying & Selling settings |
+| Sales | Enquiries, bookings, stock listings and photos, buying and selling conversations, offers to sellers, diary, customers | Invoices, costs and margins, prices, publishing, website content, settings, staff |
+| Workshop | Enquiries, bookings, preparation, inspections, documents, diary | Customer contact details, stock edits, money, website content, settings, staff |
+
+The full list is on the Staff & access page under **What each role can do**.
 
 ## Selling a car
 

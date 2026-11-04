@@ -3,13 +3,24 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { can } from "@/lib/exchange/permissions";
+import { can, type ExchangePermission } from "@/lib/exchange/permissions";
 import { getStaffRole } from "@/lib/exchange/staff";
 import { createAdminClient, getAdminUser } from "@/lib/supabase/server";
 
 const entitySchema = z.enum(["enquiries", "bookings", "invoices", "inventory", "news", "media", "reviews", "offers", "catalogue_systems", "catalogue_services"]);
 const actionSchema = z.enum(["trash", "restore", "delete"]);
 const idsSchema = z.array(z.string().uuid()).min(1).max(100);
+
+const trashPermissions: Partial<Record<z.infer<typeof entitySchema>, ExchangePermission>> = {
+  invoices: "finance.edit",
+  inventory: "stock.publish",
+  news: "content.manage",
+  media: "content.manage",
+  reviews: "content.manage",
+  offers: "pricing.manage",
+  catalogue_systems: "pricing.manage",
+  catalogue_services: "pricing.manage",
+};
 
 export type TrashActionResult = { success: boolean; message: string };
 
@@ -32,10 +43,17 @@ export async function manageTrashAction(formData: FormData): Promise<TrashAction
 
   const service = createAdminClient();
   if (!service) return { success: false, message: "Trash is temporarily unavailable." };
-  // Removing or restoring stock changes what is for sale, so it needs the
-  // same permission as publishing.
-  if (parsed.data.entity === "inventory" && !can(await getStaffRole(service, admin.user.id), "stock.publish")) {
-    return { success: false, message: "You do not have permission to remove or restore stock." };
+  // Each kind of item needs the permission of the area it belongs to (Staff &
+  // access); removing or restoring stock changes what is for sale, so it needs
+  // the publishing permission. Restoring and deleting forever happen in Trash,
+  // which is a content.manage area. Enquiries and bookings are open to all staff.
+  const role = await getStaffRole(service, admin.user.id);
+  const needed = trashPermissions[parsed.data.entity];
+  if (needed && !can(role, needed)) {
+    return { success: false, message: parsed.data.entity === "inventory" ? "You do not have permission to remove or restore stock." : "Your staff role cannot change these items." };
+  }
+  if (parsed.data.intent !== "trash" && !can(role, "content.manage")) {
+    return { success: false, message: "Your staff role cannot restore or delete items in Trash." };
   }
 
   let objectPaths: string[] = [];

@@ -49,7 +49,8 @@ If the migration has not reached a database, queries fail with codes recognised 
 - `src/config/exchange.ts`: defaults, policy pages, `NOT_CONFIRMED`, `NOT_PUBLISHED_COPY`, `exchangeBaseUrl()`
 - `src/lib/exchange/settings.ts`: `getExchangeSettings()`, `getExchangePrivateSettings()`, `getExchangeNotificationRecipients()`
 - `src/lib/exchange/permissions.ts`: roles and `can(role, permission)`
-- `src/lib/exchange/staff.ts`: `requireStaffPage(permission)`, `requireStaffAction(permission)`, `getStaffForRoute(permission)`, `auditStaffAction()`
+- `src/lib/exchange/staff.ts`: `requireStaffPage(permission)`, `requireStaffAction(permission)`, `getStaffForRoute(permission)`, `staffCan(userId, permission)`, `auditStaffAction()`
+- `src/lib/staff/`: Staff & access (`/admin/staff`): `access.ts` (sign-in check by active profile), `admin.ts` (invite, edit, remove, restore), `rules.ts` (status, last-owner rule)
 - `src/lib/exchange/readiness.ts`: `getPublishReadiness()`, `canTransition()`
 - `src/lib/exchange/margin.ts`: `summariseMargin()`, `daysInStock()`, `formatPence()`, `MARGIN_DEFINITION`
 - `src/lib/exchange/host.ts`, `links.ts`, `components/exchange/exchange-base.tsx`: links and host
