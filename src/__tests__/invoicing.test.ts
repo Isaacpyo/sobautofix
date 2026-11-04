@@ -127,6 +127,14 @@ describe("garage invoicing", () => {
     expect(parsed.pageTexts[0]).toContain("Page 1 of 1");
   }, 20_000);
 
+  it("does not print a separate 'Payment due by' line (the due date stays in the summary)", async () => {
+    const parsed = await parsePdf(await renderInvoicePdf(representativeInvoice("issued", 1)));
+    const text = parsed.pageTexts.join(" ");
+    expect(text).not.toContain("Payment due by");
+    expect(text.replace(/\s/g, "").toUpperCase()).toContain("DUEDATE18AUGUST2026");
+    expect(text).toContain("Payment due within 7 days.");
+  }, 20_000);
+
   it("places notes below the complete payment section", async () => {
     const notes = "Extended customer-facing workshop observations that must begin below every payment detail without overlapping any preceding line.";
     const loadingTask = getDocument({
