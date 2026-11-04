@@ -1,5 +1,6 @@
 import { BadgePoundSterling, Banknote, CircleCheckBig, Clock3, FilePenLine, Plus, ReceiptText } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { AdminBulkActions, AdminItemCheckbox } from "@/components/admin/admin-bulk-actions";
 import { AdminPagination } from "@/components/admin/admin-list-controls";
 import { InvoiceLoadingLink } from "@/components/admin/invoice-loading-link";
@@ -25,6 +26,10 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
   const filters = normalizeInvoiceDashboardFilters(params);
   const { query, status, date } = filters;
   const admin = await getAdminUser({ allowTrustedDevice: true });
+  // The database releases invoices only to a sign-in verified with a two-step
+  // code in this session, not a remembered device. The proxy already asks for
+  // the code on /admin/invoices; this covers any request that reaches the page.
+  if (admin?.mfaRequired && !admin.mfaVerified) redirect(`/admin/mfa?returnTo=${encodeURIComponent(invoicesReturnTo(filters))}&stepUp=1`);
   const result = admin
     ? await loadInvoiceDashboard(admin.client, filters)
     : { ...emptyInvoiceDashboard, error: new Error("Admin session is unavailable") };
@@ -46,6 +51,15 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
   </>;
 }
 
+function invoicesReturnTo({ query, status, date, requestedPage }: ReturnType<typeof normalizeInvoiceDashboardFilters>) {
+  const search = new URLSearchParams();
+  if (query) search.set("q", query);
+  if (status) search.set("status", status);
+  if (date) search.set("date", date);
+  if (requestedPage > 1) search.set("page", String(requestedPage));
+  const text = search.toString();
+  return text ? `/admin/invoices?${text}` : "/admin/invoices";
+}
 const filterInput = "mt-2 block min-h-11 w-full rounded-xl border border-[#D7E0E9] bg-white px-3 text-sm font-semibold text-[#071127]";
 function Filter({ title, children }: { title: string; children: React.ReactNode }) { return <label className="text-xs font-extrabold tracking-wide text-[#667586] uppercase">{title}{children}</label>; }
 function Actions({ invoice }: { invoice: Row }) { return <div className="flex flex-wrap gap-2"><InvoiceLoadingLink href={`/admin/invoices/${invoice.id}`}>View</InvoiceLoadingLink>{invoice.status === "draft" ? <InvoiceLoadingLink href={`/admin/invoices/${invoice.id}/edit`}>Edit</InvoiceLoadingLink> : <InvoiceLoadingLink href={`/api/admin/invoices/${invoice.id}/pdf`} transient loadingTitle="Preparing PDF" loadingDescription="Please wait while the invoice PDF is prepared.">PDF</InvoiceLoadingLink>}{invoice.status === "issued" && <Action href={`/admin/invoices/${invoice.id}#payment`} text="Mark paid" />}</div>; }

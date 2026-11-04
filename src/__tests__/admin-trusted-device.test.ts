@@ -67,6 +67,16 @@ describe("admin trusted devices", () => {
     expect(isSensitiveAdminPath("/admin/enquiries")).toBe(false);
   });
 
+  it("asks a remembered device for a fresh code before Invoices, whose data the database releases only to AAL2", () => {
+    expect(isSensitiveAdminPath("/admin/invoices")).toBe(true);
+    expect(isSensitiveAdminPath("/admin/invoices/new")).toBe(true);
+    expect(isSensitiveAdminPath("/admin/invoices/3f0c6a8e-0000-4000-8000-000000000000/edit")).toBe(true);
+    expect(isSensitiveAdminPath("/admin/invoicesx")).toBe(false);
+    const page = read("src", "app", "admin", "(protected)", "invoices", "page.tsx");
+    expect(page).toContain("admin?.mfaRequired && !admin.mfaVerified");
+    expect(page).toContain("&stepUp=1");
+  });
+
   it("creates trust only after successful TOTP verification and leaves mutations on real AAL2", () => {
     const challenge = read("src", "app", "admin", "mfa", "actions.ts");
     expect(challenge.indexOf("challengeAndVerify")).toBeLessThan(challenge.indexOf("await trustCurrentDevice"));

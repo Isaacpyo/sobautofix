@@ -39,9 +39,17 @@ export function summarizeUserAgent(userAgent: string | null) {
   return `${browser} on ${platform}`;
 }
 
+/**
+ * Paths a remembered device cannot open without a fresh two-step code.
+ * Invoices are here because their data is read with the signed-in session and
+ * the database releases it only to a genuine AAL2 sign-in (is_admin()); on a
+ * remembered device the page would load but every invoice query is refused.
+ */
 export function isSensitiveAdminPath(pathname: string) {
   return pathname === "/admin/configuration/security"
     || pathname.startsWith("/admin/configuration/security/")
+    || pathname === "/admin/invoices"
+    || pathname.startsWith("/admin/invoices/")
     || pathname === "/admin/mfa/recover"
     || pathname.startsWith("/admin/mfa/recover/")
     || pathname === "/admin/mfa/enroll"
