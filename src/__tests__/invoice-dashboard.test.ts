@@ -61,6 +61,18 @@ describe("invoice dashboard query", () => {
     });
   });
 
+  it("reports a refused query as an error and logs only its code", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    const rpc = vi.fn().mockResolvedValue({ data: null, error: { code: "42501", message: "UNAUTHORISED" } });
+    const result = await loadInvoiceDashboard({ rpc } as unknown as SupabaseClient, normalizeInvoiceDashboardFilters({ q: "AB12 CDE" }));
+
+    expect(result.error).toBeTruthy();
+    expect(result.invoices).toEqual([]);
+    expect(log).toHaveBeenCalledWith("[invoices] Dashboard could not be loaded", { code: "42501" });
+    expect(JSON.stringify(log.mock.calls)).not.toContain("AB12");
+    log.mockRestore();
+  });
+
   it("defines an admin-only, uncapped server-side query", () => {
     const migration = readFileSync(
       join(process.cwd(), "supabase", "migrations", "202608110009_invoice_dashboard_query.sql"),

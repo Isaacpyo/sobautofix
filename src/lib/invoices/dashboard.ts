@@ -69,11 +69,16 @@ export async function loadInvoiceDashboard(
     p_page: filters.requestedPage,
     p_page_size: invoiceDashboardPageSize,
   });
-  if (error) return { ...emptyInvoiceDashboard, error };
+  if (error) {
+    // Code only (42501 = refused by require_invoice_actor); never the query.
+    console.error("[invoices] Dashboard could not be loaded", { code: error.code || "unknown" });
+    return { ...emptyInvoiceDashboard, error };
+  }
 
   try {
     return parseInvoiceDashboard(data);
   } catch (parseError) {
+    console.error("[invoices] Dashboard response was not understood");
     return { ...emptyInvoiceDashboard, error: parseError };
   }
 }
