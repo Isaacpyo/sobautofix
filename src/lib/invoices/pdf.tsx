@@ -127,7 +127,7 @@ function SummaryStrip({ invoice, status }: { invoice: Invoice; status: string })
 }
 
 function PaymentSection({ invoice, status }: { invoice: Invoice; status: string }) {
-  return <View><SectionHeading>Payment details</SectionHeading><Text style={s.paymentStatus}>Pay to: {invoicePaymentDetails.accountName}</Text><Text style={s.notes}>Sort code: {invoicePaymentDetails.sortCode} · Account no: {invoicePaymentDetails.accountNumber}</Text>{invoice.paid_at ? <><Text style={s.paymentStatus}>{status} · {formatDate(invoice.paid_at.slice(0, 10))}</Text>{invoice.payment_method && <Text style={s.notes}>{paymentMethodLabel(invoice.payment_method)}{invoice.payment_reference ? ` · ${invoice.payment_reference}` : ""}</Text>}</> : <>{invoice.due_date && <Text style={s.paymentStatus}>Payment due by {formatDate(invoice.due_date)}.</Text>}{invoice.payment_terms && <Text style={s.notes}>{invoice.payment_terms}</Text>}</>}</View>;
+  return <View><SectionHeading>Payment details</SectionHeading><Text style={s.paymentStatus}>Pay to: {invoicePaymentDetails.accountName}</Text><Text style={s.notes}>Sort code: {invoicePaymentDetails.sortCode} · Account no: {invoicePaymentDetails.accountNumber}</Text>{invoice.paid_at ? <><Text style={s.paymentStatus}>{status} · {formatDate(invoice.paid_at.slice(0, 10))}</Text>{invoice.payment_method && <Text style={s.notes}>{paymentMethodLabel(invoice.payment_method)}{invoice.payment_reference ? ` · ${invoice.payment_reference}` : ""}</Text>}</> : <>{invoice.payment_terms && <Text style={s.notes}>{invoice.payment_terms}</Text>}</>}</View>;
 }
 
 function SectionHeading({ children }: { children: React.ReactNode }) { return <><Text style={s.label}>{children}</Text><View style={s.sectionRule} /></>; }
